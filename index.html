@@ -183,6 +183,11 @@ a{color:var(--inf);text-decoration:none}
 
 <div class="pg" id="p-ast"><h1 class="pt">학생 관리</h1><p class="pd">전체 학생 목록 · 등록 · 수정</p><div class="tbar"><input type="text" id="stSrch" placeholder="이름·학교 검색" oninput="fSt()"><button class="bs bgd" onclick="oSM()">+ 학생 추가</button></div><div class="cd"><div class="tw"><table class="tb" id="stTbl"><thead></thead><tbody></tbody></table></div></div></div>
 
+<!-- ENROLL -->
+<div class="pg" id="p-enroll"><h1 class="pt">입학 관리</h1><p class="pd">counsel 신규 상담에서 완료된 학생을 입학 확정합니다</p>
+<div class="tbar"><input type="text" id="enSrch" placeholder="이름 검색" oninput="fEn()"><button class="bs" onclick="lEnroll()">새로고침</button></div>
+<div class="cd"><div class="tw"><table class="tb" id="enTbl"><thead></thead><tbody></tbody></table></div></div></div>
+
 <div class="pg" id="p-acl"><h1 class="pt">반 관리</h1><p class="pd">반 구조 · 담당 교사 · 학생 배정</p><div class="tbar"><button class="bs bgd" onclick="oCM()">+ 반 추가</button></div><div class="cd"><div class="tw"><table class="tb" id="clTbl"><thead></thead><tbody></tbody></table></div></div></div>
 
 <div class="pg" id="p-atc"><h1 class="pt">강사 계정 관리</h1><p class="pd">계정 생성 · 수정 · 비활성화</p><div class="tbar"><button class="bs bgd" onclick="oTM()">+ 강사 추가</button></div><div class="cd"><div class="tw"><table class="tb" id="tcTbl"><thead></thead><tbody></tbody></table></div></div></div>
@@ -278,6 +283,7 @@ const MN=[
 {id:'p-dash',ic:'📊',lb:'대시보드',r:'all'},
 {sec:'관리자',r:'관리자'},
 {id:'p-acon',ic:'📞',lb:'신규 상담 관리',r:'관리자',ext:'https://counsel.trueasheard.com'},
+{id:'p-enroll',ic:'🎓',lb:'입학 관리',r:'관리자'},
 {id:'p-ast',ic:'👨‍🎓',lb:'학생 관리',r:'관리자'},
 {id:'p-acl',ic:'🏫',lb:'반 관리',r:'관리자'},
 {id:'p-alog',ic:'📋',lb:'일일 평가 관리',r:'관리자'},
@@ -300,7 +306,7 @@ const pg=$(pid);if(pg)pg.classList.add('on');const ni=document.querySelector(`.n
 $('tbTi').textContent=ni?ni.textContent.trim():'';$('svb').style.display=pid==='p-eval'?'flex':'none';
 $('side').classList.remove('op');lPg(pid);}
 
-async function lPg(p){try{switch(p){case'p-dash':await lDash();break;case'p-alog':await lALog();break;case'p-ast':await lSts();break;case'p-acl':await lCls();break;case'p-atc':await lTcs();break;case'p-rpt':await lRpt();break;case'p-psy':await lPsy();break;case'p-stats':await lStats();break;}}catch(e){ts(e.message,'er');}}
+async function lPg(p){try{switch(p){case'p-dash':await lDash();break;case'p-alog':await lALog();break;case'p-ast':await lSts();break;case'p-enroll':await lEnroll();break;case'p-acl':await lCls();break;case'p-atc':await lTcs();break;case'p-rpt':await lRpt();break;case'p-psy':await lPsy();break;case'p-stats':await lStats();break;}}catch(e){ts(e.message,'er');}}
 
 // LOGIN
 async function doLogin(){const nm=$('lnm').value.trim(),pw=$('lpw').value.trim(),er=$('lerr'),bt=$('lbtn');
@@ -454,6 +460,24 @@ async function lRpt(){if(!S.allSt.length){try{const r=await gA('tp_admin_allStud
 function rRP(sts){const ac=sts.filter(s=>s.status!=='퇴원');$('rpL').innerHTML=`<div class="tw"><table class="tb"><thead><tr><th>이름</th><th>학년</th><th>학교</th><th></th></tr></thead><tbody>
 ${ac.map(s=>`<tr><td>${s.name}</td><td>${s.grade}</td><td>${s.school||''}</td><td><a href="#" onclick="oPr('${esc(s.name)}','p-rpt');return false" style="font-size:.82rem">프로필 · 리포트</a></td></tr>`).join('')}</tbody></table></div>`;}
 function fRp(){const q=$('rpSrch').value.trim().toLowerCase();rRP(S.allSt.filter(s=>s.name.toLowerCase().includes(q)));}
+
+// ENROLL
+let enStudents=[];
+async function lEnroll(){sh('counsel 학생 로딩...');const r=await gA('tp_admin_counselStudents',{token:S.tk});hd();if(!r.ok){ts(r.error,'er');return;}enStudents=r.students;rEN(r.students);}
+function rEN(sts){const t=$('enTbl');
+t.querySelector('thead').innerHTML='<tr><th>이름</th><th>학년</th><th>학교</th><th>성향</th><th>영어LT</th><th>수학LT</th><th>상태</th><th></th></tr>';
+t.querySelector('tbody').innerHTML=sts.map(s=>{
+const enrolled=s.alreadyEnrolled;
+return`<tr style="${enrolled?'opacity:.5':''}"><td style="font-weight:600">${s.name}</td><td>${s.grade}</td><td>${s.school||''}</td>
+<td>${s.hasSurvey?'<span class="bd bdok">완료</span>':'<span class="bd bder">미완</span>'}</td>
+<td>${s.hasEngLT?'<span class="bd bdok">완료</span>':'<span class="bd bdwn">미완</span>'}</td>
+<td>${s.hasMathLT?'<span class="bd bdok">완료</span>':'<span class="bd bdwn">미완</span>'}</td>
+<td>${enrolled?'<span class="bd bdinf">입학완료</span>':`<span class="bd bdnv">${s.status||'진행중'}</span>`}</td>
+<td>${enrolled?'':'<button class="bs bgd" style="padding:5px 14px;font-size:.75rem" onclick="doEnroll(\''+esc(s.name)+'\')">입학 확정</button>'}</td></tr>`;}).join('')||'<tr><td colspan=8 style="text-align:center;padding:32px;color:var(--sb)">counsel에 학생 데이터가 없습니다</td></tr>';}
+function fEn(){const q=$('enSrch').value.trim().toLowerCase();rEN(enStudents.filter(s=>s.name.toLowerCase().includes(q)));}
+async function doEnroll(name){if(!confirm(name+' 학생을 입학 확정하시겠습니까?\n\n[DB] 학생 + [DB] 성향분석에 자동 등록됩니다.'))return;
+sh('입학 처리 중...');const r=await pA({action:'tp_admin_enrollStudent',student:name,token:S.tk});hd();
+if(r.ok){ts('✅ '+r.message,'ok');lEnroll();}else ts(r.error,'er');}
 
 // STATS
 let trendChart=null,dailyChart=null,teacherChart=null;
