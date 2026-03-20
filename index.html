@@ -271,6 +271,19 @@ a{color:var(--inf);text-decoration:none}
 <div class="fg"><label class="fl">담당 교사 (쉼표 구분)</label><input type="text" id="cl_tc" class="fi" placeholder="김남선, 강민수"></div>
 <div class="ma"><button class="bc" onclick="cM('clMo')">취소</button><button class="bs" onclick="svCl()">저장</button></div></div></div>
 
+<!-- ENROLL CLASS SELECT MODAL -->
+<div id="enMo" class="mo hidden"><div class="md"><div class="mdt" id="enMoTi">입학 확정 — 반 배정</div>
+<p style="font-size:.82rem;color:var(--sb);margin-bottom:16px" id="enMoDesc">배정할 반을 선택하세요 (복수 선택 가능)</p>
+<div id="enMoClasses" style="display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto;margin-bottom:16px"></div>
+<div class="ma"><button class="bc" onclick="cM('enMo')">취소</button><button class="bs bgd" id="enMoBtn" onclick="doEnrollConfirm()">입학 확정</button></div></div></div>
+
+<!-- STUDENT ENROLLMENT EDIT MODAL -->
+<div id="seMo" class="mo hidden"><div class="md"><div class="mdt" id="seMoTi">수강 반 관리</div>
+<p style="font-size:.82rem;color:var(--sb);margin-bottom:12px" id="seMoDesc">학생의 수강 반을 추가하거나 해제합니다</p>
+<div id="seMoCurrent" style="margin-bottom:16px"></div>
+<div class="fg"><label class="fl">반 추가</label><select id="se_cls" class="fi"><option value="">반 선택</option></select></div>
+<div class="ma"><button class="bc" onclick="cM('seMo')">취소</button><button class="bs" onclick="addEnrollment()">추가</button></div></div></div>
+
 <script>
 const API='/api/gs';
 const SE={'국어':'📖','영어':'🌐','수학':'📐'};const SC={'국어':'k','영어':'e','수학':'m'};
@@ -415,8 +428,8 @@ async function lSts(){sh('학생 로딩...');const r=await gA('tp_admin_allStude
 function rST(sts){const t=$('stTbl');t.querySelector('thead').innerHTML='<tr><th>이름</th><th>학년</th><th>학교</th><th>상태</th><th>수강반</th><th></th></tr>';
 t.querySelector('tbody').innerHTML=sts.map(s=>`<tr><td><a href="#" onclick="oPr('${esc(s.name)}','p-ast');return false">${s.name}</a></td><td>${s.grade}</td><td>${s.school||''}</td>
 <td><span class="bd ${s.status==='재원'?'bdok':'bder'}">${s.status||'재원'}</span></td>
-<td style="font-size:.72rem;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${(s.classes||[]).join(', ')}</td>
-<td><button class="bs" style="padding:4px 10px;font-size:.7rem" onclick="eSt('${esc(s.name)}')">수정</button></td></tr>`).join('');}
+<td style="font-size:.72rem;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${(s.classes||[]).join(', ')||'<span style="color:var(--lt)">미배정</span>'}</td>
+<td style="white-space:nowrap"><button class="bs" style="padding:4px 10px;font-size:.7rem;margin-right:4px" onclick="oSE('${esc(s.name)}')">수강</button><button class="bs" style="padding:4px 10px;font-size:.7rem" onclick="eSt('${esc(s.name)}')">수정</button></td></tr>`).join('');}
 function fSt(){const q=$('stSrch').value.trim().toLowerCase();rST(S.allSt.filter(s=>s.name.toLowerCase().includes(q)||(s.school||'').toLowerCase().includes(q)));}
 function oSM(d){$('smTi').textContent=d?'학생 정보 수정':'학생 추가';$('sm_n').value=d?.name||'';$('sm_g').value=d?.grade||'';$('sm_s').value=d?.school||'';$('sm_p').value=d?.parentPhone||'';$('sm_ph').value=d?.studentPhone||'';$('sm_st').value=d?.status||'재원';$('sm_n').readOnly=!!d;$('smMo').classList.remove('hidden');}
 function eSt(n){const s=S.allSt.find(x=>x.name===n);if(s)oSM(s);}
@@ -462,7 +475,7 @@ ${ac.map(s=>`<tr><td>${s.name}</td><td>${s.grade}</td><td>${s.school||''}</td><t
 function fRp(){const q=$('rpSrch').value.trim().toLowerCase();rRP(S.allSt.filter(s=>s.name.toLowerCase().includes(q)));}
 
 // ENROLL
-let enStudents=[];
+let enStudents=[],enTarget='';
 async function lEnroll(){sh('counsel 학생 로딩...');const r=await gA('tp_admin_counselStudents',{token:S.tk});hd();if(!r.ok){ts(r.error,'er');return;}enStudents=r.students;rEN(r.students);}
 function rEN(sts){const t=$('enTbl');
 t.querySelector('thead').innerHTML='<tr><th>이름</th><th>학년</th><th>학교</th><th>성향</th><th>영어LT</th><th>수학LT</th><th>상태</th><th></th></tr>';
@@ -473,11 +486,46 @@ return`<tr style="${enrolled?'opacity:.5':''}"><td style="font-weight:600">${s.n
 <td>${s.hasEngLT?'<span class="bd bdok">완료</span>':'<span class="bd bdwn">미완</span>'}</td>
 <td>${s.hasMathLT?'<span class="bd bdok">완료</span>':'<span class="bd bdwn">미완</span>'}</td>
 <td>${enrolled?'<span class="bd bdinf">입학완료</span>':`<span class="bd bdnv">${s.status||'진행중'}</span>`}</td>
-<td>${enrolled?'':'<button class="bs bgd" style="padding:5px 14px;font-size:.75rem" onclick="doEnroll(\''+esc(s.name)+'\')">입학 확정</button>'}</td></tr>`;}).join('')||'<tr><td colspan=8 style="text-align:center;padding:32px;color:var(--sb)">counsel에 학생 데이터가 없습니다</td></tr>';}
+<td>${enrolled?'':'<button class="bs bgd" style="padding:5px 14px;font-size:.75rem" onclick="oEnMo(\''+esc(s.name)+'\')">입학 확정</button>'}</td></tr>`;}).join('')||'<tr><td colspan=8 style="text-align:center;padding:32px;color:var(--sb)">counsel에 학생 데이터가 없습니다</td></tr>';}
 function fEn(){const q=$('enSrch').value.trim().toLowerCase();rEN(enStudents.filter(s=>s.name.toLowerCase().includes(q)));}
-async function doEnroll(name){if(!confirm(name+' 학생을 입학 확정하시겠습니까?\n\n[DB] 학생 + [DB] 성향분석에 자동 등록됩니다.'))return;
-sh('입학 처리 중...');const r=await pA({action:'tp_admin_enrollStudent',student:name,token:S.tk});hd();
+
+// 입학 확정 모달 — 반 선택
+async function oEnMo(name){enTarget=name;$('enMoTi').textContent=name+' — 입학 확정';
+$('enMoDesc').textContent='배정할 반을 선택하세요 (복수 선택 가능, 선택 안 하면 반 미배정 상태로 입학)';
+// 반 목록 로딩
+if(!S.cls.length){try{const r=await gA('tp_admin_allClasses',{token:S.tk});if(r.ok)S.cls=r.classes||[];}catch(e){}}
+$('enMoClasses').innerHTML=S.cls.map(c=>`<label style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:1.5px solid var(--bd);border-radius:8px;cursor:pointer;transition:.15s">
+<input type="checkbox" value="${esc(c.name)}" style="width:18px;height:18px;accent-color:var(--nv)">
+<div><div style="font-size:.88rem;font-weight:600;color:var(--nv)">${c.name}</div>
+<div style="font-size:.72rem;color:var(--sb)">${c.subject} · ${c.teachers||''}</div></div></label>`).join('');
+$('enMo').classList.remove('hidden');}
+
+async function doEnrollConfirm(){const checks=document.querySelectorAll('#enMoClasses input:checked');
+const classes=Array.from(checks).map(c=>c.value);
+cM('enMo');sh('입학 처리 중...');
+const r=await pA({action:'tp_admin_enrollStudent',student:enTarget,classes:classes,token:S.tk});hd();
 if(r.ok){ts('✅ '+r.message,'ok');lEnroll();}else ts(r.error,'er');}
+
+// 학생 관리 — 수강 편집
+async function oSE(name){$('seMoTi').textContent=name+' — 수강 반 관리';
+// 현재 수강 반 조회
+const st=S.allSt.find(s=>s.name===name);const cur=(st&&st.classes)||[];
+$('seMoCurrent').innerHTML=cur.length?cur.map(c=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border:1px solid var(--bd);border-radius:8px;margin-bottom:6px">
+<span style="font-size:.85rem;font-weight:500">${c}</span>
+<button class="bs" style="padding:3px 10px;font-size:.7rem;background:var(--er);color:#fff" onclick="rmEnroll('${esc(name)}','${esc(c)}')">해제</button></div>`).join('')
+:'<p style="font-size:.82rem;color:var(--sb)">배정된 반이 없습니다</p>';
+// 반 선택 드롭다운
+if(!S.cls.length){try{const r=await gA('tp_admin_allClasses',{token:S.tk});if(r.ok)S.cls=r.classes||[];}catch(e){}}
+$('se_cls').innerHTML='<option value="">반 선택</option>'+S.cls.filter(c=>!cur.includes(c.name)).map(c=>`<option value="${esc(c.name)}">${c.name} (${c.subject})</option>`).join('');
+$('seMo').dataset.student=name;$('seMo').classList.remove('hidden');}
+
+async function addEnrollment(){const name=$('seMo').dataset.student;const cn=$('se_cls').value;if(!cn){ts('반을 선택하세요','er');return;}
+sh('배정 중...');const r=await pA({action:'tp_admin_saveEnrollment',enrollAction:'add',student:name,className:cn,token:S.tk});hd();
+if(r.ok){ts('✅ '+r.message,'ok');await lSts();oSE(name);}else ts(r.error,'er');}
+
+async function rmEnroll(name,cn){if(!confirm(name+' → '+cn+' 배정을 해제하시겠습니까?'))return;
+sh('해제 중...');const r=await pA({action:'tp_admin_saveEnrollment',enrollAction:'remove',student:name,className:cn,token:S.tk});hd();
+if(r.ok){ts('✅ '+r.message,'ok');await lSts();oSE(name);}else ts(r.error,'er');}
 
 // STATS
 let trendChart=null,dailyChart=null,teacherChart=null;
