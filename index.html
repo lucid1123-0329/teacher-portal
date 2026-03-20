@@ -499,7 +499,7 @@ h+=`<div style="border:1px solid var(--bd);border-radius:var(--r);margin-bottom:
 <div style="padding:14px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;background:var(--bg)" onclick="var el=document.getElementById('rp${idx}');el.style.maxHeight=el.style.maxHeight==='0px'?'3000px':'0px'">
 <div><span style="font-weight:600;font-size:.88rem;color:var(--nv)">${rp.date||''}</span><span style="font-size:.75rem;color:var(--sb);margin-left:8px">${rp.counselor||''}</span></div>
 <div style="display:flex;gap:6px;align-items:center">
-${rp.shortUrl?`<a href="https://go.trueasheard.com/${rp.shortUrl}" target="_blank" style="font-size:.75rem" onclick="event.stopPropagation()">리포트 ↗</a>`:(rp.reportUrl?`<a href="${rp.reportUrl}" target="_blank" style="font-size:.75rem" onclick="event.stopPropagation()">열기 ↗</a>`:'')}
+${rp.shortUrl?`<a href="${rp.shortUrl.startsWith('http')?rp.shortUrl:'https://go.trueasheard.com/'+rp.shortUrl}" target="_blank" style="font-size:.75rem" onclick="event.stopPropagation()">리포트 ↗</a>`:(rp.reportUrl?`<a href="${rp.reportUrl}" target="_blank" style="font-size:.75rem" onclick="event.stopPropagation()">열기 ↗</a>`:'')}
 <span style="font-size:.7rem;color:var(--lt)">▼</span>
 </div></div>
 <div id="rp${idx}" style="max-height:0;overflow:hidden;transition:max-height .4s ease;padding:0 16px"><div style="padding:12px 0 16px">`;
