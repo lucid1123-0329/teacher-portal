@@ -560,7 +560,7 @@ function fPsy(){const q=$('psySrch').value.trim().toLowerCase();rPsy((S.mySt||[]
 async function lRpt(){await loadMySts();rRP(S.mySt);}
 function rRP(l){$('rpL').innerHTML=l.length?`<div class="tw"><table class="tb"><thead><tr><th>이름</th><th>학년</th><th>학교</th><th></th></tr></thead><tbody>
 ${l.map(s=>`<tr><td>${s.name}</td><td>${s.grade}</td><td>${s.school||''}</td><td><a href="#" onclick="oPr('${esc(s.name)}','p-rpt');return false">프로필 · 리포트</a></td></tr>`).join('')}</tbody></table></div>`
-:'<p style="text-align:center;color:var(--t4);padding:20px">담당 학생이 없습니다</p>';}}
+:'<p style="text-align:center;color:var(--t4);padding:20px">담당 학생이 없습니다</p>';}
 function fRp(){const q=$('rpSrch').value.trim().toLowerCase();rRP((S.mySt||[]).filter(s=>s.name.toLowerCase().includes(q)));}
 
 // STATS
