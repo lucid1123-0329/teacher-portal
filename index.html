@@ -282,6 +282,10 @@ a{color:var(--ac);text-decoration:none}::selection{background:var(--acbg)}
 <div class="fg"><label class="fl">반 추가</label><select id="se_cls" class="ipt" style="width:100%"><option value="">선택</option></select></div>
 <div class="modal-ft"><button class="btn btn-g" onclick="cM('seMo')">취소</button><button class="btn btn-p" onclick="addEnroll()">추가</button></div></div></div>
 
+<div id="cdMo" class="modal hd"><div class="modal-box" style="max-width:600px"><div class="modal-h" id="cdMoTi">분석 결과</div>
+<div id="cdMoBody" style="max-height:70vh;overflow-y:auto"></div>
+<div class="modal-ft"><button class="btn btn-g" onclick="cM('cdMo')">닫기</button><button class="btn btn-p" id="cdCapBtn" onclick="captureCd()" style="display:none">이미지 저장</button></div></div></div>
+
 <script>
 const API='/api/gs';
 let S={t:null,tk:null,cf:null,cls:[],cc:null,sts:[],ev:{},allSt:[],allTc:[],mySt:null,pf:'p-dash',editCl:null};
@@ -521,11 +525,11 @@ if(!tc.name){ts('이름 필요','er');return;}sh('');const r=await pA({action:'t
 // ENROLL
 let enSts=[],enTgt='';
 async function lEnroll(){sh('');const r=await gA('tp_admin_counselStudents',{token:S.tk});hd();if(!r.ok){ts(r.error,'er');return;}enSts=r.students;rEN(r.students);}
-function rEN(l){$('enTbl').querySelector('thead').innerHTML='<tr><th>이름</th><th>학년</th><th>학교</th><th>성향</th><th>영어</th><th>수학</th><th>상태</th><th></th></tr>';
+function rEN(l){$('enTbl').querySelector('thead').innerHTML='<tr><th>이름</th><th>학년</th><th>학교</th><th>성향</th><th>영어LT</th><th>수학LT</th><th>상태</th><th></th></tr>';
 $('enTbl').querySelector('tbody').innerHTML=l.map(s=>{const en=s.alreadyEnrolled;return`<tr style="${en?'opacity:.35':''}"><td style="font-weight:500">${s.name}</td><td>${s.grade}</td><td>${s.school||''}</td>
-<td>${s.hasSurvey?'<span class="chip chip-ok">완료</span>':'<span class="chip chip-er">미완</span>'}</td>
-<td>${s.hasEngLT?'<span class="chip chip-ok">완료</span>':'<span class="chip chip-n">—</span>'}</td>
-<td>${s.hasMathLT?'<span class="chip chip-ok">완료</span>':'<span class="chip chip-n">—</span>'}</td>
+<td>${s.hasSurvey?`<button class="btn btn-g btn-sm" style="font-size:10px;padding:0 8px;height:22px" onclick="viewCounselDetail('${esc(s.name)}','psy')">보기</button>`:'<span class="chip chip-er">미완</span>'}</td>
+<td>${s.hasEngLT?`<button class="btn btn-g btn-sm" style="font-size:10px;padding:0 8px;height:22px" onclick="viewCounselDetail('${esc(s.name)}','eng')">보기</button>`:'<span class="chip chip-n">—</span>'}</td>
+<td>${s.hasMathLT?`<button class="btn btn-g btn-sm" style="font-size:10px;padding:0 8px;height:22px" onclick="viewCounselDetail('${esc(s.name)}','math')">보기</button>`:'<span class="chip chip-n">—</span>'}</td>
 <td>${en?'<span class="chip chip-ac">입학</span>':`<span class="chip chip-n">${s.status||'진행'}</span>`}</td>
 <td>${en?'':'<button class="btn btn-a btn-sm" onclick="oEnMo(\''+esc(s.name)+'\')">입학</button>'}</td></tr>`;}).join('')||'<tr><td colspan=8 style="text-align:center;padding:20px;color:var(--t3)">없음</td></tr>';}
 function fEn(){const q=$('enSrch').value.trim().toLowerCase();rEN(enSts.filter(s=>s.name.toLowerCase().includes(q)));}
@@ -550,6 +554,84 @@ r.ok?(ts(r.message,'ok'),await lSts(),oSE(n)):ts(r.error,'er');}
 async function rmEnroll(n,cn){if(!confirm(n+' → '+cn+' 해제?'))return;sh('');
 const r=await pA({action:'tp_admin_saveEnrollment',enrollAction:'remove',student:n,className:cn,token:S.tk});hd();
 r.ok?(ts(r.message,'ok'),await lSts(),oSE(n)):ts(r.error,'er');}
+
+// COUNSEL DETAIL VIEW
+let cdCache={};
+async function viewCounselDetail(name,type){
+sh('분석 결과 조회...');
+if(!cdCache[name]){const r=await gA('tp_counselStudentDetail',{student:name,token:S.tk});
+if(!r.ok){hd();ts(r.error,'er');return;}cdCache[name]=r.student;}
+hd();const st=cdCache[name];
+let title='',html='';
+$('cdCapBtn').style.display='inline-flex';$('cdCapBtn').onclick=()=>captureCd(name,type);
+
+if(type==='psy'&&st.surveyJson){
+title=name+' — 성향검사 분석';
+try{const pj=JSON.parse(st.surveyJson);const pa=pj.profileAnalysis||{};const ps=pj.profileScores||{};const rl=pj.reliability||{};const cs=pj.consultStrategy||{};const sa=pj.sectionAnalysis||{};
+html=`<div id="cdCapArea" style="padding:12px;background:#fff">`;
+html+=`<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:12px">
+<span class="chip ${rl.score==='상'?'chip-ok':rl.score==='중'?'chip-wn':'chip-er'}">신뢰도 ${rl.score||'—'}</span>
+<span class="chip chip-n">${st.surveyDate||''}</span>
+${cs.recommend_tag_A?`<span class="chip chip-ac">${cs.recommend_tag_A}</span>`:''}
+${cs.recommend_tag_B?`<span class="chip chip-ac">${cs.recommend_tag_B}</span>`:''}
+</div>`;
+if(pa.summary_title)html+=`<div style="font-size:14px;font-weight:700;margin-bottom:4px">${pa.summary_title}</div>`;
+if(pa.summary_text)html+=`<p style="font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:14px">${pa.summary_text}</p>`;
+if(ps.motivation!==undefined){html+=`<div style="font-size:11px;font-weight:600;color:var(--t3);margin-bottom:6px">5대 역량</div><div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-bottom:14px">`;
+const dims=[['동기',ps.motivation],['계획',ps.planning],['메타인지',ps.metacognition],['자기조절',ps.self_regulation],['도움요청',ps.help_seeking]];
+dims.forEach(([l,v])=>{const c=v>=70?'var(--ok)':v>=40?'var(--wn)':'var(--er)';
+html+=`<div style="text-align:center;padding:8px 4px;background:var(--bg);border-radius:6px"><div style="font-size:18px;font-weight:700;color:${c}">${v}</div><div style="font-size:10px;color:var(--t3)">${l}</div></div>`;});
+html+=`</div>`;}
+const secNames={section1_motivation:'학습 동기',section2_cognition:'인지 전략',section3_behavior:'행동 조절',section4_emotion:'정서 관리',section5_environment:'학습 환경'};
+const secClrs=['#6366f1','#22c55e','#f59e0b','#ec4899','#0066ff'];
+Object.keys(secNames).forEach((sk,idx)=>{const sec=sa[sk];if(!sec)return;
+html+=`<div style="margin-bottom:10px"><div style="font-size:12px;font-weight:600;color:${secClrs[idx]};margin-bottom:2px">${secNames[sk]}</div>`;
+if(sec.sectionSummary)html+=`<p style="font-size:11px;color:var(--t3);margin-bottom:4px">${sec.sectionSummary}</p>`;
+if(sec.detailedScores){Object.entries(sec.detailedScores).forEach(([k,v])=>{
+html+=`<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px"><span style="font-size:10px;color:var(--t2);width:80px;flex-shrink:0;text-align:right">${k}</span><div style="flex:1;height:6px;background:var(--ln);border-radius:3px;overflow:hidden"><div style="width:${v}%;height:100%;background:${secClrs[idx]};border-radius:3px"></div></div><span style="font-size:10px;font-weight:600;width:28px">${v}</span></div>`;});}
+html+=`</div>`;});
+if(cs.recommend_text)html+=`<div style="margin-top:10px;padding:10px 12px;background:var(--bg);border-radius:6px"><div style="font-size:11px;font-weight:600;margin-bottom:3px">상담 전략</div><p style="font-size:11px;color:var(--t2);line-height:1.7">${cs.recommend_text}</p></div>`;
+html+=`</div>`;}catch(e){html=`<div id="cdCapArea"><p style="color:var(--er)">JSON 파싱 오류: ${e.message}</p><pre style="font-size:10px;max-height:300px;overflow:auto;white-space:pre-wrap;background:var(--bg);padding:8px;border-radius:6px">${st.surveyJson.substring(0,2000)}</pre></div>`;}
+}else if(type==='eng'&&st.engLtJson){
+title=name+' — 영어 레벨테스트';html=renderLtJson(st.engLtJson,'영어');
+}else if(type==='math'&&st.mathLtJson){
+title=name+' — 수학 레벨테스트';html=renderLtJson(st.mathLtJson,'수학');
+}else{title=name;html='<p style="color:var(--t3);padding:20px;text-align:center">분석 데이터가 없습니다</p>';$('cdCapBtn').style.display='none';}
+
+$('cdMoTi').textContent=title;$('cdMoBody').innerHTML=html;$('cdMo').classList.remove('hd');}
+
+function renderLtJson(jsonStr,subject){
+try{const lt=JSON.parse(jsonStr);
+let h=`<div id="cdCapArea" style="padding:12px;background:#fff">`;
+h+=`<div style="font-size:14px;font-weight:700;margin-bottom:12px">${subject} 레벨테스트 결과</div>`;
+if(lt.totalScore!==undefined||lt.level){
+h+=`<div style="display:flex;gap:8px;margin-bottom:14px">`;
+if(lt.totalScore!==undefined)h+=`<div style="padding:12px 16px;background:var(--acbg);border-radius:8px;text-align:center"><div style="font-size:24px;font-weight:700;color:var(--ac)">${lt.totalScore}</div><div style="font-size:10px;color:var(--t3)">총점</div></div>`;
+if(lt.level)h+=`<div style="padding:12px 16px;background:var(--bg);border-radius:8px;text-align:center"><div style="font-size:18px;font-weight:700">${lt.level}</div><div style="font-size:10px;color:var(--t3)">레벨</div></div>`;
+h+=`</div>`;}
+if(lt.sections&&Array.isArray(lt.sections)){
+h+=`<div style="font-size:11px;font-weight:600;color:var(--t3);margin-bottom:6px">영역별 결과</div>`;
+lt.sections.forEach(s=>{const pct=s.maxScore>0?Math.round(s.score/s.maxScore*100):0;
+h+=`<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px"><span style="font-weight:500">${s.name||s.section||''}</span><span style="font-weight:600">${s.score}/${s.maxScore}</span></div>
+<div style="height:6px;background:var(--ln);border-radius:3px;overflow:hidden"><div style="width:${pct}%;height:100%;background:${pct>=70?'var(--ok)':pct>=40?'var(--wn)':'var(--er)'};border-radius:3px"></div></div></div>`;});}
+if(lt.analysis)h+=`<div style="margin-top:10px;padding:10px;background:var(--bg);border-radius:6px;font-size:11px;color:var(--t2);line-height:1.7">${typeof lt.analysis==='string'?lt.analysis:JSON.stringify(lt.analysis)}</div>`;
+if(lt.recommendation)h+=`<div style="margin-top:6px;padding:10px;background:var(--okbg);border-radius:6px;font-size:11px;color:#15803d;line-height:1.7">${typeof lt.recommendation==='string'?lt.recommendation:JSON.stringify(lt.recommendation)}</div>`;
+// Fallback: 기타 필드
+const shown=new Set(['totalScore','level','sections','analysis','recommendation']);
+const rest=Object.entries(lt).filter(([k])=>!shown.has(k));
+if(rest.length){h+=`<div style="margin-top:10px;font-size:10px;color:var(--t3)">기타 데이터</div>`;
+rest.forEach(([k,v])=>{h+=`<div style="display:flex;gap:6px;font-size:11px;padding:3px 0;border-bottom:1px solid var(--lnl)"><span style="font-weight:600;color:var(--t2);min-width:80px">${k}</span><span style="color:var(--t1)">${typeof v==='object'?JSON.stringify(v):v}</span></div>`;});}
+h+=`</div>`;return h;
+}catch(e){return `<div id="cdCapArea"><p style="color:var(--er)">JSON 파싱 오류</p><pre style="font-size:10px;max-height:300px;overflow:auto;white-space:pre-wrap;background:var(--bg);padding:8px;border-radius:6px">${jsonStr.substring(0,2000)}</pre></div>`;}
+}
+
+async function captureCd(name,type){
+ts('이미지 생성 중...','');
+try{const el=$('cdCapArea');if(!el){ts('캡처 대상 없음','er');return;}
+const canvas=await html2canvas(el,{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false});
+const lbl=type==='psy'?'성향검사':type==='eng'?'영어LT':'수학LT';
+const link=document.createElement('a');link.download=name+'_'+lbl+'.png';link.href=canvas.toDataURL('image/png');link.click();
+ts('저장 완료','ok');}catch(e){ts('캡처 실패','er');}}
 
 // PERSONALITY + REPORTS (list pages)
 async function loadMySts(){if(S.mySt&&S.mySt.length)return;try{const r=await gA('tp_myStudents',{teacher:S.t.name,role:S.t.role,token:S.tk});if(r.ok)S.mySt=r.students||[];}catch(e){S.mySt=[];}}
