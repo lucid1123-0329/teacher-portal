@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>명불허전학원 관리 포털</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--nv:#1B2A4A;--nvl:#2C3E5A;--nvd:#0F1B33;--gd:#D4A843;--gdl:#F0D68A;--gdd:#B8902A;--bg:#F5F3EE;--cd:#FFF;--tx:#2D2D2D;--sb:#6B7280;--lt:#9CA3AF;--bd:#E5E2DB;--ok:#10B981;--okb:#D1FAE5;--wn:#F59E0B;--wnb:#FEF3C7;--er:#EF4444;--erb:#FEE2E2;--inf:#3B82F6;--infb:#DBEAFE;--r:12px;--rs:8px;--sh:0 2px 8px rgba(27,42,74,.08);--shl:0 8px 32px rgba(27,42,74,.12);--sw:260px}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--tx);line-height:1.6;min-height:100vh;overflow-x:hidden}.hidden{display:none!important}button{font-family:inherit;cursor:pointer}input,select,textarea{font-family:inherit}
+#loginScreen{display:flex;min-height:100vh;align-items:center;justify-content:center;background:linear-gradient(160deg,var(--nvd),var(--nv),var(--nvl));padding:24px}
+.lbox{background:var(--cd);border-radius:20px;padding:48px 36px;width:100%;max-width:400px;box-shadow:var(--shl);text-align:center}
+.llogo{width:72px;height:72px;background:var(--nv);border-radius:18px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:1.8rem;color:var(--gd)}
+.ltitle{font-size:1.4rem;font-weight:700;color:var(--nv)}.lsub{font-size:.85rem;color:var(--sb);margin-bottom:28px}
+.fg{margin-bottom:14px;text-align:left}.fl{display:block;font-size:.78rem;font-weight:600;color:var(--sb);margin-bottom:5px}
+.fi{width:100%;padding:13px 15px;border:2px solid var(--bd);border-radius:var(--rs);font-size:1rem;color:var(--tx);background:var(--bg);outline:0;transition:.2s}.fi:focus{border-color:var(--gd);box-shadow:0 0 0 3px rgba(212,168,67,.15)}
+.bp{width:100%;padding:15px;background:var(--nv);color:#fff;border:none;border-radius:var(--rs);font-size:1rem;font-weight:600;transition:.2s;margin-top:6px}.bp:hover{background:var(--nvl)}.bp:disabled{opacity:.5;cursor:not-allowed}
+.lerr{color:var(--er);font-size:.85rem;margin-top:10px;min-height:1.2em}
+#app{display:none;min-height:100vh}#app.on{display:flex}
+.side{width:var(--sw);background:var(--nv);color:#fff;position:fixed;top:0;left:0;bottom:0;z-index:200;display:flex;flex-direction:column;transition:transform .3s;overflow-y:auto}
+.side-hd{padding:20px 20px 16px;border-bottom:1px solid rgba(255,255,255,.1)}.side-br{font-size:1.05rem;font-weight:700;color:var(--gdl)}.side-usr{font-size:.78rem;color:rgba(255,255,255,.6);margin-top:4px}
+.side-role{display:inline-block;background:var(--gd);color:var(--nvd);font-size:.65rem;font-weight:700;padding:2px 8px;border-radius:10px;margin-left:4px}
+.side-nav{flex:1;padding:12px 0}.nav-sec{padding:0 20px;margin-top:16px;margin-bottom:6px;font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.35)}
+.ni{display:flex;align-items:center;gap:10px;padding:10px 20px;font-size:.88rem;color:rgba(255,255,255,.7);cursor:pointer;transition:.15s;border-left:3px solid transparent}
+.ni:hover{background:rgba(255,255,255,.06);color:#fff}.ni.on{background:rgba(212,168,67,.12);color:var(--gdl);border-left-color:var(--gd)}.ni .ic{font-size:1.1rem;width:22px;text-align:center}
+.side-ft{padding:16px 20px;border-top:1px solid rgba(255,255,255,.1)}
+.blo{width:100%;padding:10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.8);border-radius:var(--rs);font-size:.82rem;transition:.15s}.blo:hover{background:rgba(255,255,255,.15)}
+.main{margin-left:var(--sw);flex:1;min-height:100vh}
+.topbar{display:none;background:var(--nv);color:#fff;padding:14px 20px;position:sticky;top:0;z-index:100;align-items:center;gap:12px}
+.topbar-t{background:0;border:0;color:#fff;font-size:1.5rem;padding:4px}.topbar-ti{font-size:1rem;font-weight:600}
+.pg{display:none;padding:24px;max-width:1100px;margin:0 auto}.pg.on{display:block}
+.pt{font-size:1.35rem;font-weight:700;color:var(--nv);margin-bottom:4px}.pd{font-size:.85rem;color:var(--sb);margin-bottom:24px}
+.cd{background:var(--cd);border-radius:var(--r);padding:20px;box-shadow:var(--sh);margin-bottom:16px}
+.ct{font-size:1rem;font-weight:600;color:var(--nv);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.sr{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px;margin-bottom:24px}
+.sc{background:var(--cd);border-radius:var(--r);padding:18px;box-shadow:var(--sh);border-left:4px solid var(--nv)}
+.sc.gd{border-left-color:var(--gd)}.sc.gn{border-left-color:var(--ok)}.sc.rd{border-left-color:var(--er)}
+.sl{font-size:.75rem;color:var(--sb);font-weight:500;margin-bottom:4px}.sv{font-size:1.6rem;font-weight:700;color:var(--nv)}.ss{font-size:.75rem;color:var(--lt);margin-top:2px}
+.tw{overflow-x:auto}table.tb{width:100%;border-collapse:collapse;font-size:.85rem}.tb th{background:var(--nv);color:#fff;padding:10px 12px;text-align:left;font-weight:500;font-size:.78rem;white-space:nowrap}.tb td{padding:9px 12px;border-bottom:1px solid var(--bd)}.tb tr:hover td{background:rgba(212,168,67,.04)}
+.bd{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.72rem;font-weight:600}.bdok{background:var(--okb);color:var(--ok)}.bdwn{background:var(--wnb);color:var(--wn)}.bder{background:var(--erb);color:var(--er)}.bdinf{background:var(--infb);color:var(--inf)}.bdnv{background:rgba(27,42,74,.1);color:var(--nv)}
+.tbar{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px;align-items:center}.tbar select,.tbar input[type=date],.tbar input[type=text]{padding:8px 12px;border:2px solid var(--bd);border-radius:var(--rs);font-size:.85rem;background:var(--cd);color:var(--tx);outline:0}.tbar select:focus,.tbar input:focus{border-color:var(--gd)}
+.bs{padding:8px 16px;background:var(--nv);color:#fff;border:none;border-radius:var(--rs);font-size:.82rem;font-weight:500;transition:.15s}.bs:hover{background:var(--nvl)}.bgd{background:var(--gd);color:var(--nvd)}.bgd:hover{background:var(--gdd);color:#fff}
+.cg{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.cc{background:var(--cd);border-radius:var(--r);padding:18px;box-shadow:var(--sh);cursor:pointer;transition:.2s;border:2px solid transparent;display:flex;align-items:center;gap:14px}
+.cc:hover{transform:translateY(-2px);box-shadow:var(--shl);border-color:var(--gd)}
+.ci{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0}.ci.k{background:#FEF3C7}.ci.e{background:#DBEAFE}.ci.m{background:#D1FAE5}
+.cn{font-size:1rem;font-weight:600;color:var(--nv)}.cm{font-size:.78rem;color:var(--sb)}.cp{margin-left:auto;text-align:right;font-size:.85rem;font-weight:700;color:var(--nv)}
+.etb{display:flex;align-items:center;gap:12px;margin-bottom:20px}.eback{background:0;border:2px solid var(--bd);border-radius:var(--rs);padding:8px 14px;font-size:.88rem;color:var(--nv);font-weight:500;transition:.15s}.eback:hover{border-color:var(--nv);background:rgba(27,42,74,.04)}
+.scd{background:var(--cd);border-radius:var(--r);padding:20px;box-shadow:var(--sh);margin-bottom:16px;border-left:4px solid var(--bd);transition:.2s}.scd.dn{border-left-color:var(--ok)}
+.shd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.sav{width:38px;height:38px;border-radius:50%;background:var(--nv);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem}
+.snm{font-weight:600;font-size:1rem;color:var(--nv)}.sgr{font-size:.73rem;color:var(--sb)}
+.scr{display:flex;align-items:center;margin-bottom:10px;gap:6px}.scl{width:68px;flex-shrink:0;font-size:.76rem;font-weight:500;color:var(--sb);text-align:right}
+.sbs{display:flex;gap:3px;flex-wrap:wrap}
+.sb2{min-width:40px;height:34px;border:2px solid var(--bd);border-radius:6px;background:var(--bg);color:var(--sb);font-size:.7rem;font-weight:600;transition:.15s;padding:0 5px;white-space:nowrap}
+.sb2:hover{border-color:var(--gd);color:var(--gdd)}.sb2.on{background:var(--nv);border-color:var(--nv);color:#fff;transform:scale(1.05)}
+.ms{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px}.ms label{display:flex;align-items:center;gap:4px;padding:4px 10px;border:1.5px solid var(--bd);border-radius:16px;font-size:.7rem;color:var(--sb);cursor:pointer;transition:.15s;user-select:none}
+.ms label.ck{background:var(--nv);border-color:var(--nv);color:#fff}.ms input{display:none}
+.eta{width:100%;padding:10px 12px;border:2px solid var(--bd);border-radius:var(--rs);font-size:.85rem;color:var(--tx);background:var(--bg);resize:vertical;min-height:50px;outline:0;transition:.2s;margin-top:4px}.eta:focus{border-color:var(--gd)}
+.efl{font-size:.76rem;font-weight:500;color:var(--sb);margin-top:8px;display:block}
+.svb{position:fixed;bottom:0;left:var(--sw);right:0;background:var(--cd);padding:14px 24px;box-shadow:0 -4px 20px rgba(0,0,0,.1);z-index:100;display:none;align-items:center;justify-content:center;gap:16px}
+.svi{font-size:.85rem;color:var(--sb)}.svi strong{color:var(--nv)}
+.bsv{padding:12px 36px;background:var(--gd);color:var(--nvd);border:none;border-radius:var(--rs);font-size:1rem;font-weight:700;transition:.2s}.bsv:hover{background:var(--gdd);color:#fff}.bsv:disabled{opacity:.5;cursor:not-allowed}
+.ecn{padding-bottom:80px}
+.pg2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.pi{padding:12px 0;border-bottom:1px solid var(--bd)}.pil{font-size:.72rem;color:var(--sb);font-weight:500;margin-bottom:2px}.piv{font-size:.92rem;font-weight:500;color:var(--nv)}
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px}
+.md{background:var(--cd);border-radius:var(--r);padding:28px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;box-shadow:var(--shl)}
+.mdt{font-size:1.1rem;font-weight:700;color:var(--nv);margin-bottom:16px}
+.ma{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+.bc{background:var(--bg);color:var(--sb);border:2px solid var(--bd);border-radius:var(--rs);font-size:.85rem;font-weight:500;padding:10px 20px;transition:.15s}.bc:hover{border-color:var(--nv);color:var(--nv)}
+.tst{position:fixed;top:20px;right:20px;background:var(--nv);color:#fff;padding:14px 22px;border-radius:var(--r);font-size:.88rem;font-weight:500;box-shadow:var(--shl);z-index:1000;opacity:0;transform:translateY(-10px);transition:.3s;pointer-events:none;max-width:400px}
+.tst.sh{opacity:1;transform:translateY(0)}.tst.ok{background:var(--ok)}.tst.er{background:var(--er)}
+.ld{position:fixed;inset:0;background:rgba(245,243,238,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:500;backdrop-filter:blur(3px)}
+.spn{width:44px;height:44px;border:4px solid var(--bd);border-top-color:var(--nv);border-radius:50%;animation:sp .7s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}.ldt{margin-top:14px;font-size:.88rem;color:var(--sb)}
+.emp{text-align:center;padding:48px 24px;color:var(--sb)}.emp .ej{font-size:2.5rem;margin-bottom:12px}
+@media(max-width:768px){.side{transform:translateX(-100%)}.side.op{transform:translateX(0)}.main{margin-left:0}.topbar{display:flex}.svb{left:0}.sr{grid-template-columns:1fr 1fr}.pg2{grid-template-columns:1fr}.pg{padding:16px}}
+@media(max-width:480px){.sb2{min-width:36px;height:30px;font-size:.66rem}.scl{width:56px;font-size:.7rem}.sr{grid-template-columns:1fr}}
+@keyframes fu{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}.an{animation:fu .4s ease both}
+</style>
+</head>
+<body>
+<div id="tst" class="tst"></div>
+<div id="ld" class="ld hidden"><div class="spn"></div><div class="ldt" id="ldtx">로딩 중...</div></div>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+<div class="lbox an">
+<div class="llogo">📋</div><h1 class="ltitle">명불허전학원</h1><p class="lsub">통합 관리 포털</p>
+<div class="fg"><label class="fl">강사명</label><input type="text" id="lnm" class="fi" placeholder="이름" autocomplete="off"></div>
+<div class="fg"><label class="fl">비밀번호</label><input type="password" id="lpw" class="fi" placeholder="비밀번호"></div>
+<button id="lbtn" class="bp" onclick="doLogin()">로그인</button><p class="lerr" id="lerr"></p>
+</div></div>
+
+<!-- APP -->
+<div id="app">
+<aside class="side" id="side">
+<div class="side-hd"><div class="side-br">명불허전 관리 포털</div><div class="side-usr" id="sUsr"></div></div>
+<nav class="side-nav" id="sNav"></nav>
+<div class="side-ft"><button class="blo" onclick="doLogout()">로그아웃</button></div>
+</aside>
+<div class="topbar" id="topbar"><button class="topbar-t" onclick="document.getElementById('side').classList.toggle('op')">☰</button><span class="topbar-ti" id="tbTi"></span></div>
+<div class="main">
+
+<div class="pg" id="p-dash"><h1 class="pt" id="dT"></h1><p class="pd" id="dD"></p><div class="sr" id="dS"></div><div class="cd"><div class="ct">📚 반별 평가 현황</div><div id="dC" class="cg"></div></div></div>
+
+<div class="pg" id="p-eval"><div class="etb"><button class="eback" onclick="nav('p-dash')">← 대시보드</button><div><h1 class="pt" id="eT"></h1><p class="pd" id="eSb"></p></div><span class="bd bdnv" id="eBd" style="margin-left:auto;font-size:.88rem;padding:6px 14px">0/0</span></div><div id="eL" class="ecn"></div></div>
+<div class="svb" id="svb"><div class="svi"><strong id="svC">0</strong>명 입력</div><button class="bsv" id="svBtn" onclick="doSave()" disabled>💾 저장</button></div>
+
+<div class="pg" id="p-alog"><h1 class="pt">📊 일일 평가 관리</h1><p class="pd">날짜·강사·반별 평가 기록 조회</p><div class="tbar" id="alTb"></div><div class="cd"><div class="tw"><table class="tb" id="alTbl"><thead></thead><tbody></tbody></table></div></div></div>
+
+<div class="pg" id="p-ast"><h1 class="pt">👨‍🎓 학생 관리</h1><p class="pd">전체 학생 목록 · 등록 · 수정</p><div class="tbar"><input type="text" id="stSrch" placeholder="이름·학교 검색" oninput="fSt()"><button class="bs bgd" onclick="oSM()">+ 학생 추가</button></div><div class="cd"><div class="tw"><table class="tb" id="stTbl"><thead></thead><tbody></tbody></table></div></div></div>
+
+<div class="pg" id="p-acl"><h1 class="pt">🏫 반 관리</h1><p class="pd">전체 반 · 학생 배정 현황</p><div class="cd"><div class="tw"><table class="tb" id="clTbl"><thead></thead><tbody></tbody></table></div></div></div>
+
+<div class="pg" id="p-acon"><h1 class="pt">📞 신규 상담 관리</h1><p class="pd">counsel.trueasheard.com 연동</p><div class="cd" id="conC"><div class="emp"><div class="ej">📞</div><p>로딩 중...</p></div></div></div>
+
+<div class="pg" id="p-atc"><h1 class="pt">👩‍🏫 강사 계정 관리</h1><p class="pd">계정 생성 · 수정 · 비활성화</p><div class="tbar"><button class="bs bgd" onclick="oTM()">+ 강사 추가</button></div><div class="cd"><div class="tw"><table class="tb" id="tcTbl"><thead></thead><tbody></tbody></table></div></div></div>
+
+<div class="pg" id="p-rpt"><h1 class="pt">📄 2주 리포트</h1><p class="pd">학생 프로필에서 리포트 확인</p><div class="tbar"><input type="text" id="rpSrch" placeholder="학생 이름 검색" oninput="fRp()"></div><div class="cd" id="rpL"></div></div>
+
+<div class="pg" id="p-prof"><div class="etb"><button class="eback" id="prBk" onclick="nav(S.pf)">← 돌아가기</button><h1 class="pt" id="prTi">프로필</h1></div><div id="prC"></div></div>
+
+</div></div>
+
+<!-- MODALS -->
+<div id="smMo" class="mo hidden"><div class="md"><div class="mdt" id="smTi">학생 추가</div>
+<div class="fg"><label class="fl">학생명</label><input type="text" id="sm_n" class="fi"></div>
+<div class="fg"><label class="fl">학년</label><select id="sm_g" class="fi"><option value="">선택</option><option>초1</option><option>초2</option><option>초3</option><option>초4</option><option>초5</option><option>초6</option><option>중1</option><option>중2</option><option>중3</option><option>고1</option><option>고2</option><option>고3</option></select></div>
+<div class="fg"><label class="fl">학교</label><input type="text" id="sm_s" class="fi"></div>
+<div class="fg"><label class="fl">학부모 연락처</label><input type="text" id="sm_p" class="fi" placeholder="010-0000-0000"></div>
+<div class="fg"><label class="fl">학생 연락처</label><input type="text" id="sm_ph" class="fi"></div>
+<div class="fg"><label class="fl">재원 여부</label><select id="sm_st" class="fi"><option>재원</option><option>퇴원</option></select></div>
+<div class="ma"><button class="bc" onclick="cM('smMo')">취소</button><button class="bs" onclick="svSt()">저장</button></div></div></div>
+
+<div id="tmMo" class="mo hidden"><div class="md"><div class="mdt" id="tmTi">강사 추가</div>
+<div class="fg"><label class="fl">강사명</label><input type="text" id="tm_n" class="fi"></div>
+<div class="fg"><label class="fl">과목</label><select id="tm_sb" class="fi"><option>국어</option><option>영어</option><option>수학</option></select></div>
+<div class="fg"><label class="fl">비밀번호</label><input type="text" id="tm_pw" class="fi"></div>
+<div class="fg"><label class="fl">역할</label><select id="tm_rl" class="fi"><option>강사</option><option>관리자</option></select></div>
+<div class="fg"><label class="fl">로그식별자</label><input type="text" id="tm_li" class="fi" placeholder="과목_이름"></div>
+<div class="fg"><label class="fl">상태</label><select id="tm_ss" class="fi"><option>활성</option><option>비활성</option></select></div>
+<div class="ma"><button class="bc" onclick="cM('tmMo')">취소</button><button class="bs" onclick="svTc()">저장</button></div></div></div>
+
+<script>
+const API='https://script.google.com/macros/s/AKfycbyeW_1LFg6GNEPnpQZwI2a8VxAHhhEicm2vlyjbFbvmeY84we2c4C_FaPonZXg2Z1DoPg/exec';
+const SE={'국어':'📖','영어':'🌐','수학':'📐'};const SC={'국어':'k','영어':'e','수학':'m'};
+let S={t:null,tk:null,cf:null,cls:[],cc:null,sts:[],ev:{},allSt:[],allTc:[],pf:'p-dash'};
+
+async function gA(a,p={}){const u=new URL(API);u.searchParams.set('action',a);Object.entries(p).forEach(([k,v])=>v!==undefined&&u.searchParams.set(k,v));const r=await fetch(u);return r.json();}
+async function pA(d){const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(d)});return r.json();}
+
+const MN=[
+{id:'p-dash',ic:'📊',lb:'대시보드',r:'all'},
+{sec:'관리자',r:'관리자'},
+{id:'p-acon',ic:'📞',lb:'신규 상담 관리',r:'관리자'},
+{id:'p-ast',ic:'👨‍🎓',lb:'학생 관리',r:'관리자'},
+{id:'p-acl',ic:'🏫',lb:'반 관리',r:'관리자'},
+{id:'p-alog',ic:'📋',lb:'일일 평가 관리',r:'관리자'},
+{id:'p-atc',ic:'👩‍🏫',lb:'강사 계정',r:'관리자'},
+{sec:'공통',r:'all'},
+{id:'p-rpt',ic:'📄',lb:'2주 리포트',r:'all'},
+];
+
+function bNav(){
+const n=document.getElementById('sNav');const rl=S.t.role;let h='';
+for(const m of MN){if(m.sec){if(m.r!=='all'&&m.r!==rl)continue;h+=`<div class="nav-sec">${m.sec}</div>`;}else{if(m.r!=='all'&&m.r!==rl)continue;h+=`<div class="ni" data-p="${m.id}" onclick="nav('${m.id}')"><span class="ic">${m.ic}</span>${m.lb}</div>`;}}
+n.innerHTML=h;}
+
+function nav(pid){
+document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
+document.querySelectorAll('.ni').forEach(n=>n.classList.remove('on'));
+const pg=document.getElementById(pid);if(pg)pg.classList.add('on');
+const ni=document.querySelector(`.ni[data-p="${pid}"]`);if(ni)ni.classList.add('on');
+document.getElementById('tbTi').textContent=ni?ni.textContent.trim():'';
+document.getElementById('svb').style.display=pid==='p-eval'?'flex':'none';
+document.getElementById('side').classList.remove('op');
+lPg(pid);}
+
+async function lPg(p){try{switch(p){
+case'p-dash':await lDash();break;case'p-alog':await lALog();break;case'p-ast':await lSts();break;
+case'p-acl':await lCls();break;case'p-acon':await lCon();break;case'p-atc':await lTcs();break;case'p-rpt':await lRpt();break;
+}}catch(e){ts(e.message,'er');}}
+
+// LOGIN
+async function doLogin(){
+const nm=$('lnm').value.trim(),pw=$('lpw').value.trim(),er=$('lerr'),bt=$('lbtn');
+if(!nm||!pw){er.textContent='이름과 비밀번호를 입력해주세요.';return;}
+bt.disabled=true;bt.textContent='로그인 중...';er.textContent='';
+try{const r=await gA('tp_login',{name:nm,pw});if(r.ok){S.t=r.teacher;S.tk=r.token;sessionStorage.setItem('tp',JSON.stringify({t:r.teacher,tk:r.token}));enter();}else er.textContent=r.error||'실패';}
+catch(e){er.textContent='서버 연결 실패';}finally{bt.disabled=false;bt.textContent='로그인';}}
+
+function doLogout(){S={t:null,tk:null,cf:null,cls:[],cc:null,sts:[],ev:{},allSt:[],allTc:[],pf:'p-dash'};sessionStorage.removeItem('tp');$('app').classList.remove('on');$('loginScreen').style.display='flex';$('lnm').value='';$('lpw').value='';}
+
+async function enter(){$('loginScreen').style.display='none';$('app').classList.add('on');
+$('sUsr').innerHTML=`${S.t.name} 선생님 <span class="side-role">${S.t.role}</span>`;
+bNav();try{const c=await gA('tp_config',{token:S.tk});if(c.ok)S.cf=c;}catch(e){}nav('p-dash');}
+
+// DASHBOARD
+async function lDash(){
+sh('대시보드 로딩...');const r=await gA('tp_todayStatus',{teacher:S.t.name,role:S.t.role,token:S.tk});hd();
+if(!r.ok){ts(r.error,'er');return;}
+const d=new Date(),dy=['일','월','화','수','목','금','토'];
+$('dT').textContent=S.t.role==='관리자'?'전체 현황 대시보드':`${S.t.name} 선생님 대시보드`;
+$('dD').textContent=`${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 (${dy[d.getDay()]})`;
+const pc=r.totalStudents>0?Math.round(r.completedStudents/r.totalStudents*100):0;
+$('dS').innerHTML=`<div class="sc an"><div class="sl">전체 학생</div><div class="sv">${r.totalStudents}</div></div>
+<div class="sc gd an"><div class="sl">오늘 입력</div><div class="sv">${r.completedStudents}</div><div class="ss">/${r.totalStudents}명</div></div>
+<div class="sc gn an"><div class="sl">달성률</div><div class="sv">${pc}%</div></div>
+<div class="sc${pc<100?' rd':''} an"><div class="sl">미입력</div><div class="sv">${r.totalStudents-r.completedStudents}</div></div>`;
+const cl=$('dC');
+if(!r.classes||!r.classes.length){cl.innerHTML='<div class="emp"><div class="ej">📭</div><p>담당 반 없음</p></div>';return;}
+cl.innerHTML=r.classes.map(c=>{const em=SE[c.subject]||'📚';const cs=SC[c.subject]||'k';const p=c.total>0?Math.round(c.completed/c.total*100):0;
+return`<div class="cc an" onclick="oC('${esc(c.name)}')"><div class="ci ${cs}">${em}</div><div><div class="cn">${c.name}</div><div class="cm">${c.subject}·${c.total}명</div></div><div class="cp">${c.completed}/${c.total}<br><span style="font-size:.7rem;color:${p===100?'var(--ok)':p>0?'var(--gd)':'var(--lt)'}">${p}%</span></div></div>`;}).join('');}
+
+// EVAL
+async function oC(cn){
+sh('학생 목록...');S.cc=cn;S.ev={};const r=await gA('tp_students',{className:cn,token:S.tk});hd();
+if(!r.ok){ts(r.error,'er');return;}S.sts=r.students;$('eT').textContent=cn;$('eSb').textContent=`${r.subject}·${r.students.length}명`;
+rEL(r.students,r.subject);nav('p-eval');$('svb').style.display='flex';}
+
+function rEL(sts,subj){
+const cfg=S.cf||{};const scales=cfg.scales||['5점 (완벽)','4점 (우수)','3점 (보통)','2점 (미흡)','1점 (불량)'];
+const gp=cfg.growthPts||[];const wk=cfg.weaknesses||[];const mg=cfg.mgmtAreas||[];const ua=cfg.urgentActions||[];
+$('eL').innerHTML=sts.map((st,i)=>{
+const sb=(f)=>scales.map(s=>`<button class="sb2" data-s="${esc(st.name)}" data-f="${f}" data-v="${esc(s)}" onclick="sS(this)">${s.split('(')[0].trim()}</button>`).join('');
+const mc=(items,f)=>items.length?`<div class="ms">${items.map(it=>`<label><input type="checkbox" data-s="${esc(st.name)}" data-f="${f}" value="${esc(it)}" onchange="uM('${esc(st.name)}','${f}')">${it}</label>`).join('')}</div>`:'';
+const rc=(items,f)=>items.length?`<div class="ms">${items.map(it=>`<label><input type="radio" name="r${i}_${f}" data-s="${esc(st.name)}" data-f="${f}" value="${esc(it)}" onchange="sR(this)">${it}</label>`).join('')}</div>`:'';
+return`<div class="scd an" id="c${i}"><div class="shd"><div style="display:flex;align-items:center;gap:10px"><div class="sav">${st.name[0]}</div><div><div class="snm">${st.name}</div><div class="sgr">${st.grade}·${st.school||''}</div></div></div><span class="bd bdwn" id="s${i}">미입력</span></div>
+<div class="scr"><div class="scl">📝 과제</div><div class="sbs">${sb('hw')}</div></div>
+<div class="scr"><div class="scl">💡 이해</div><div class="sbs">${sb('ud')}</div></div>
+<div class="scr"><div class="scl">🎯 집중</div><div class="sbs">${sb('fc')}</div></div>
+<div class="scr"><div class="scl">🔥 끈기</div><div class="sbs">${sb('ps')}</div></div>
+${gp.length?`<div class="efl">🌱 성장포인트</div>${mc(gp,'gp')}`:''}
+${wk.length?`<div class="efl">⚠️ 학업약점</div>${mc(wk,'wk')}`:''}
+${mg.length?`<div class="efl">📌 관리영역</div>${mc(mg,'mg')}`:''}
+${ua.length?`<div class="efl">🚨 긴급조치</div>${rc(ua,'ua')}`:''}
+<div class="efl">💬 종합코멘트</div><textarea class="eta" placeholder="코멘트..." data-s="${esc(st.name)}" data-f="cm" oninput="sT(this)"></textarea></div>`;}).join('');uEP();}
+
+function sS(b){const{s,f,v}=b.dataset;b.parentElement.querySelectorAll('.sb2').forEach(x=>x.classList.remove('on'));b.classList.add('on');if(!S.ev[s])S.ev[s]={};S.ev[s][f]=v;uCS(s);uEP();}
+function uM(sn,f){const ch=document.querySelectorAll(`input[type=checkbox][data-s="${sn}"][data-f="${f}"]`);
+ch.forEach(c=>c.parentElement.classList.toggle('ck',c.checked));
+if(!S.ev[sn])S.ev[sn]={};S.ev[sn][f]=Array.from(ch).filter(c=>c.checked).map(c=>c.value).join(', ');}
+function sR(r){const{s,f}=r.dataset;if(!S.ev[s])S.ev[s]={};S.ev[s][f]=r.value;r.closest('.ms').querySelectorAll('label').forEach(l=>l.classList.toggle('ck',l.querySelector('input').checked));}
+function sT(el){const{s,f}=el.dataset;if(!S.ev[s])S.ev[s]={};S.ev[s][f]=el.value;}
+function uCS(sn){const e=S.ev[sn]||{};const i=S.sts.findIndex(x=>x.name===sn);if(i<0)return;const dn=e.hw&&e.ud&&e.fc&&e.ps;
+const bd=$(`s${i}`),cd=$(`c${i}`);if(dn){bd.textContent='완료';bd.className='bd bdok';cd.classList.add('dn');}
+else if(Object.keys(e).length){bd.textContent='입력중';bd.className='bd bdwn';cd.classList.remove('dn');}}
+function uEP(){let d=0;S.sts.forEach(st=>{const e=S.ev[st.name]||{};if(e.hw&&e.ud&&e.fc&&e.ps)d++;});
+$('eBd').textContent=`${d}/${S.sts.length}`;$('svC').textContent=d;$('svBtn').disabled=d===0;}
+
+async function doSave(){
+const btn=$('svBtn');btn.disabled=true;btn.textContent='⏳ 저장 중...';
+const evs=[];S.sts.forEach(st=>{const e=S.ev[st.name]||{};if(!e.hw||!e.ud||!e.fc||!e.ps)return;
+evs.push({studentName:st.name,className:S.cc,homework:e.hw,understanding:e.ud,focus:e.fc,persistence:e.ps,
+growthPoints:e.gp||'',weaknesses:e.wk||'',mgmtAreas:e.mg||'',urgentAction:e.ua||'',comment:e.cm||''});});
+if(!evs.length){ts('저장할 평가 없음','er');btn.disabled=false;btn.textContent='💾 저장';return;}
+try{const r=await pA({action:'tp_saveEval',evaluations:evs,teacherLogId:S.t.logId,token:S.tk});
+if(r.ok){ts('✅ '+r.message,'ok');setTimeout(()=>nav('p-dash'),1200);}else ts(r.error||'실패','er');}
+catch(e){ts('서버 오류','er');}finally{btn.disabled=false;btn.textContent='💾 저장';}}
+
+// ADMIN: EVAL LOG
+async function lALog(){
+$('alTb').innerHTML=`<input type="date" id="eld" value="${new Date().toISOString().slice(0,10)}" onchange="fAL()"><input type="text" id="elt" placeholder="강사 로그식별자"><input type="text" id="elc" placeholder="반 이름"><button class="bs" onclick="fAL()">조회</button>`;fAL();}
+async function fAL(){sh('조회 중...');const d=$('eld').value,t=$('elt').value.trim(),c=$('elc').value.trim();
+const r=await gA('tp_admin_evalLog',{token:S.tk,date:d||undefined,teacher:t||undefined,className:c||undefined});hd();
+if(!r.ok){ts(r.error,'er');return;}const tbl=$('alTbl');
+tbl.querySelector('thead').innerHTML='<tr><th>교사</th><th>날짜</th><th>반</th><th>학생</th><th>과제</th><th>이해</th><th>집중</th><th>끈기</th><th>코멘트</th></tr>';
+tbl.querySelector('tbody').innerHTML=r.logs.map(l=>`<tr><td>${l.teacher}</td><td>${l.date}</td><td>${l.className}</td><td><a href="#" onclick="oPr('${esc(l.student)}','p-alog');return false" style="color:var(--inf)">${l.student}</a></td>
+<td>${sS2(l.homework)}</td><td>${sS2(l.understanding)}</td><td>${sS2(l.focus)}</td><td>${sS2(l.persistence)}</td>
+<td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${l.comment||''}</td></tr>`).join('')||'<tr><td colspan=9 style="text-align:center;color:var(--sb);padding:32px">기록 없음</td></tr>';}
+
+// ADMIN: STUDENTS
+async function lSts(){sh('학생 로딩...');const r=await gA('tp_admin_allStudents',{token:S.tk});hd();if(!r.ok){ts(r.error,'er');return;}S.allSt=r.students;rST(r.students);}
+function rST(sts){const t=$('stTbl');t.querySelector('thead').innerHTML='<tr><th>이름</th><th>학년</th><th>학교</th><th>상태</th><th>수강반</th><th></th></tr>';
+t.querySelector('tbody').innerHTML=sts.map(s=>`<tr><td><a href="#" onclick="oPr('${esc(s.name)}','p-ast');return false" style="color:var(--inf)">${s.name}</a></td><td>${s.grade}</td><td>${s.school||''}</td>
+<td><span class="bd ${s.status==='재원'?'bdok':'bder'}">${s.status||'재원'}</span></td>
+<td style="font-size:.73rem;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${(s.classes||[]).join(', ')}</td>
+<td><button class="bs" style="padding:3px 8px;font-size:.7rem" onclick="eSt('${esc(s.name)}')">수정</button></td></tr>`).join('');}
+function fSt(){const q=$('stSrch').value.trim().toLowerCase();rST(S.allSt.filter(s=>s.name.toLowerCase().includes(q)||(s.school||'').toLowerCase().includes(q)));}
+function oSM(d){$('smTi').textContent=d?'학생 수정':'학생 추가';$('sm_n').value=d?.name||'';$('sm_g').value=d?.grade||'';$('sm_s').value=d?.school||'';$('sm_p').value=d?.parentPhone||'';$('sm_ph').value=d?.studentPhone||'';$('sm_st').value=d?.status||'재원';$('sm_n').readOnly=!!d;$('smMo').classList.remove('hidden');}
+function eSt(n){const s=S.allSt.find(x=>x.name===n);if(s)oSM(s);}
+async function svSt(){const st={name:$('sm_n').value.trim(),grade:$('sm_g').value,school:$('sm_s').value.trim(),parentPhone:$('sm_p').value.trim(),studentPhone:$('sm_ph').value.trim(),status:$('sm_st').value};
+if(!st.name){ts('학생명 필수','er');return;}sh('저장...');const r=await pA({action:'tp_admin_saveStudent',student:st,token:S.tk});hd();cM('smMo');if(r.ok){ts(r.message,'ok');lSts();}else ts(r.error,'er');}
+
+// ADMIN: CLASSES
+async function lCls(){sh('반 목록...');const r=await gA('tp_admin_allClasses',{token:S.tk});hd();if(!r.ok)return;
+const t=$('clTbl');t.querySelector('thead').innerHTML='<tr><th>반</th><th>과목</th><th>레벨</th><th>담당 교사</th><th>학생수</th></tr>';
+t.querySelector('tbody').innerHTML=r.classes.map(c=>`<tr><td style="font-weight:600;color:var(--nv)">${c.name}</td><td><span class="bd bdnv">${c.subject}</span></td><td>${c.level||''}</td><td style="font-size:.76rem">${c.teachers||''}</td><td style="font-weight:600">${c.studentCount}</td></tr>`).join('');}
+
+// ADMIN: CONSULT
+async function lCon(){sh('상담 로딩...');const r=await gA('tp_admin_consultList',{token:S.tk});hd();const el=$('conC');
+if(!r.ok){el.innerHTML=`<div class="emp"><div class="ej">⚠️</div><p>${r.error}</p><p style="margin-top:12px"><a href="https://counsel.trueasheard.com" target="_blank" style="color:var(--inf)">counsel.trueasheard.com →</a></p></div>`;return;}
+if(!r.consults||!r.consults.length){el.innerHTML='<div class="emp"><div class="ej">📭</div><p>상담 데이터 없음</p></div>';return;}
+const hd2=r.headers||Object.keys(r.consults[0]);const sh2=hd2.slice(0,8);
+el.innerHTML=`<div class="tw"><table class="tb"><thead><tr>${sh2.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${r.consults.map(c=>`<tr>${sh2.map(h=>`<td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c[h]||''}</td>`).join('')}</tr>`).join('')}</tbody></table></div><p style="margin-top:12px;font-size:.82rem"><a href="https://counsel.trueasheard.com" target="_blank" style="color:var(--inf)">counsel.trueasheard.com 상세 관리 →</a></p>`;}
+
+// ADMIN: TEACHERS
+async function lTcs(){sh('강사 로딩...');const r=await gA('tp_admin_teachers',{token:S.tk});hd();if(!r.ok)return;S.allTc=r.teachers;
+const t=$('tcTbl');t.querySelector('thead').innerHTML='<tr><th>이름</th><th>과목</th><th>역할</th><th>로그식별자</th><th>상태</th><th></th></tr>';
+t.querySelector('tbody').innerHTML=r.teachers.map(tc=>`<tr><td style="font-weight:600">${tc.name}</td><td><span class="bd bdnv">${tc.subject}</span></td>
+<td><span class="bd ${tc.role==='관리자'?'bdinf':'bdok'}">${tc.role}</span></td><td style="font-size:.76rem">${tc.logId}</td>
+<td><span class="bd ${tc.status==='활성'?'bdok':'bder'}">${tc.status}</span></td>
+<td><button class="bs" style="padding:3px 8px;font-size:.7rem" onclick="eTc('${esc(tc.name)}')">수정</button></td></tr>`).join('');}
+function oTM(d){$('tmTi').textContent=d?'강사 수정':'강사 추가';$('tm_n').value=d?.name||'';$('tm_sb').value=d?.subject||'국어';$('tm_pw').value='';$('tm_rl').value=d?.role||'강사';$('tm_li').value=d?.logId||'';$('tm_ss').value=d?.status||'활성';$('tm_n').readOnly=!!d;$('tmMo').classList.remove('hidden');}
+function eTc(n){const t=S.allTc.find(x=>x.name===n);if(t)oTM(t);}
+async function svTc(){const tc={name:$('tm_n').value.trim(),subject:$('tm_sb').value,password:$('tm_pw').value.trim()||undefined,role:$('tm_rl').value,logId:$('tm_li').value.trim(),status:$('tm_ss').value};
+if(!tc.name){ts('강사명 필수','er');return;}sh('저장...');const r=await pA({action:'tp_admin_saveTeacher',teacher:tc,token:S.tk});hd();cM('tmMo');if(r.ok){ts(r.message,'ok');lTcs();}else ts(r.error,'er');}
+
+// PROFILE
+async function oPr(sn,from){S.pf=from||'p-dash';sh('프로필...');const r=await gA('tp_studentProfile',{student:sn,token:S.tk});hd();if(!r.ok){ts(r.error,'er');return;}
+const s=r.student;$('prTi').textContent=`${s.name} 프로필`;
+let h=`<div class="cd"><div class="ct">👤 기본 정보</div><div class="pg2">
+<div class="pi"><div class="pil">학년</div><div class="piv">${s.grade}</div></div>
+<div class="pi"><div class="pil">학교</div><div class="piv">${s.school||'-'}</div></div>
+<div class="pi"><div class="pil">상태</div><div class="piv"><span class="bd ${s.status==='재원'?'bdok':'bder'}">${s.status}</span></div></div>
+<div class="pi"><div class="pil">수강 반</div><div class="piv">${(s.classes||[]).join(', ')||'-'}</div></div></div></div>`;
+if(s.personalityDate){h+=`<div class="cd"><div class="ct">🧠 성향 분석</div><div class="pg2">
+<div class="pi"><div class="pil">검사일</div><div class="piv">${s.personalityDate}</div></div>
+<div class="pi"><div class="pil">신뢰도</div><div class="piv">${s.reliability||'-'}</div></div>
+<div class="pi"><div class="pil">영어 레벨</div><div class="piv">${s.levelTestEnglish||'-'}</div></div>
+<div class="pi"><div class="pil">수학 레벨</div><div class="piv">${s.levelTestMath||'-'}</div></div></div></div>`;}
+try{const rr=await gA('tp_studentReports',{student:sn,token:S.tk});
+if(rr.ok&&rr.reports.length){h+=`<div class="cd"><div class="ct">📄 2주 리포트 (${rr.reports.length}건)</div><div class="tw"><table class="tb"><thead><tr><th>상담일</th><th>상담자</th><th>리포트</th></tr></thead><tbody>
+${rr.reports.slice(0,10).map(r=>`<tr><td>${r.date||''}</td><td>${r.counselor||''}</td><td>${r.shortUrl?`<a href="https://go.trueasheard.com/${r.shortUrl}" target="_blank" style="color:var(--inf)">열기</a>`:(r.reportUrl?`<a href="${r.reportUrl}" target="_blank" style="color:var(--inf)">열기</a>`:'-')}</td></tr>`).join('')}
+</tbody></table></div></div>`;}}catch(e){}
+$('prC').innerHTML=h;document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));$('p-prof').classList.add('on');}
+
+// REPORTS
+async function lRpt(){if(!S.allSt.length){try{const r=await gA('tp_admin_allStudents',{token:S.tk});if(r.ok)S.allSt=r.students;}catch(e){}}rRP(S.allSt);}
+function rRP(sts){const ac=sts.filter(s=>s.status!=='퇴원');$('rpL').innerHTML=`<div class="tw"><table class="tb"><thead><tr><th>이름</th><th>학년</th><th>학교</th><th></th></tr></thead><tbody>
+${ac.map(s=>`<tr><td>${s.name}</td><td>${s.grade}</td><td>${s.school||''}</td><td><a href="#" onclick="oPr('${esc(s.name)}','p-rpt');return false" style="color:var(--inf);font-size:.82rem">프로필·리포트</a></td></tr>`).join('')}</tbody></table></div>`;}
+function fRp(){const q=$('rpSrch').value.trim().toLowerCase();rRP(S.allSt.filter(s=>s.name.toLowerCase().includes(q)));}
+
+// UTILS
+function $(id){return document.getElementById(id);}
+function esc(s){return String(s).replace(/'/g,"\\'").replace(/"/g,'&quot;');}
+function sS2(v){if(!v)return'-';const m=String(v).match(/(\d)점/);return m?m[1]+'점':String(v).substring(0,6);}
+function sh(t){$('ldtx').textContent=t||'로딩 중...';$('ld').classList.remove('hidden');}
+function hd(){$('ld').classList.add('hidden');}
+function ts(m,t){const e=$('tst');e.textContent=m;e.className='tst sh'+(t?' '+t:'');setTimeout(()=>e.className='tst',3000);}
+function cM(id){$(id).classList.add('hidden');}
+
+// INIT
+document.addEventListener('DOMContentLoaded',()=>{
+$('lpw').addEventListener('keypress',e=>{if(e.key==='Enter')doLogin();});
+$('lnm').addEventListener('keypress',e=>{if(e.key==='Enter')$('lpw').focus();});
+document.querySelectorAll('.mo').forEach(m=>{m.addEventListener('click',e=>{if(e.target===m)m.classList.add('hidden');});});
+const sv=sessionStorage.getItem('tp');if(sv){try{const d=JSON.parse(sv);S.t=d.t;S.tk=d.tk;enter();}catch(e){sessionStorage.clear();}}});
+</script>
+</body>
+</html>
