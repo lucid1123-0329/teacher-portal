@@ -1,14 +1,5 @@
 {
   "rewrites": [
-    { "source": "/api/gs", "destination": "/api/gs" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
-  ],
-  "headers": [
-    {
-      "source": "/api/(.*)",
-      "headers": [
-        { "key": "Cache-Control", "value": "no-store" }
-      ]
-    }
   ]
 }
