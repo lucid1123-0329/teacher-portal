@@ -283,7 +283,7 @@ a{color:var(--ac);text-decoration:none}::selection{background:var(--acbg)}
 
 <script>
 const API='/api/gs';
-let S={t:null,tk:null,cf:null,cls:[],cc:null,sts:[],ev:{},allSt:[],allTc:[],pf:'p-dash',editCl:null};
+let S={t:null,tk:null,cf:null,cls:[],cc:null,sts:[],ev:{},allSt:[],allTc:[],mySt:null,pf:'p-dash',editCl:null};
 
 async function gA(a,p={}){const u=new URL(API,location.origin);u.searchParams.set('action',a);for(const[k,v]of Object.entries(p))if(v!==undefined)u.searchParams.set(k,v);return(await fetch(u)).json();}
 async function pA(d){return(await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(d)})).json();}
@@ -331,14 +331,21 @@ if(nw!==cf){$('stpwerr').textContent='불일치';return;}$('stpwerr').textConten
 try{const r=await pA({action:'tp_changePassword',name:S.t.name,currentPassword:cur,newPassword:nw,token:S.tk});
 if(r.ok){ts('변경 완료','ok');$('st_cpw').value='';$('st_npw').value='';$('st_cpw2').value='';}else $('stpwerr').textContent=r.error;}catch(e){$('stpwerr').textContent='연결 실패';}}
 
-function doLogout(){S={t:null,tk:null,cf:null,cls:[],cc:null,sts:[],ev:{},allSt:[],allTc:[],pf:'p-dash',editCl:null};sessionStorage.removeItem('tp');$('app').classList.remove('on');$('loginScreen').style.display='flex';$('pwScreen').style.display='none';}
+function doLogout(){S={t:null,tk:null,cf:null,cls:[],cc:null,sts:[],ev:{},allSt:[],allTc:[],mySt:null,pf:'p-dash',editCl:null};sessionStorage.removeItem('tp');$('app').classList.remove('on');$('loginScreen').style.display='flex';$('pwScreen').style.display='none';}
 async function enter(){$('loginScreen').style.display='none';$('pwScreen').style.display='none';$('app').classList.add('on');
 $('sUsr').innerHTML=`${S.t.name} <span class="chip chip-ac">${S.t.role}</span>`;bNav();
-try{const c=await gA('tp_config',{token:S.tk});if(c.ok)S.cf=c;}catch(e){}nav('p-dash');}
+sh('초기 데이터 로딩...');
+try{const r=await gA('tp_init',{teacher:S.t.name,role:S.t.role,token:S.tk});
+if(r.ok){if(r.config)S.cf=r.config;S._dash=r.todayStatus;S._dashTs=Date.now();}}catch(e){}
+hd();nav('p-dash');}
 
 // DASHBOARD
-async function lDash(){$('dAdmin').style.display=S.t.role==='관리자'?'block':'none';sh('');
-const r=await gA('tp_todayStatus',{teacher:S.t.name,role:S.t.role,token:S.tk});hd();if(!r.ok)return;
+async function lDash(){$('dAdmin').style.display=S.t.role==='관리자'?'block':'none';
+// 60초 이내 캐시 사용
+let r=S._dash;
+if(!r||!S._dashTs||Date.now()-S._dashTs>60000){
+sh('');r=await gA('tp_todayStatus',{teacher:S.t.name,role:S.t.role,token:S.tk});hd();
+if(!r||!r.ok)return;S._dash=r;S._dashTs=Date.now();}
 const d=new Date(),dy=['일','월','화','수','목','금','토'];
 $('dH').textContent=S.t.role==='관리자'?'대시보드':S.t.name+' 선생님';
 $('dD').textContent=`${d.getFullYear()}. ${d.getMonth()+1}. ${d.getDate()} ${dy[d.getDay()]}요일`;
@@ -473,7 +480,7 @@ $('alTbl').querySelector('tbody').innerHTML=r.logs.map(l=>`<tr><td>${l.teacher}<
 <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${l.comment||''}</td></tr>`).join('')||'<tr><td colspan=9 style="text-align:center;padding:20px;color:var(--t3)">기록 없음</td></tr>';}
 
 // STUDENTS
-async function lSts(){sh('');const r=await gA('tp_admin_allStudents',{token:S.tk});hd();if(!r.ok)return;S.allSt=r.students;rST(r.students);}
+async function lSts(){if(S.allSt.length){rST(S.allSt);return;}sh('');const r=await gA('tp_admin_allStudents',{token:S.tk});hd();if(!r.ok)return;S.allSt=r.students;rST(r.students);}
 function rST(l){$('stTbl').querySelector('thead').innerHTML='<tr><th>이름</th><th>학년</th><th>학교</th><th>상태</th><th>수강</th><th></th></tr>';
 $('stTbl').querySelector('tbody').innerHTML=l.map(s=>`<tr><td><a href="#" onclick="oPr('${esc(s.name)}','p-ast');return false">${s.name}</a></td><td>${s.grade}</td><td>${s.school||''}</td>
 <td><span class="chip ${s.status==='재원'?'chip-ok':'chip-er'}">${s.status||'재원'}</span></td>
@@ -483,10 +490,11 @@ function fSt(){const q=$('stSrch').value.trim().toLowerCase();rST(S.allSt.filter
 function oSM(d){$('smTi').textContent=d?'학생 수정':'학생 추가';$('sm_n').value=d?.name||'';$('sm_g').value=d?.grade||'';$('sm_s').value=d?.school||'';$('sm_p').value=d?.parentPhone||'';$('sm_ph').value=d?.studentPhone||'';$('sm_st').value=d?.status||'재원';$('sm_n').readOnly=!!d;$('smMo').classList.remove('hd');}
 function eSt(n){oSM(S.allSt.find(x=>x.name===n));}
 async function svSt(){const st={name:$('sm_n').value.trim(),grade:$('sm_g').value,school:$('sm_s').value.trim(),parentPhone:$('sm_p').value.trim(),studentPhone:$('sm_ph').value.trim(),status:$('sm_st').value};
-if(!st.name){ts('이름 필요','er');return;}sh('');const r=await pA({action:'tp_admin_saveStudent',student:st,token:S.tk});hd();cM('smMo');r.ok?ts(r.message,'ok')&&lSts():ts(r.error,'er');}
+if(!st.name){ts('이름 필요','er');return;}sh('');const r=await pA({action:'tp_admin_saveStudent',student:st,token:S.tk});hd();cM('smMo');if(r.ok){ts(r.message,'ok');S.allSt=[];lSts();}else ts(r.error,'er');}
 
 // CLASSES
-async function lCls(){sh('');const r=await gA('tp_admin_allClasses',{token:S.tk});hd();if(!r.ok)return;S.cls=r.classes||[];
+async function lCls(){if(S.cls.length){rClTbl();return;}sh('');const r=await gA('tp_admin_allClasses',{token:S.tk});hd();if(!r.ok)return;S.cls=r.classes||[];rClTbl();}
+function rClTbl(){
 $('clTbl').querySelector('thead').innerHTML='<tr><th>반</th><th>과목</th><th>레벨</th><th>담당</th><th>학생</th><th></th></tr>';
 $('clTbl').querySelector('tbody').innerHTML=S.cls.map(c=>`<tr><td style="font-weight:600">${c.name}</td><td><span class="chip chip-n">${c.subject}</span></td><td>${c.level||''}</td>
 <td style="font-size:11px">${c.teachers||''}</td><td style="font-weight:600">${c.studentCount}</td>
@@ -494,10 +502,11 @@ $('clTbl').querySelector('tbody').innerHTML=S.cls.map(c=>`<tr><td style="font-we
 function oCM(d){$('clMoTi').textContent=d?'반 수정':'반 추가';$('cl_n').value=d?.name||'';$('cl_sb').value=d?.subject||'국어';$('cl_lv').value=d?.level||'';$('cl_tc').value=d?.teachers||'';$('cl_n').readOnly=!!d;S.editCl=d?.name||null;$('clMo').classList.remove('hd');}
 function eCl(n){oCM(S.cls.find(x=>x.name===n));}
 async function svCl(){const ci={name:$('cl_n').value.trim(),subject:$('cl_sb').value,level:$('cl_lv').value.trim(),teachers:$('cl_tc').value.trim(),originalName:S.editCl||''};
-if(!ci.name){ts('이름 필요','er');return;}sh('');const r=await pA({action:'tp_admin_saveClass',classInfo:ci,token:S.tk});hd();cM('clMo');r.ok?ts(r.message,'ok')&&lCls():ts(r.error,'er');}
+if(!ci.name){ts('이름 필요','er');return;}sh('');const r=await pA({action:'tp_admin_saveClass',classInfo:ci,token:S.tk});hd();cM('clMo');if(r.ok){ts(r.message,'ok');S.cls=[];lCls();}else ts(r.error,'er');}
 
 // TEACHERS
-async function lTcs(){sh('');const r=await gA('tp_admin_teachers',{token:S.tk});hd();if(!r.ok)return;S.allTc=r.teachers;
+async function lTcs(){if(S.allTc.length){rTcTbl();return;}sh('');const r=await gA('tp_admin_teachers',{token:S.tk});hd();if(!r.ok)return;S.allTc=r.teachers;rTcTbl();}
+function rTcTbl(){
 $('tcTbl').querySelector('thead').innerHTML='<tr><th>이름</th><th>과목</th><th>역할</th><th>식별자</th><th>상태</th><th></th></tr>';
 $('tcTbl').querySelector('tbody').innerHTML=S.allTc.map(t=>`<tr><td>${t.name}</td><td><span class="chip chip-n">${t.subject}</span></td>
 <td><span class="chip ${t.role==='관리자'?'chip-ac':'chip-n'}">${t.role}</span></td><td style="font-size:11px;color:var(--t3)">${t.logId}</td>
@@ -542,15 +551,17 @@ const r=await pA({action:'tp_admin_saveEnrollment',enrollAction:'remove',student
 r.ok?(ts(r.message,'ok'),await lSts(),oSE(n)):ts(r.error,'er');}
 
 // PERSONALITY + REPORTS (list pages)
-async function lPsy(){if(!S.allSt.length){try{const r=await gA('tp_admin_allStudents',{token:S.tk});if(r.ok)S.allSt=r.students;}catch(e){}}rPsy(S.allSt);}
-function rPsy(l){const a=l.filter(s=>s.status!=='퇴원');$('psyList').innerHTML=a.length?`<div class="tw"><table class="tb"><thead><tr><th>이름</th><th>학년</th><th>학교</th><th></th></tr></thead><tbody>
-${a.map(s=>`<tr><td>${s.name}</td><td>${s.grade}</td><td>${s.school||''}</td><td><a href="#" onclick="oPr('${esc(s.name)}','p-psy');return false">성향 · 프로필</a></td></tr>`).join('')}</tbody></table></div>`
-:'<p style="text-align:center;color:var(--t4);padding:20px">없음</p>';}
-function fPsy(){const q=$('psySrch').value.trim().toLowerCase();rPsy(S.allSt.filter(s=>s.name.toLowerCase().includes(q)));}
-async function lRpt(){if(!S.allSt.length){try{const r=await gA('tp_admin_allStudents',{token:S.tk});if(r.ok)S.allSt=r.students;}catch(e){}}rRP(S.allSt);}
-function rRP(l){const a=l.filter(s=>s.status!=='퇴원');$('rpL').innerHTML=`<div class="tw"><table class="tb"><thead><tr><th>이름</th><th>학년</th><th>학교</th><th></th></tr></thead><tbody>
-${a.map(s=>`<tr><td>${s.name}</td><td>${s.grade}</td><td>${s.school||''}</td><td><a href="#" onclick="oPr('${esc(s.name)}','p-rpt');return false">프로필 · 리포트</a></td></tr>`).join('')}</tbody></table></div>`;}
-function fRp(){const q=$('rpSrch').value.trim().toLowerCase();rRP(S.allSt.filter(s=>s.name.toLowerCase().includes(q)));}
+async function loadMySts(){if(S.mySt&&S.mySt.length)return;try{const r=await gA('tp_myStudents',{teacher:S.t.name,role:S.t.role,token:S.tk});if(r.ok)S.mySt=r.students||[];}catch(e){S.mySt=[];}}
+async function lPsy(){await loadMySts();rPsy(S.mySt);}
+function rPsy(l){$('psyList').innerHTML=l.length?`<div class="tw"><table class="tb"><thead><tr><th>이름</th><th>학년</th><th>학교</th><th></th></tr></thead><tbody>
+${l.map(s=>`<tr><td>${s.name}</td><td>${s.grade}</td><td>${s.school||''}</td><td><a href="#" onclick="oPr('${esc(s.name)}','p-psy');return false">성향 · 프로필</a></td></tr>`).join('')}</tbody></table></div>`
+:'<p style="text-align:center;color:var(--t4);padding:20px">담당 학생이 없습니다</p>';}
+function fPsy(){const q=$('psySrch').value.trim().toLowerCase();rPsy((S.mySt||[]).filter(s=>s.name.toLowerCase().includes(q)));}
+async function lRpt(){await loadMySts();rRP(S.mySt);}
+function rRP(l){$('rpL').innerHTML=l.length?`<div class="tw"><table class="tb"><thead><tr><th>이름</th><th>학년</th><th>학교</th><th></th></tr></thead><tbody>
+${l.map(s=>`<tr><td>${s.name}</td><td>${s.grade}</td><td>${s.school||''}</td><td><a href="#" onclick="oPr('${esc(s.name)}','p-rpt');return false">프로필 · 리포트</a></td></tr>`).join('')}</tbody></table></div>`
+:'<p style="text-align:center;color:var(--t4);padding:20px">담당 학생이 없습니다</p>';}}
+function fRp(){const q=$('rpSrch').value.trim().toLowerCase();rRP((S.mySt||[]).filter(s=>s.name.toLowerCase().includes(q)));}
 
 // STATS
 let trendCh=null,teachCh=null,dailyCh=null;
