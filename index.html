@@ -413,39 +413,125 @@ function rRP(sts){const ac=sts.filter(s=>s.status!=='퇴원');$('rpL').innerHTML
 ${ac.map(s=>`<tr><td>${s.name}</td><td>${s.grade}</td><td>${s.school||''}</td><td><a href="#" onclick="oPr('${esc(s.name)}','p-rpt');return false" style="font-size:.82rem">프로필 · 리포트</a></td></tr>`).join('')}</tbody></table></div>`;}
 function fRp(){const q=$('rpSrch').value.trim().toLowerCase();rRP(S.allSt.filter(s=>s.name.toLowerCase().includes(q)));}
 
-// PROFILE + PERSONALITY CHART (#1)
-async function oPr(sn,from){S.pf=from||'p-dash';sh('프로필 로딩...');const r=await gA('tp_studentProfile',{student:sn,token:S.tk});hd();if(!r.ok){ts(r.error,'er');return;}
-const s=r.student;$('prTi').textContent=`${s.name}`;
-let h=`<div class="cd"><div class="ct">👤 기본 정보</div><div class="pg2">
+// PROFILE — FULL VISUALIZATION
+const LBL={intrinsic_motivation:'내재적 동기',identified_regulation:'동일시 조절',self_efficacy:'자기효능감',achievement_pressure:'성취 압박감',academic_lethargy:'학업 무기력',
+metacognition:'메타인지',planning_ability:'계획 수립',memory_strategy:'암기 전략',comprehension_strategy:'이해/구조화',error_analysis:'오답 분석',
+execution_power:'실행력',persistence:'끈기/지속성',env_control:'환경 통제',attention_control:'집중 유지',digital_detox:'디지털 절제',
+academic_self_esteem:'학업 자존감',test_anxiety:'시험 불안',resilience:'회복 탄력성',emotion_regulation:'감정 조절',optimism:'낙관성',
+parent_support:'부모 지지',autonomy_respect:'자율성 존중',help_seeking:'도움 요청',teacher_rapport:'교사 유대감',peer_relation:'교우 관계'};
+const SEC_NAMES={section1_motivation:'학습 동기',section2_cognition:'인지 전략',section3_behavior:'행동 조절',section4_emotion:'정서 관리',section5_environment:'학습 환경'};
+const SEC_COLORS=['#534AB7','#1D9E75','#D85A30','#D4537E','#378ADD'];
+
+async function oPr(sn,from){S.pf=from||'p-dash';sh('프로필 로딩...');
+const r=await gA('tp_studentProfile',{student:sn,token:S.tk});hd();if(!r.ok){ts(r.error,'er');return;}
+const s=r.student;$('prTi').textContent=s.name;
+let h='';
+
+// ── 기본 정보 ──
+h+=`<div class="cd"><div class="ct">👤 기본 정보</div><div class="pg2">
 <div class="pi"><div class="pil">학년</div><div class="piv">${s.grade}</div></div>
 <div class="pi"><div class="pil">학교</div><div class="piv">${s.school||'-'}</div></div>
 <div class="pi"><div class="pil">상태</div><div class="piv"><span class="bd ${s.status==='재원'?'bdok':'bder'}">${s.status}</span></div></div>
 <div class="pi"><div class="pil">수강 반</div><div class="piv">${(s.classes||[]).join(', ')||'-'}</div></div></div></div>`;
 
-// 성향 분석 (#1 — 레이더 차트)
-if(s.personalityJson){
-try{const pj=JSON.parse(s.personalityJson);const ps=pj.profileScores;
-if(ps){h+=`<div class="cd"><div class="ct">🧠 학습 성향 분석</div>
-<div style="display:flex;align-items:center;gap:4px;margin-bottom:12px"><span class="bd ${pj.reliability?.score==='상'?'bdok':pj.reliability?.score==='중'?'bdwn':'bder'}">신뢰도: ${pj.reliability?.score||'-'}</span><span style="font-size:.75rem;color:var(--sb)">${s.personalityDate||''}</span></div>
-<div class="radar-wrap"><canvas id="radarChart"></canvas></div>
-<p style="font-size:.82rem;color:var(--sb);margin-top:12px;line-height:1.7">${pj.profileAnalysis?.summary_text||''}</p></div>`;}}catch(e){}}
-else if(s.personalityDate){h+=`<div class="cd"><div class="ct">🧠 성향 검사</div><p style="color:var(--sb);font-size:.85rem">검사일: ${s.personalityDate} / 신뢰도: ${s.reliability||'-'}</p></div>`;}
+// ── 성향 분석 (전체 시각화) ──
+let pj=null;
+if(s.personalityJson){try{pj=JSON.parse(s.personalityJson);}catch(e){}}
 
-// 리포트
+if(pj&&pj.profileScores){
+const ps=pj.profileScores;const rl=pj.reliability||{};const pa=pj.profileAnalysis||{};const cs=pj.consultStrategy||{};
+
+// 신뢰도 + 요약
+h+=`<div class="cd"><div class="ct">🧠 학습 성향 종합 분석</div>
+<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+<span class="bd ${rl.score==='상'?'bdok':rl.score==='중'?'bdwn':'bder'}">신뢰도 ${rl.score||'-'}</span>
+<span style="font-size:.75rem;color:var(--sb)">${s.personalityDate||''} 검사</span>
+${cs.priority?`<span class="bd bdinf">상담 우선순위 ${cs.priority}</span>`:''}
+${cs.recommend_tag_A?`<span class="bd bdnv">${cs.recommend_tag_A}</span>`:''}
+${cs.recommend_tag_B?`<span class="bd bdnv">${cs.recommend_tag_B}</span>`:''}
+</div>
+${pa.summary_title?`<div style="font-size:.95rem;font-weight:600;color:var(--nv);margin-bottom:8px">${pa.summary_title}</div>`:''}
+${pa.summary_text?`<p style="font-size:.82rem;color:var(--sb);line-height:1.8;margin-bottom:16px">${pa.summary_text}</p>`:''}
+<div class="radar-wrap"><canvas id="radarChart"></canvas></div></div>`;
+
+// 5대 역량 상세 코멘트
+const paFields=[{k:'motivation_text',t:'학습 동기'},{k:'planning_text',t:'계획 수립'},{k:'metacognition_text',t:'메타인지'},{k:'self_regulation_text',t:'자기 조절'},{k:'help_seeking_text',t:'도움 요청'}];
+const hasComments=paFields.some(f=>pa[f.k]);
+if(hasComments){h+=`<div class="cd"><div class="ct">📝 역량별 상세 분석</div>`;
+paFields.forEach(f=>{if(pa[f.k])h+=`<div style="margin-bottom:14px"><div style="font-size:.82rem;font-weight:600;color:var(--nv);margin-bottom:4px">${f.t}</div><p style="font-size:.78rem;color:var(--sb);line-height:1.7">${pa[f.k]}</p></div>`;});
+h+=`</div>`;}
+
+// 5개 섹션별 세부 척도 차트
+const sa=pj.sectionAnalysis;
+if(sa){h+=`<div class="cd"><div class="ct">📊 25개 세부 척도 분석</div><div id="secCharts" style="display:grid;grid-template-columns:1fr;gap:20px">`;
+const secKeys=['section1_motivation','section2_cognition','section3_behavior','section4_emotion','section5_environment'];
+secKeys.forEach((sk,idx)=>{const sec=sa[sk];if(!sec)return;
+h+=`<div style="border:1px solid var(--bd);border-radius:var(--r);padding:16px">
+<div style="font-size:.85rem;font-weight:600;color:${SEC_COLORS[idx]};margin-bottom:4px">${SEC_NAMES[sk]||sec.sectionName}</div>
+<p style="font-size:.72rem;color:var(--sb);margin-bottom:12px;line-height:1.6">${sec.sectionSummary||''}</p>
+<canvas id="sec${idx}"></canvas></div>`;});
+h+=`</div></div>`;}
+
+// 신뢰도 상세
+if(rl.comment){h+=`<div class="cd"><div class="ct">🔍 신뢰도 분석 상세</div><p style="font-size:.82rem;color:var(--sb);line-height:1.8">${rl.comment}</p>
+${rl.detected_issues&&rl.detected_issues.length?`<div style="margin-top:10px">${rl.detected_issues.map(i=>`<span class="bd bdwn" style="margin:2px">${i}</span>`).join('')}</div>`:''}</div>`;}
+
+// 상담 전략
+if(cs.recommend_text){h+=`<div class="cd"><div class="ct">💡 상담 전략 추천</div><p style="font-size:.82rem;color:var(--sb);line-height:1.8">${cs.recommend_text}</p></div>`;}
+
+} else if(s.personalityDate){
+h+=`<div class="cd"><div class="ct">🧠 성향 검사</div><p style="color:var(--sb);font-size:.85rem">검사일: ${s.personalityDate} / 신뢰도: ${s.reliability||'-'}</p><p style="font-size:.78rem;color:var(--lt);margin-top:6px">상세 분석 데이터가 없습니다.</p></div>`;}
+
+// ── 레벨테스트 ──
+if(s.levelTestEnglish||s.levelTestMath){
+h+=`<div class="cd"><div class="ct">📝 레벨테스트 결과</div><div class="pg2">`;
+if(s.levelTestEnglish){try{const le=JSON.parse(s.levelTestEnglish);h+=`<div class="pi"><div class="pil">영어</div><div class="piv">${le.totalScore!==undefined?le.totalScore+'점':le.level||JSON.stringify(le).substring(0,60)+'...'}</div></div>`;}catch(e){h+=`<div class="pi"><div class="pil">영어</div><div class="piv">${String(s.levelTestEnglish).substring(0,80)}</div></div>`;}}
+if(s.levelTestMath){try{const lm=JSON.parse(s.levelTestMath);h+=`<div class="pi"><div class="pil">수학</div><div class="piv">${lm.totalScore!==undefined?lm.totalScore+'점':lm.level||JSON.stringify(lm).substring(0,60)+'...'}</div></div>`;}catch(e){h+=`<div class="pi"><div class="pil">수학</div><div class="piv">${String(s.levelTestMath).substring(0,80)}</div></div>`;}}
+h+=`</div></div>`;}
+
+// ── 2주 리포트 (AI 분석 포함) ──
 try{const rr=await gA('tp_studentReports',{student:sn,token:S.tk});
-if(rr.ok&&rr.reports.length){h+=`<div class="cd"><div class="ct">📄 2주 리포트 (${rr.reports.length}건)</div><div class="tw"><table class="tb"><thead><tr><th>상담일</th><th>상담자</th><th>리포트</th></tr></thead><tbody>
-${rr.reports.slice(0,10).map(r=>`<tr><td>${r.date||''}</td><td>${r.counselor||''}</td><td>${r.shortUrl?`<a href="https://go.trueasheard.com/${r.shortUrl}" target="_blank">열기 ↗</a>`:(r.reportUrl?`<a href="${r.reportUrl}" target="_blank">열기 ↗</a>`:'-')}</td></tr>`).join('')}</tbody></table></div></div>`;}}catch(e){}
+if(rr.ok&&rr.reports.length){
+h+=`<div class="cd"><div class="ct">📄 2주 상담 리포트 (${rr.reports.length}건)</div>`;
+rr.reports.slice(0,10).forEach((rp,idx)=>{
+const hasDetail=rp.briefing||rp.checklist||rp.goals||rp.aiAnalysis;
+h+=`<div style="border:1px solid var(--bd);border-radius:var(--r);margin-bottom:10px;overflow:hidden">
+<div style="padding:14px 16px;display:flex;align-items:center;justify-content:space-between;cursor:${hasDetail?'pointer':'default'};background:var(--bg)" ${hasDetail?`onclick="document.getElementById('rp${idx}').classList.toggle('open')"`:''}">
+<div><span style="font-weight:600;font-size:.88rem;color:var(--nv)">${rp.date||''}</span><span style="font-size:.75rem;color:var(--sb);margin-left:8px">${rp.counselor||''}</span></div>
+<div style="display:flex;gap:6px;align-items:center">
+${rp.shortUrl?`<a href="https://go.trueasheard.com/${rp.shortUrl}" target="_blank" style="font-size:.75rem" onclick="event.stopPropagation()">리포트 열기 ↗</a>`:(rp.reportUrl?`<a href="${rp.reportUrl}" target="_blank" style="font-size:.75rem" onclick="event.stopPropagation()">열기 ↗</a>`:'')}
+${hasDetail?'<span style="font-size:.7rem;color:var(--lt)">▼ 상세</span>':''}
+</div></div>`;
+if(hasDetail){h+=`<div class="sbody" id="rp${idx}" style="max-height:0;overflow:hidden;transition:max-height .3s;padding:0 16px"><div style="padding:0 0 16px">`;
+if(rp.goals)h+=`<div style="margin-bottom:12px"><div style="font-size:.72rem;font-weight:600;color:var(--nv);margin-bottom:4px">🎯 다음 목표</div><p style="font-size:.78rem;color:var(--sb);line-height:1.6">${rp.goals}</p></div>`;
+if(rp.briefing)h+=`<div style="margin-bottom:12px"><div style="font-size:.72rem;font-weight:600;color:var(--nv);margin-bottom:4px">🤖 AI 사전 브리핑</div><p style="font-size:.78rem;color:var(--sb);line-height:1.6;max-height:120px;overflow-y:auto">${rp.briefing}</p></div>`;
+if(rp.checklist)h+=`<div style="margin-bottom:12px"><div style="font-size:.72rem;font-weight:600;color:var(--nv);margin-bottom:4px">✅ 상담 체크리스트</div><p style="font-size:.78rem;color:var(--sb);line-height:1.6;white-space:pre-line">${rp.checklist}</p></div>`;
+h+=`</div></div>`;}
+h+=`</div>`;});
+h+=`</div>`;}}catch(e){}
 
-$('prC').innerHTML=h;document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));$('p-prof').classList.add('on');
+$('prC').innerHTML=h;
+document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));$('p-prof').classList.add('on');
 
-// Chart.js 레이더 렌더 (#1)
-if(s.personalityJson){try{const pj=JSON.parse(s.personalityJson);const ps=pj.profileScores;
-if(ps&&$('radarChart')){const ctx=$('radarChart').getContext('2d');
-new Chart(ctx,{type:'radar',data:{labels:['학습 동기','계획 수립','메타인지','자기 조절','도움 요청'],
-datasets:[{label:s.name,data:[ps.motivation,ps.planning,ps.metacognition,ps.self_regulation,ps.help_seeking],
-backgroundColor:'rgba(27,42,74,.12)',borderColor:'#1B2A4A',pointBackgroundColor:'#D4A843',pointBorderColor:'#1B2A4A',pointRadius:5,borderWidth:2}]},
-options:{responsive:true,scales:{r:{min:0,max:100,ticks:{stepSize:20,font:{size:10}},pointLabels:{font:{size:12,family:'Noto Sans KR'}}}},plugins:{legend:{display:false}}}});}}catch(e){}}
-}
+// ── Chart.js 렌더링 ──
+if(pj&&pj.profileScores){
+const ps=pj.profileScores;
+// 레이더 차트
+if($('radarChart')){new Chart($('radarChart').getContext('2d'),{type:'radar',data:{labels:['학습 동기','계획 수립','메타인지','자기 조절','도움 요청'],
+datasets:[{data:[ps.motivation,ps.planning,ps.metacognition,ps.self_regulation,ps.help_seeking],
+backgroundColor:'rgba(27,42,74,.1)',borderColor:'#1B2A4A',pointBackgroundColor:'#D4A843',pointBorderColor:'#1B2A4A',pointRadius:5,borderWidth:2}]},
+options:{responsive:true,scales:{r:{min:0,max:100,ticks:{stepSize:20,font:{size:10}},pointLabels:{font:{size:11,weight:'500',family:'Noto Sans KR'}}}},plugins:{legend:{display:false}}}});}
+
+// 섹션별 바 차트
+const sa=pj.sectionAnalysis;
+if(sa){const secKeys=['section1_motivation','section2_cognition','section3_behavior','section4_emotion','section5_environment'];
+secKeys.forEach((sk,idx)=>{const sec=sa[sk];if(!sec||!sec.detailedScores)return;const cv=$(`sec${idx}`);if(!cv)return;
+const ds=sec.detailedScores;const labels=Object.keys(ds).map(k=>LBL[k]||k);const vals=Object.values(ds);
+const clr=SEC_COLORS[idx];
+new Chart(cv.getContext('2d'),{type:'bar',data:{labels,datasets:[{data:vals,backgroundColor:clr+'33',borderColor:clr,borderWidth:1.5,borderRadius:4,barPercentage:.7}]},
+options:{indexAxis:'y',responsive:true,scales:{x:{min:0,max:100,ticks:{stepSize:25,font:{size:10}},grid:{color:'rgba(0,0,0,.05)'}},y:{ticks:{font:{size:11,family:'Noto Sans KR'}},grid:{display:false}}},
+plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw+'점'}}}}});});}
+}}
 
 // UTILS
 function $(id){return document.getElementById(id);}
