@@ -555,75 +555,185 @@ async function rmEnroll(n,cn){if(!confirm(n+' → '+cn+' 해제?'))return;sh('')
 const r=await pA({action:'tp_admin_saveEnrollment',enrollAction:'remove',student:n,className:cn,token:S.tk});hd();
 r.ok?(ts(r.message,'ok'),await lSts(),oSE(n)):ts(r.error,'er');}
 
-// COUNSEL DETAIL VIEW
-let cdCache={};
+// COUNSEL DETAIL VIEW — Chart.js 기반 시각화
+let cdCache={},cdCharts=[];
+function destroyCdCharts(){cdCharts.forEach(c=>{try{c.destroy();}catch(e){}});cdCharts=[];}
+
 async function viewCounselDetail(name,type){
 sh('분석 결과 조회...');
 if(!cdCache[name]){const r=await gA('tp_counselStudentDetail',{student:name,token:S.tk});
 if(!r.ok){hd();ts(r.error,'er');return;}cdCache[name]=r.student;}
-hd();const st=cdCache[name];
+hd();destroyCdCharts();const st=cdCache[name];
 let title='',html='';
 $('cdCapBtn').style.display='inline-flex';$('cdCapBtn').onclick=()=>captureCd(name,type);
 
-if(type==='psy'&&st.surveyJson){
-title=name+' — 성향검사 분석';
+if(type==='psy'&&st.surveyJson){title=name+' — 성향검사 분석 결과';html=buildPsyReport(st);
+}else if(type==='eng'&&st.engLtJson){title=name+' — 영어 레벨테스트 분석';html=buildLtReport(st.engLtJson,'영어',name,st);
+}else if(type==='math'&&st.mathLtJson){title=name+' — 수학 레벨테스트 분석';html=buildLtReport(st.mathLtJson,'수학',name,st);
+}else{title=name;html='<p style="color:var(--t3);padding:20px;text-align:center">분석 데이터가 없습니다</p>';$('cdCapBtn').style.display='none';}
+
+$('cdMoTi').textContent=title;$('cdMoBody').innerHTML=html;$('cdMo').classList.remove('hd');
+// 차트는 DOM 렌더 후 생성
+requestAnimationFrame(()=>{if(type==='psy')renderPsyCharts(st);else if((type==='eng'||type==='math'))renderLtCharts(type==='eng'?st.engLtJson:st.mathLtJson);});}
+
+// ── 성향검사 리포트 HTML ──
+function buildPsyReport(st){
 try{const pj=JSON.parse(st.surveyJson);const pa=pj.profileAnalysis||{};const ps=pj.profileScores||{};const rl=pj.reliability||{};const cs=pj.consultStrategy||{};const sa=pj.sectionAnalysis||{};
-html=`<div id="cdCapArea" style="padding:12px;background:#fff">`;
-html+=`<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:12px">
+let h=`<div id="cdCapArea" style="padding:16px;background:#fff">`;
+// 헤더
+h+=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--ln)">
+<div><div style="font-size:16px;font-weight:700">${st.name}</div><div style="font-size:11px;color:var(--t3)">${st.grade} · ${st.school||''}</div></div>
+<div style="display:flex;gap:4px;flex-wrap:wrap">
 <span class="chip ${rl.score==='상'?'chip-ok':rl.score==='중'?'chip-wn':'chip-er'}">신뢰도 ${rl.score||'—'}</span>
 <span class="chip chip-n">${st.surveyDate||''}</span>
 ${cs.recommend_tag_A?`<span class="chip chip-ac">${cs.recommend_tag_A}</span>`:''}
 ${cs.recommend_tag_B?`<span class="chip chip-ac">${cs.recommend_tag_B}</span>`:''}
-</div>`;
-if(pa.summary_title)html+=`<div style="font-size:14px;font-weight:700;margin-bottom:4px">${pa.summary_title}</div>`;
-if(pa.summary_text)html+=`<p style="font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:14px">${pa.summary_text}</p>`;
-if(ps.motivation!==undefined){html+=`<div style="font-size:11px;font-weight:600;color:var(--t3);margin-bottom:6px">5대 역량</div><div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-bottom:14px">`;
-const dims=[['동기',ps.motivation],['계획',ps.planning],['메타인지',ps.metacognition],['자기조절',ps.self_regulation],['도움요청',ps.help_seeking]];
+</div></div>`;
+// 종합 분석
+if(pa.summary_title)h+=`<div style="font-size:14px;font-weight:700;margin-bottom:4px">${pa.summary_title}</div>`;
+if(pa.summary_text)h+=`<p style="font-size:12px;color:var(--t2);line-height:1.8;margin-bottom:16px">${pa.summary_text}</p>`;
+// 레이더 차트
+h+=`<div style="display:flex;gap:16px;align-items:center;margin-bottom:20px;flex-wrap:wrap">
+<div style="width:220px;flex-shrink:0"><canvas id="cdRadar"></canvas></div>
+<div style="flex:1;min-width:150px"><div style="font-size:12px;font-weight:600;margin-bottom:8px">5대 핵심 역량</div>`;
+const dims=[['학습 동기',ps.motivation],['계획 수립',ps.planning],['메타인지',ps.metacognition],['자기 조절',ps.self_regulation],['도움 요청',ps.help_seeking]];
 dims.forEach(([l,v])=>{const c=v>=70?'var(--ok)':v>=40?'var(--wn)':'var(--er)';
-html+=`<div style="text-align:center;padding:8px 4px;background:var(--bg);border-radius:6px"><div style="font-size:18px;font-weight:700;color:${c}">${v}</div><div style="font-size:10px;color:var(--t3)">${l}</div></div>`;});
-html+=`</div>`;}
+h+=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="font-size:11px;width:56px;color:var(--t2);text-align:right">${l}</span>
+<div style="flex:1;height:8px;background:var(--ln);border-radius:4px;overflow:hidden"><div style="width:${v}%;height:100%;background:${c};border-radius:4px"></div></div>
+<span style="font-size:12px;font-weight:700;width:28px;color:${c}">${v}</span></div>`;});
+h+=`</div></div>`;
+// 세부 척도 (5개 섹션 × 5개 = 25개)
 const secNames={section1_motivation:'학습 동기',section2_cognition:'인지 전략',section3_behavior:'행동 조절',section4_emotion:'정서 관리',section5_environment:'학습 환경'};
 const secClrs=['#6366f1','#22c55e','#f59e0b','#ec4899','#0066ff'];
+h+=`<div style="font-size:13px;font-weight:700;margin-bottom:10px;padding-top:12px;border-top:1px solid var(--ln)">25개 세부 척도 분석</div>`;
 Object.keys(secNames).forEach((sk,idx)=>{const sec=sa[sk];if(!sec)return;
-html+=`<div style="margin-bottom:10px"><div style="font-size:12px;font-weight:600;color:${secClrs[idx]};margin-bottom:2px">${secNames[sk]}</div>`;
-if(sec.sectionSummary)html+=`<p style="font-size:11px;color:var(--t3);margin-bottom:4px">${sec.sectionSummary}</p>`;
-if(sec.detailedScores){Object.entries(sec.detailedScores).forEach(([k,v])=>{
-html+=`<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px"><span style="font-size:10px;color:var(--t2);width:80px;flex-shrink:0;text-align:right">${k}</span><div style="flex:1;height:6px;background:var(--ln);border-radius:3px;overflow:hidden"><div style="width:${v}%;height:100%;background:${secClrs[idx]};border-radius:3px"></div></div><span style="font-size:10px;font-weight:600;width:28px">${v}</span></div>`;});}
-html+=`</div>`;});
-if(cs.recommend_text)html+=`<div style="margin-top:10px;padding:10px 12px;background:var(--bg);border-radius:6px"><div style="font-size:11px;font-weight:600;margin-bottom:3px">상담 전략</div><p style="font-size:11px;color:var(--t2);line-height:1.7">${cs.recommend_text}</p></div>`;
-html+=`</div>`;}catch(e){html=`<div id="cdCapArea"><p style="color:var(--er)">JSON 파싱 오류: ${e.message}</p><pre style="font-size:10px;max-height:300px;overflow:auto;white-space:pre-wrap;background:var(--bg);padding:8px;border-radius:6px">${st.surveyJson.substring(0,2000)}</pre></div>`;}
-}else if(type==='eng'&&st.engLtJson){
-title=name+' — 영어 레벨테스트';html=renderLtJson(st.engLtJson,'영어');
-}else if(type==='math'&&st.mathLtJson){
-title=name+' — 수학 레벨테스트';html=renderLtJson(st.mathLtJson,'수학');
-}else{title=name;html='<p style="color:var(--t3);padding:20px;text-align:center">분석 데이터가 없습니다</p>';$('cdCapBtn').style.display='none';}
-
-$('cdMoTi').textContent=title;$('cdMoBody').innerHTML=html;$('cdMo').classList.remove('hd');}
-
-function renderLtJson(jsonStr,subject){
-try{const lt=JSON.parse(jsonStr);
-let h=`<div id="cdCapArea" style="padding:12px;background:#fff">`;
-h+=`<div style="font-size:14px;font-weight:700;margin-bottom:12px">${subject} 레벨테스트 결과</div>`;
-if(lt.totalScore!==undefined||lt.level){
-h+=`<div style="display:flex;gap:8px;margin-bottom:14px">`;
-if(lt.totalScore!==undefined)h+=`<div style="padding:12px 16px;background:var(--acbg);border-radius:8px;text-align:center"><div style="font-size:24px;font-weight:700;color:var(--ac)">${lt.totalScore}</div><div style="font-size:10px;color:var(--t3)">총점</div></div>`;
-if(lt.level)h+=`<div style="padding:12px 16px;background:var(--bg);border-radius:8px;text-align:center"><div style="font-size:18px;font-weight:700">${lt.level}</div><div style="font-size:10px;color:var(--t3)">레벨</div></div>`;
-h+=`</div>`;}
-if(lt.sections&&Array.isArray(lt.sections)){
-h+=`<div style="font-size:11px;font-weight:600;color:var(--t3);margin-bottom:6px">영역별 결과</div>`;
-lt.sections.forEach(s=>{const pct=s.maxScore>0?Math.round(s.score/s.maxScore*100):0;
-h+=`<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px"><span style="font-weight:500">${s.name||s.section||''}</span><span style="font-weight:600">${s.score}/${s.maxScore}</span></div>
-<div style="height:6px;background:var(--ln);border-radius:3px;overflow:hidden"><div style="width:${pct}%;height:100%;background:${pct>=70?'var(--ok)':pct>=40?'var(--wn)':'var(--er)'};border-radius:3px"></div></div></div>`;});}
-if(lt.analysis)h+=`<div style="margin-top:10px;padding:10px;background:var(--bg);border-radius:6px;font-size:11px;color:var(--t2);line-height:1.7">${typeof lt.analysis==='string'?lt.analysis:JSON.stringify(lt.analysis)}</div>`;
-if(lt.recommendation)h+=`<div style="margin-top:6px;padding:10px;background:var(--okbg);border-radius:6px;font-size:11px;color:#15803d;line-height:1.7">${typeof lt.recommendation==='string'?lt.recommendation:JSON.stringify(lt.recommendation)}</div>`;
-// Fallback: 기타 필드
-const shown=new Set(['totalScore','level','sections','analysis','recommendation']);
-const rest=Object.entries(lt).filter(([k])=>!shown.has(k));
-if(rest.length){h+=`<div style="margin-top:10px;font-size:10px;color:var(--t3)">기타 데이터</div>`;
-rest.forEach(([k,v])=>{h+=`<div style="display:flex;gap:6px;font-size:11px;padding:3px 0;border-bottom:1px solid var(--lnl)"><span style="font-weight:600;color:var(--t2);min-width:80px">${k}</span><span style="color:var(--t1)">${typeof v==='object'?JSON.stringify(v):v}</span></div>`;});}
+h+=`<div style="margin-bottom:16px"><div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+<div style="width:8px;height:8px;border-radius:50%;background:${secClrs[idx]}"></div>
+<span style="font-size:12px;font-weight:600">${secNames[sk]}</span></div>`;
+if(sec.sectionSummary)h+=`<p style="font-size:11px;color:var(--t3);margin-bottom:6px;line-height:1.6">${sec.sectionSummary}</p>`;
+h+=`<canvas id="cdSec${idx}" height="100"></canvas></div>`;});
+// 상담 전략
+if(cs.recommend_text){h+=`<div style="padding:14px;background:var(--acbg);border-radius:8px;border-left:3px solid var(--ac);margin-top:12px">
+<div style="font-size:12px;font-weight:700;color:var(--ac);margin-bottom:4px">상담 전략 추천</div>
+<p style="font-size:12px;color:var(--t1);line-height:1.8">${cs.recommend_text}</p></div>`;}
+// 신뢰도 상세
+if(rl.details){h+=`<div style="margin-top:12px;padding:12px;background:var(--bg);border-radius:8px">
+<div style="font-size:11px;font-weight:600;color:var(--t3);margin-bottom:4px">신뢰도 분석</div>
+<p style="font-size:11px;color:var(--t2);line-height:1.6">${typeof rl.details==='string'?rl.details:JSON.stringify(rl.details)}</p></div>`;}
+if(pj.detected_issues&&pj.detected_issues.length){h+=`<div style="margin-top:8px;display:flex;gap:4px;flex-wrap:wrap">`;
+pj.detected_issues.forEach(d=>{h+=`<span class="chip chip-wn">${d}</span>`;});h+=`</div>`;}
 h+=`</div>`;return h;
-}catch(e){return `<div id="cdCapArea"><p style="color:var(--er)">JSON 파싱 오류</p><pre style="font-size:10px;max-height:300px;overflow:auto;white-space:pre-wrap;background:var(--bg);padding:8px;border-radius:6px">${jsonStr.substring(0,2000)}</pre></div>`;}
-}
+}catch(e){return `<div id="cdCapArea"><p style="color:var(--er)">파싱 오류: ${e.message}</p></div>`;}}
+
+// ── 성향 차트 렌더 ──
+function renderPsyCharts(st){
+try{const pj=JSON.parse(st.surveyJson);const ps=pj.profileScores||{};const sa=pj.sectionAnalysis||{};
+// 레이더
+const rc=$('cdRadar');if(rc){const c=new Chart(rc.getContext('2d'),{type:'radar',data:{labels:['동기','계획','메타인지','자기조절','도움요청'],
+datasets:[{data:[ps.motivation,ps.planning,ps.metacognition,ps.self_regulation,ps.help_seeking],
+backgroundColor:'rgba(0,102,255,.1)',borderColor:'#0066ff',pointBackgroundColor:'#0066ff',pointRadius:4,borderWidth:2}]},
+options:{responsive:true,scales:{r:{min:0,max:100,ticks:{stepSize:25,font:{size:9},backdropColor:'transparent'},pointLabels:{font:{size:11,weight:'600'}},grid:{color:'#e5e5e5'}}},plugins:{legend:{display:false}}}});cdCharts.push(c);}
+// 섹션별 바 차트
+const secClrs=['#6366f1','#22c55e','#f59e0b','#ec4899','#0066ff'];
+const secKeys=['section1_motivation','section2_cognition','section3_behavior','section4_emotion','section5_environment'];
+secKeys.forEach((sk,idx)=>{const sec=sa[sk];if(!sec||!sec.detailedScores)return;
+const cv=$(`cdSec${idx}`);if(!cv)return;
+const ds=sec.detailedScores;const labels=Object.keys(ds).map(k=>LBL[k]||k);
+const c=new Chart(cv.getContext('2d'),{type:'bar',data:{labels,datasets:[{data:Object.values(ds),
+backgroundColor:secClrs[idx]+'25',borderColor:secClrs[idx],borderWidth:1.5,borderRadius:3,barPercentage:.65}]},
+options:{indexAxis:'y',responsive:true,scales:{x:{min:0,max:100,ticks:{stepSize:25,font:{size:9}},grid:{color:'#f0f0f0'}},y:{ticks:{font:{size:10}},grid:{display:false}}},
+plugins:{legend:{display:false}}}});cdCharts.push(c);});
+}catch(e){}}
+
+// ── 레벨테스트 리포트 HTML ──
+function buildLtReport(jsonStr,subject,name,st){
+try{const lt=JSON.parse(jsonStr);
+let h=`<div id="cdCapArea" style="padding:16px;background:#fff">`;
+// 헤더
+h+=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--ln)">
+<div><div style="font-size:16px;font-weight:700">${name||''}</div><div style="font-size:11px;color:var(--t3)">${st.grade||''} · ${st.school||''} · ${subject} 레벨테스트</div></div></div>`;
+// 핵심 지표 카드
+h+=`<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">`;
+if(lt.totalScore!==undefined){const maxS=lt.maxScore||100;const pct=Math.round(lt.totalScore/maxS*100);
+const clr=pct>=70?'var(--ok)':pct>=40?'var(--wn)':'var(--er)';
+h+=`<div style="flex:1;min-width:100px;padding:16px;background:var(--bg);border-radius:10px;text-align:center;border:1px solid var(--ln)">
+<div style="font-size:28px;font-weight:800;color:${clr}">${lt.totalScore}<span style="font-size:14px;font-weight:400;color:var(--t3)">/${maxS}</span></div>
+<div style="font-size:11px;color:var(--t3);margin-top:2px">총점 (${pct}%)</div></div>`;}
+if(lt.level)h+=`<div style="flex:1;min-width:100px;padding:16px;background:var(--acbg);border-radius:10px;text-align:center;border:1px solid #d0e2ff">
+<div style="font-size:24px;font-weight:800;color:var(--ac)">${lt.level}</div>
+<div style="font-size:11px;color:var(--ac);margin-top:2px">판정 레벨</div></div>`;
+if(lt.percentile!==undefined)h+=`<div style="flex:1;min-width:100px;padding:16px;background:var(--bg);border-radius:10px;text-align:center;border:1px solid var(--ln)">
+<div style="font-size:24px;font-weight:800">${lt.percentile}<span style="font-size:12px;font-weight:400">%</span></div>
+<div style="font-size:11px;color:var(--t3);margin-top:2px">상위 백분위</div></div>`;
+h+=`</div>`;
+// 영역별 분석 차트 + 테이블
+if(lt.sections&&Array.isArray(lt.sections)&&lt.sections.length){
+h+=`<div style="font-size:13px;font-weight:700;margin-bottom:10px">영역별 성취도 분석</div>`;
+h+=`<div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:16px;flex-wrap:wrap">
+<div style="flex:1;min-width:200px"><canvas id="cdLtBar"></canvas></div>
+<div style="flex:1;min-width:160px"><canvas id="cdLtRadar"></canvas></div></div>`;
+// 영역 상세 테이블
+h+=`<div style="overflow-x:auto;margin-bottom:16px"><table style="width:100%;border-collapse:collapse;font-size:12px">
+<thead><tr style="background:var(--bg)"><th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:600;color:var(--t3)">영역</th>
+<th style="padding:8px 10px;text-align:center;font-size:10px;font-weight:600;color:var(--t3)">점수</th>
+<th style="padding:8px 10px;text-align:center;font-size:10px;font-weight:600;color:var(--t3)">배점</th>
+<th style="padding:8px 10px;text-align:center;font-size:10px;font-weight:600;color:var(--t3)">정답률</th>
+<th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:600;color:var(--t3)">달성도</th></tr></thead><tbody>`;
+lt.sections.forEach(s=>{const pct=s.maxScore>0?Math.round(s.score/s.maxScore*100):0;
+const clr=pct>=70?'var(--ok)':pct>=40?'var(--wn)':'var(--er)';
+h+=`<tr style="border-bottom:1px solid var(--lnl)"><td style="padding:8px 10px;font-weight:500">${s.name||s.section||''}</td>
+<td style="padding:8px 10px;text-align:center;font-weight:700;color:${clr}">${s.score}</td>
+<td style="padding:8px 10px;text-align:center;color:var(--t3)">${s.maxScore}</td>
+<td style="padding:8px 10px;text-align:center;font-weight:600">${pct}%</td>
+<td style="padding:8px 10px"><div style="display:flex;align-items:center;gap:6px">
+<div style="flex:1;height:8px;background:var(--ln);border-radius:4px;overflow:hidden"><div style="width:${pct}%;height:100%;background:${clr};border-radius:4px"></div></div></div></td></tr>`;});
+h+=`</tbody></table></div>`;}
+// 강점/약점 분석
+if(lt.strengths||lt.weaknesses){h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">`;
+if(lt.strengths){h+=`<div style="padding:12px;background:var(--okbg);border-radius:8px;border-left:3px solid var(--ok)">
+<div style="font-size:11px;font-weight:700;color:#15803d;margin-bottom:4px">강점 영역</div>
+<p style="font-size:11px;color:#166534;line-height:1.7">${typeof lt.strengths==='string'?lt.strengths:Array.isArray(lt.strengths)?lt.strengths.join(', '):JSON.stringify(lt.strengths)}</p></div>`;}
+if(lt.weaknesses){h+=`<div style="padding:12px;background:var(--erbg);border-radius:8px;border-left:3px solid var(--er)">
+<div style="font-size:11px;font-weight:700;color:#b91c1c;margin-bottom:4px">보완 영역</div>
+<p style="font-size:11px;color:#991b1b;line-height:1.7">${typeof lt.weaknesses==='string'?lt.weaknesses:Array.isArray(lt.weaknesses)?lt.weaknesses.join(', '):JSON.stringify(lt.weaknesses)}</p></div>`;}
+h+=`</div>`;}
+// AI 분석 / 추천
+if(lt.analysis){h+=`<div style="padding:14px;background:var(--bg);border-radius:8px;margin-bottom:10px">
+<div style="font-size:12px;font-weight:700;margin-bottom:4px">종합 분석</div>
+<p style="font-size:12px;color:var(--t2);line-height:1.8">${typeof lt.analysis==='string'?lt.analysis:JSON.stringify(lt.analysis)}</p></div>`;}
+if(lt.recommendation){h+=`<div style="padding:14px;background:var(--acbg);border-radius:8px;border-left:3px solid var(--ac)">
+<div style="font-size:12px;font-weight:700;color:var(--ac);margin-bottom:4px">학습 방향 추천</div>
+<p style="font-size:12px;color:var(--t1);line-height:1.8">${typeof lt.recommendation==='string'?lt.recommendation:JSON.stringify(lt.recommendation)}</p></div>`;}
+// 기타 필드
+const shown=new Set(['totalScore','maxScore','level','percentile','sections','analysis','recommendation','strengths','weaknesses']);
+const rest=Object.entries(lt).filter(([k])=>!shown.has(k));
+if(rest.length){h+=`<div style="margin-top:12px;padding:12px;background:var(--bg);border-radius:6px">
+<div style="font-size:10px;font-weight:600;color:var(--t3);margin-bottom:6px">추가 데이터</div>`;
+rest.forEach(([k,v])=>{h+=`<div style="display:flex;gap:6px;font-size:11px;padding:3px 0;border-bottom:1px solid var(--lnl)">
+<span style="font-weight:600;color:var(--t2);min-width:80px">${k}</span>
+<span style="color:var(--t1)">${typeof v==='object'?JSON.stringify(v):v}</span></div>`;});
+h+=`</div>`;}
+h+=`</div>`;return h;
+}catch(e){return `<div id="cdCapArea"><p style="color:var(--er)">파싱 오류: ${e.message}</p></div>`;}}
+
+// ── 레벨테스트 차트 렌더 ──
+function renderLtCharts(jsonStr){
+try{const lt=JSON.parse(jsonStr);
+if(!lt.sections||!Array.isArray(lt.sections)||!lt.sections.length)return;
+const labels=lt.sections.map(s=>s.name||s.section||'');
+const pcts=lt.sections.map(s=>s.maxScore>0?Math.round(s.score/s.maxScore*100):0);
+const colors=pcts.map(p=>p>=70?'#22c55e':p>=40?'#f59e0b':'#ef4444');
+// 막대 차트
+const barCv=$('cdLtBar');if(barCv){const c=new Chart(barCv.getContext('2d'),{type:'bar',
+data:{labels,datasets:[{label:'정답률 (%)',data:pcts,backgroundColor:colors.map(c=>c+'30'),borderColor:colors,borderWidth:1.5,borderRadius:4,barPercentage:.7}]},
+options:{responsive:true,scales:{y:{min:0,max:100,ticks:{stepSize:25,font:{size:9},callback:v=>v+'%'},grid:{color:'#f0f0f0'}},x:{ticks:{font:{size:10}},grid:{display:false}}},
+plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.parsed.y+'%'}}}}});cdCharts.push(c);}
+// 레이더 차트
+const radCv=$('cdLtRadar');if(radCv){const c=new Chart(radCv.getContext('2d'),{type:'radar',
+data:{labels,datasets:[{data:pcts,backgroundColor:'rgba(0,102,255,.1)',borderColor:'#0066ff',pointBackgroundColor:colors,pointRadius:5,borderWidth:2}]},
+options:{responsive:true,scales:{r:{min:0,max:100,ticks:{stepSize:25,font:{size:8},backdropColor:'transparent'},pointLabels:{font:{size:10,weight:'500'}},grid:{color:'#e5e5e5'}}},
+plugins:{legend:{display:false}}}});cdCharts.push(c);}
+}catch(e){}}
 
 async function captureCd(name,type){
 ts('이미지 생성 중...','');
