@@ -665,9 +665,9 @@ if(hasPre||hasCurrent||hasPost){
 // 각 단계: [{name:"Algebra", value:38.1, full:42.86}, ...]
 
 const stages=[];
-if(hasPre)stages.push({key:'pre',label:'사전 평가',data:lt.pre,color:'#6366f1'});
-if(hasCurrent)stages.push({key:'current',label:'현재 수준',data:lt.current,color:'#0066ff'});
-if(hasPost)stages.push({key:'post',label:'사후 평가',data:lt.post,color:'#22c55e'});
+if(hasPre)stages.push({key:'pre',label:'선행',data:lt.pre,color:'#6366f1'});
+if(hasCurrent)stages.push({key:'current',label:'현행',data:lt.current,color:'#0066ff'});
+if(hasPost)stages.push({key:'post',label:'후행',data:lt.post,color:'#22c55e'});
 
 // 영역 이름 수집
 const areaNames=[...new Set(stages.flatMap(s=>s.data.map(d=>d.name)))];
@@ -709,20 +709,6 @@ const lastStg=stages[stages.length-1];const ld=lastStg.data.find(x=>x.name===are
 const lp=ld&&fullVal>0?Math.round((ld.value||0)/fullVal*100):0;const lc=lp>=70?'var(--ok)':lp>=40?'var(--wn)':'var(--er)';
 h+=`<td style="padding:8px 10px"><div style="height:8px;background:var(--ln);border-radius:4px;overflow:hidden"><div style="width:${lp}%;height:100%;background:${lc};border-radius:4px"></div></div></td></tr>`;});
 h+=`</tbody></table></div>`;
-
-// 성장 분석 (pre vs post)
-if(hasPre&&hasPost){
-h+=`<div style="font-size:13px;font-weight:700;margin-bottom:8px">성장 분석</div>`;
-h+=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:6px;margin-bottom:14px">`;
-areaNames.forEach(area=>{
-const preD=lt.pre.find(x=>x.name===area);const postD=lt.post.find(x=>x.name===area);
-const preV=preD?preD.value:0;const postV=postD?postD.value:0;
-const diff=postV-preV;const grew=diff>0;
-h+=`<div style="padding:10px;background:${grew?'var(--okbg)':'var(--erbg)'};border-radius:8px;text-align:center">
-<div style="font-size:11px;font-weight:600;color:var(--t2)">${area}</div>
-<div style="font-size:18px;font-weight:800;color:${grew?'var(--ok)':'var(--er)'}">${grew?'+':''}${diff.toFixed(1)}</div>
-<div style="font-size:10px;color:var(--t3)">${preV.toFixed(1)} → ${postV.toFixed(1)}</div></div>`;});
-h+=`</div>`;}
 
 }else if(hasAction||hasContent){
 // === counsel 레벨테스트 구조 (action + content) ===
@@ -841,9 +827,9 @@ const hasPost=lt.post&&Array.isArray(lt.post);
 // pre/current/post 구조
 if(hasPre||hasCurrent||hasPost){
 const stages=[];
-if(hasPre)stages.push({key:'pre',label:'사전',data:lt.pre,color:'#6366f1',bg:'#6366f130'});
-if(hasCurrent)stages.push({key:'current',label:'현재',data:lt.current,color:'#0066ff',bg:'#0066ff30'});
-if(hasPost)stages.push({key:'post',label:'사후',data:lt.post,color:'#22c55e',bg:'#22c55e30'});
+if(hasPre)stages.push({key:'pre',label:'선행',data:lt.pre,color:'#6366f1',bg:'#6366f130'});
+if(hasCurrent)stages.push({key:'current',label:'현행',data:lt.current,color:'#0066ff',bg:'#0066ff30'});
+if(hasPost)stages.push({key:'post',label:'후행',data:lt.post,color:'#22c55e',bg:'#22c55e30'});
 const areaNames=[...new Set(stages.flatMap(s=>s.data.map(d=>d.name)))];
 
 // 그룹 막대 차트
