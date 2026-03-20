@@ -653,11 +653,78 @@ let h=`<div id="cdCapArea" style="padding:16px;background:#fff">`;
 h+=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--ln)">
 <div><div style="font-size:16px;font-weight:700">${name||''}</div><div style="font-size:11px;color:var(--t3)">${st.grade||''} · ${st.school||''} · ${subject} 레벨테스트</div></div></div>`;
 
-// ── 구조 감지: action/content 형태 vs totalScore/sections 형태 ──
+// ── 구조 감지 ──
 const hasAction=lt.action&&Array.isArray(lt.action);
 const hasContent=lt.content&&Array.isArray(lt.content);
+const hasPre=lt.pre&&Array.isArray(lt.pre);
+const hasCurrent=lt.current&&Array.isArray(lt.current);
+const hasPost=lt.post&&Array.isArray(lt.post);
 
-if(hasAction||hasContent){
+if(hasPre||hasCurrent||hasPost){
+// === 수학 레벨테스트 구조 (pre/current/post) ===
+// 각 단계: [{name:"Algebra", value:38.1, full:42.86}, ...]
+
+const stages=[];
+if(hasPre)stages.push({key:'pre',label:'사전 평가',data:lt.pre,color:'#6366f1'});
+if(hasCurrent)stages.push({key:'current',label:'현재 수준',data:lt.current,color:'#0066ff'});
+if(hasPost)stages.push({key:'post',label:'사후 평가',data:lt.post,color:'#22c55e'});
+
+// 영역 이름 수집
+const areaNames=[...new Set(stages.flatMap(s=>s.data.map(d=>d.name)))];
+
+// 총점 카드
+h+=`<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">`;
+stages.forEach(stg=>{
+const total=stg.data.reduce((s,d)=>s+(d.value||0),0);
+const maxTotal=stg.data.reduce((s,d)=>s+(d.full||0),0);
+const pct=maxTotal>0?Math.round(total/maxTotal*100):0;
+const clr=pct>=70?'var(--ok)':pct>=40?'var(--wn)':'var(--er)';
+h+=`<div style="flex:1;min-width:100px;padding:14px;background:var(--bg);border-radius:10px;text-align:center;border:2px solid ${stg.color}20">
+<div style="font-size:10px;font-weight:700;color:${stg.color};margin-bottom:4px">${stg.label}</div>
+<div style="font-size:24px;font-weight:800;color:${clr}">${total.toFixed(1)}<span style="font-size:12px;font-weight:400;color:var(--t3)">/${maxTotal.toFixed(1)}</span></div>
+<div style="font-size:10px;color:var(--t3);margin-top:2px">${pct}%</div></div>`;});
+h+=`</div>`;
+
+// 성장 추이 비교 차트
+h+=`<div style="font-size:13px;font-weight:700;margin-bottom:10px">영역별 성취도 비교</div>
+<div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:16px;flex-wrap:wrap">
+<div style="flex:1;min-width:220px"><canvas id="cdLtBar"></canvas></div>
+<div style="flex:1;min-width:180px"><canvas id="cdLtRadar"></canvas></div></div>`;
+
+// 영역별 상세 테이블
+h+=`<div style="overflow-x:auto;margin-bottom:16px"><table style="width:100%;border-collapse:collapse;font-size:12px">
+<thead><tr style="background:var(--bg)"><th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:600;color:var(--t3)">영역</th>`;
+stages.forEach(stg=>{h+=`<th style="padding:8px 10px;text-align:center;font-size:10px;font-weight:600;color:${stg.color}">${stg.label}</th>`;});
+h+=`<th style="padding:8px 10px;text-align:center;font-size:10px;font-weight:600;color:var(--t3)">배점</th>
+<th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:600;color:var(--t3)">달성도</th></tr></thead><tbody>`;
+areaNames.forEach(area=>{
+h+=`<tr style="border-bottom:1px solid var(--lnl)"><td style="padding:8px 10px;font-weight:500">${area}</td>`;
+let fullVal=0;
+stages.forEach(stg=>{const d=stg.data.find(x=>x.name===area);const v=d?d.value:0;if(d&&d.full)fullVal=d.full;
+const pct=fullVal>0?Math.round(v/fullVal*100):0;const clr=pct>=70?'var(--ok)':pct>=40?'var(--wn)':'var(--er)';
+h+=`<td style="padding:8px 10px;text-align:center;font-weight:700;color:${clr}">${v.toFixed?v.toFixed(1):v}</td>`;});
+h+=`<td style="padding:8px 10px;text-align:center;color:var(--t3)">${fullVal.toFixed?fullVal.toFixed(1):fullVal}</td>`;
+// 달성도 바 (마지막 단계 기준)
+const lastStg=stages[stages.length-1];const ld=lastStg.data.find(x=>x.name===area);
+const lp=ld&&fullVal>0?Math.round((ld.value||0)/fullVal*100):0;const lc=lp>=70?'var(--ok)':lp>=40?'var(--wn)':'var(--er)';
+h+=`<td style="padding:8px 10px"><div style="height:8px;background:var(--ln);border-radius:4px;overflow:hidden"><div style="width:${lp}%;height:100%;background:${lc};border-radius:4px"></div></div></td></tr>`;});
+h+=`</tbody></table></div>`;
+
+// 성장 분석 (pre vs post)
+if(hasPre&&hasPost){
+h+=`<div style="font-size:13px;font-weight:700;margin-bottom:8px">성장 분석</div>`;
+h+=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:6px;margin-bottom:14px">`;
+areaNames.forEach(area=>{
+const preD=lt.pre.find(x=>x.name===area);const postD=lt.post.find(x=>x.name===area);
+const preV=preD?preD.value:0;const postV=postD?postD.value:0;
+const diff=postV-preV;const grew=diff>0;
+h+=`<div style="padding:10px;background:${grew?'var(--okbg)':'var(--erbg)'};border-radius:8px;text-align:center">
+<div style="font-size:11px;font-weight:600;color:var(--t2)">${area}</div>
+<div style="font-size:18px;font-weight:800;color:${grew?'var(--ok)':'var(--er)'}">${grew?'+':''}${diff.toFixed(1)}</div>
+<div style="font-size:10px;color:var(--t3)">${preV.toFixed(1)} → ${postV.toFixed(1)}</div></div>`;});
+h+=`</div>`;}
+
+}else if(hasAction||hasContent){
 // === counsel 레벨테스트 구조 (action + content) ===
 
 // action: 영역별 배점 [{subject,A,fullMark}]
@@ -753,7 +820,7 @@ if(lt.recommendation)h+=`<div style="padding:14px;background:var(--acbg);border-
 }
 
 // 기타 필드 (알려진 필드 제외)
-const known=new Set(['action','content','totalScore','maxScore','level','percentile','sections','analysis','recommendation','strengths','weaknesses']);
+const known=new Set(['action','content','pre','current','post','totalScore','maxScore','level','percentile','sections','analysis','recommendation','strengths','weaknesses']);
 const rest=Object.entries(lt).filter(([k])=>!known.has(k));
 if(rest.length){h+=`<div style="margin-top:12px;padding:12px;background:var(--bg);border-radius:6px"><div style="font-size:10px;font-weight:600;color:var(--t3);margin-bottom:6px">추가 데이터</div>`;
 rest.forEach(([k,v])=>{h+=`<div style="display:flex;gap:6px;font-size:11px;padding:3px 0;border-bottom:1px solid var(--lnl)"><span style="font-weight:600;color:var(--t2);min-width:80px">${k}</span><span style="color:var(--t1)">${typeof v==='object'?JSON.stringify(v):v}</span></div>`;});
@@ -767,6 +834,34 @@ try{const lt=JSON.parse(jsonStr);
 const hasAction=lt.action&&Array.isArray(lt.action)&&lt.action.length;
 const hasContent=lt.content&&Array.isArray(lt.content)&&lt.content.length;
 const hasSections=lt.sections&&Array.isArray(lt.sections)&&lt.sections.length;
+const hasPre=lt.pre&&Array.isArray(lt.pre);
+const hasCurrent=lt.current&&Array.isArray(lt.current);
+const hasPost=lt.post&&Array.isArray(lt.post);
+
+// pre/current/post 구조
+if(hasPre||hasCurrent||hasPost){
+const stages=[];
+if(hasPre)stages.push({key:'pre',label:'사전',data:lt.pre,color:'#6366f1',bg:'#6366f130'});
+if(hasCurrent)stages.push({key:'current',label:'현재',data:lt.current,color:'#0066ff',bg:'#0066ff30'});
+if(hasPost)stages.push({key:'post',label:'사후',data:lt.post,color:'#22c55e',bg:'#22c55e30'});
+const areaNames=[...new Set(stages.flatMap(s=>s.data.map(d=>d.name)))];
+
+// 그룹 막대 차트
+const barCv=$('cdLtBar');if(barCv){const c=new Chart(barCv.getContext('2d'),{type:'bar',
+data:{labels:areaNames,datasets:stages.map(stg=>({label:stg.label,
+data:areaNames.map(a=>{const d=stg.data.find(x=>x.name===a);return d?Math.round((d.value||0)/(d.full||1)*100):0;}),
+backgroundColor:stg.bg,borderColor:stg.color,borderWidth:1.5,borderRadius:3,barPercentage:.7}))},
+options:{responsive:true,scales:{y:{min:0,max:100,ticks:{stepSize:25,font:{size:9},callback:v=>v+'%'},grid:{color:'#f0f0f0'}},x:{ticks:{font:{size:11,weight:'500'}},grid:{display:false}}},
+plugins:{legend:{position:'bottom',labels:{font:{size:10},usePointStyle:true,padding:10}}}}});cdCharts.push(c);}
+
+// 레이더 차트
+const radCv=$('cdLtRadar');if(radCv){const c=new Chart(radCv.getContext('2d'),{type:'radar',
+data:{labels:areaNames,datasets:stages.map(stg=>({label:stg.label,
+data:areaNames.map(a=>{const d=stg.data.find(x=>x.name===a);return d?Math.round((d.value||0)/(d.full||1)*100):0;}),
+backgroundColor:stg.bg,borderColor:stg.color,pointBackgroundColor:stg.color,pointRadius:4,borderWidth:2}))},
+options:{responsive:true,scales:{r:{min:0,max:100,ticks:{stepSize:25,font:{size:8},backdropColor:'transparent'},pointLabels:{font:{size:11,weight:'600'}},grid:{color:'#e5e5e5'}}},
+plugins:{legend:{position:'bottom',labels:{font:{size:10},usePointStyle:true}}}}});cdCharts.push(c);}
+return;}
 
 // action 기반 차트 (영역별)
 if(hasAction){
