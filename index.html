@@ -207,7 +207,7 @@ a{color:var(--ac);text-decoration:none}::selection{background:var(--acbg)}
 
 <!-- EVAL GRID -->
 <div class="pg" id="p-eval">
-<div class="eval-top"><button class="btn btn-g btn-sm" onclick="nav('p-dash')">← 뒤로</button><div><div class="eval-title" id="eH"></div><div class="eval-sub" id="eSub"></div></div><div style="margin-left:auto"><span class="chip chip-n" id="eProg">0/0</span></div></div>
+<div class="eval-top"><button class="btn btn-g btn-sm" onclick="nav('p-dash')">← 뒤로</button><div><div class="eval-title" id="eH"></div><div class="eval-sub" id="eSub"></div></div><div style="margin-left:auto;display:flex;align-items:center;gap:8px"><input type="date" id="eDate" class="ipt" style="height:28px;font-size:12px" onchange="loadEvalDate()"><span class="chip chip-n" id="eProg">0/0</span><span class="chip chip-n" id="eMode" style="display:none">수정모드</span></div></div>
 <div class="grid-wrap"><table class="grid" id="eGrid"><thead></thead><tbody></tbody></table></div>
 </div>
 <div class="save-bar" id="saveBar"><div class="info"><strong id="saveC">0</strong>명 완료</div><button class="btn btn-a" id="saveBtn" onclick="doSave()" disabled>저장</button></div>
@@ -356,30 +356,73 @@ return`<div class="cls-card" onclick="oC('${esc(c.name)}')"><div class="cls-ico"
 // ==============================
 // EVAL GRID — 핵심 재설계
 // ==============================
-async function oC(cn){sh('');S.cc=cn;S.ev={};const r=await gA('tp_students',{className:cn,token:S.tk});hd();
-if(!r.ok){ts(r.error,'er');return;}S.sts=r.students;$('eH').textContent=cn;$('eSub').textContent=r.subject+' · '+r.students.length+'명';
-buildGrid();nav('p-eval');$('saveBar').style.display='flex';}
+async function oC(cn){sh('');S.cc=cn;S.ev={};S.existingEvals={};
+const r=await gA('tp_students',{className:cn,token:S.tk});hd();
+if(!r.ok){ts(r.error,'er');return;}S.sts=r.students;S.evalSubject=r.subject;
+$('eH').textContent=cn;$('eSub').textContent=r.subject+' · '+r.students.length+'명';
+// 오늘 날짜 기본 설정
+const today=new Date();const tz=today.toLocaleDateString('sv-SE',{timeZone:'Asia/Seoul'});
+$('eDate').value=tz;
+nav('p-eval');$('saveBar').style.display='flex';
+await loadEvalDate();}
+
+async function loadEvalDate(){const date=$('eDate').value;if(!date||!S.cc)return;
+S.ev={};S.existingEvals={};
+sh('조회 중...');
+try{const r=await gA('tp_getMyEvals',{teacherLogId:S.t.logId,date:date,className:S.cc,token:S.tk});
+if(r.ok&&r.evals){S.existingEvals=r.evals;}}catch(e){}
+hd();
+const hasExisting=Object.keys(S.existingEvals).length>0;
+$('eMode').style.display=hasExisting?'inline-flex':'none';
+$('eMode').textContent=hasExisting?'수정모드':'';
+buildGrid();}
 
 function buildGrid(){const cfg=S.cf||{};const scales=cfg.scales||['5점 (완벽)','4점 (우수)','3점 (보통)','2점 (미흡)','1점 (불량)'];
 const nums=scales.map(s=>{const m=s.match(/(\d)/);return m?m[1]:'?';});
 const g=$('eGrid');
 g.querySelector('thead').innerHTML=`<tr><th style="min-width:90px">학생</th><th>결석</th><th>과제</th><th>이해</th><th>집중</th><th>끈기</th><th style="width:36px"></th></tr>`;
 g.querySelector('tbody').innerHTML=S.sts.map((st,i)=>{
-const scCells=['hw','ud','fc','ps'].map(f=>`<td><div class="sc-group">${nums.map((n,j)=>`<button class="sc-btn" data-i="${i}" data-f="${f}" data-v="${scales[j]}" data-n="${n}" onclick="gSc(this)">${n}</button>`).join('')}</div></td>`).join('');
-return`<tr id="gr${i}"><td>${st.name}<br><span style="font-size:10px;color:var(--t3)">${st.grade}</span></td>
-<td class="abs-cell" onclick="gAbs(${i})"><div class="abs-check" id="ga${i}">✓</div></td>
+// 기존 데이터 확인
+const ex=S.existingEvals[st.name];
+if(ex){
+if(!S.ev[i])S.ev[i]={};
+if(ex.isAbsent)S.ev[i]._absent=true;
+if(ex.homework)S.ev[i].hw=ex.homework;
+if(ex.understanding)S.ev[i].ud=ex.understanding;
+if(ex.focus)S.ev[i].fc=ex.focus;
+if(ex.persistence)S.ev[i].ps=ex.persistence;
+if(ex.growthPoints)S.ev[i].gp=ex.growthPoints;
+if(ex.weaknesses)S.ev[i].wk=ex.weaknesses;
+if(ex.mgmtAreas)S.ev[i].mg=ex.mgmtAreas;
+if(ex.urgentAction)S.ev[i].ua=ex.urgentAction;
+if(ex.comment)S.ev[i].cm=ex.comment;
+}
+const ev=S.ev[i]||{};
+const isAbs=ev._absent;
+const scCells=['hw','ud','fc','ps'].map(f=>{
+const curV=ev[f]||'';
+return`<td><div class="sc-group">${nums.map((n,j)=>`<button class="sc-btn${curV===scales[j]?' on':''}" data-i="${i}" data-f="${f}" data-v="${scales[j]}" data-n="${n}" onclick="gSc(this)">${n}</button>`).join('')}</div></td>`;}).join('');
+const isDone=isAbs||(ev.hw&&ev.ud&&ev.fc&&ev.ps);
+return`<tr id="gr${i}" class="${isAbs?'absent':''}${isDone?' done':''}"><td>${st.name}<br><span style="font-size:10px;color:var(--t3)">${st.grade}</span></td>
+<td class="abs-cell" onclick="gAbs(${i})"><div class="abs-check${isAbs?' on':''}" id="ga${i}">✓</div></td>
 ${scCells}
 <td><button class="btn btn-g btn-sm" style="padding:0 6px;font-size:10px" onclick="gDet(${i})">⋯</button></td></tr>
 <tr class="detail-row" id="dr${i}"><td colspan="7"><div class="detail-inner" id="di${i}">${buildDetail(st,i)}</div></td></tr>`;}).join('');
 uProg();}
 
 function buildDetail(st,i){const cfg=S.cf||{};const gp=cfg.growthPts||[];const wk=cfg.weaknesses||[];const mg=cfg.mgmtAreas||[];const ua=cfg.urgentActions||[];
+const ev=S.ev[i]||{};
+const gpSel=(ev.gp||'').split(', ').filter(Boolean);
+const wkSel=(ev.wk||'').split(', ').filter(Boolean);
+const mgSel=(ev.mg||'').split(', ').filter(Boolean);
+const uaSel=ev.ua||'';
+const cm=ev.cm||'';
 return`<div class="detail-grid">
-${gp.length?`<div><div class="det-label">성장 포인트</div><div class="ms">${gp.map(g=>`<label><input type="checkbox" data-i="${i}" data-f="gp" value="${esc(g)}" onchange="gChk(${i},'gp')">${g}</label>`).join('')}</div></div>`:''}
-${wk.length?`<div><div class="det-label">학업 약점</div><div class="ms">${wk.map(w=>`<label><input type="checkbox" data-i="${i}" data-f="wk" value="${esc(w)}" onchange="gChk(${i},'wk')">${w}</label>`).join('')}</div></div>`:''}
-${mg.length?`<div><div class="det-label">관리 영역</div><div class="ms">${mg.map(m=>`<label><input type="checkbox" data-i="${i}" data-f="mg" value="${esc(m)}" onchange="gChk(${i},'mg')">${m}</label>`).join('')}</div></div>`:''}
-${ua.length?`<div><div class="det-label">긴급 조치</div><div class="ms">${ua.map(u=>`<label><input type="radio" name="ua${i}" data-i="${i}" data-f="ua" value="${esc(u)}" onchange="gRad(this)">${u}</label>`).join('')}</div></div>`:''}
-</div><div style="margin-top:6px"><div class="det-label">코멘트</div><textarea class="det-ta" data-i="${i}" oninput="gCm(this)" placeholder="코멘트 입력"></textarea></div>`;}
+${gp.length?`<div><div class="det-label">성장 포인트</div><div class="ms">${gp.map(g=>`<label class="${gpSel.includes(g)?'ck':''}"><input type="checkbox" data-i="${i}" data-f="gp" value="${esc(g)}" ${gpSel.includes(g)?'checked':''} onchange="gChk(${i},'gp')">${g}</label>`).join('')}</div></div>`:''}
+${wk.length?`<div><div class="det-label">학업 약점</div><div class="ms">${wk.map(w=>`<label class="${wkSel.includes(w)?'ck':''}"><input type="checkbox" data-i="${i}" data-f="wk" value="${esc(w)}" ${wkSel.includes(w)?'checked':''} onchange="gChk(${i},'wk')">${w}</label>`).join('')}</div></div>`:''}
+${mg.length?`<div><div class="det-label">관리 영역</div><div class="ms">${mg.map(m=>`<label class="${mgSel.includes(m)?'ck':''}"><input type="checkbox" data-i="${i}" data-f="mg" value="${esc(m)}" ${mgSel.includes(m)?'checked':''} onchange="gChk(${i},'mg')">${m}</label>`).join('')}</div></div>`:''}
+${ua.length?`<div><div class="det-label">긴급 조치</div><div class="ms">${ua.map(u=>`<label class="${uaSel===u?'ck':''}"><input type="radio" name="ua${i}" data-i="${i}" data-f="ua" value="${esc(u)}" ${uaSel===u?'checked':''} onchange="gRad(this)">${u}</label>`).join('')}</div></div>`:''}
+</div><div style="margin-top:6px"><div class="det-label">코멘트</div><textarea class="det-ta" data-i="${i}" oninput="gCm(this)" placeholder="코멘트 입력">${cm}</textarea></div>`;}
 
 function gSc(btn){const{i,f,v}=btn.dataset;btn.parentElement.querySelectorAll('.sc-btn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');
 if(!S.ev[i])S.ev[i]={};S.ev[i][f]=v;uRow(+i);uProg();}
@@ -406,12 +449,13 @@ function uProg(){let d=0;S.sts.forEach((st,i)=>{const e=S.ev[i]||{};if(e._absent
 $('eProg').textContent=`${d}/${S.sts.length}`;$('saveC').textContent=d;$('saveBtn').disabled=d===0;}
 
 async function doSave(){const btn=$('saveBtn');btn.disabled=true;btn.textContent='저장 중...';
+const evalDate=$('eDate').value;
 const evs=[];S.sts.forEach((st,i)=>{const e=S.ev[i]||{};const isAbs=e._absent;
 if(!isAbs&&(!e.hw||!e.ud||!e.fc||!e.ps))return;
 evs.push({studentName:st.name,className:S.cc,isAbsent:!!isAbs,homework:e.hw||'',understanding:e.ud||'',focus:e.fc||'',persistence:e.ps||'',
 growthPoints:e.gp||'',weaknesses:e.wk||'',mgmtAreas:e.mg||'',urgentAction:e.ua||'',comment:e.cm||''});});
 if(!evs.length){ts('저장할 데이터 없음','er');btn.disabled=false;btn.textContent='저장';return;}
-try{const r=await pA({action:'tp_saveEval',evaluations:evs,teacherLogId:S.t.logId,token:S.tk});
+try{const r=await pA({action:'tp_saveEval',evaluations:evs,teacherLogId:S.t.logId,evalDate:evalDate,token:S.tk});
 if(r.ok){ts(r.message,'ok');setTimeout(()=>nav('p-dash'),600);}else ts(r.error,'er');}
 catch(e){ts('연결 실패','er');}finally{btn.disabled=false;btn.textContent='저장';}}
 
