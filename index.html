@@ -193,6 +193,47 @@ a{color:var(--inf);text-decoration:none}
 <!-- COMMON: REPORTS -->
 <div class="pg" id="p-rpt"><h1 class="pt">2주 리포트</h1><p class="pd">학생 프로필에서 리포트를 확인하세요</p><div class="tbar"><input type="text" id="rpSrch" placeholder="학생 이름 검색" oninput="fRp()"></div><div class="cd" id="rpL"></div></div>
 
+<!-- STATS -->
+<div class="pg" id="p-stats">
+<h1 class="pt">평가 통계</h1><p class="pd">학생별 추이 그래프 + 강사별 입력 현황</p>
+<div class="cd"><div class="ct">📈 학생별 성적 추이</div>
+<div class="tbar"><input type="text" id="stTrendSrch" placeholder="학생 이름 입력" style="flex:1;max-width:240px">
+<select id="stTrendDays" class="fi" style="width:auto"><option value="14">최근 2주</option><option value="30" selected>최근 1개월</option><option value="60">최근 2개월</option><option value="90">최근 3개월</option></select>
+<button class="bs bgd" onclick="loadStudentTrend()">조회</button></div>
+<div id="trendResult"></div>
+</div>
+<div class="cd" id="statsTeacher"><div class="ct">👩‍🏫 강사별 평가 현황</div>
+<div class="tbar"><select id="stStatsDays" class="fi" style="width:auto"><option value="7">최근 7일</option><option value="14" selected>최근 2주</option><option value="30">최근 1개월</option></select>
+<button class="bs" onclick="loadTeacherStats()">조회</button></div>
+<div id="statsResult"></div></div>
+</div>
+
+<!-- STATISTICS -->
+<div class="pg" id="p-stat">
+<h1 class="pt">평가 통계</h1><p class="pd">학생별 성장 추이와 강사별 입력 현황</p>
+<div class="cd">
+<div class="ct">📈 학생별 성장 추이</div>
+<div class="tbar"><input type="text" id="statSrch" placeholder="학생 이름 검색" list="statList" style="min-width:200px"><datalist id="statList"></datalist>
+<select id="statDays"><option value="14">최근 2주</option><option value="30" selected>최근 1개월</option><option value="60">최근 2개월</option><option value="90">최근 3개월</option></select>
+<button class="bs bgd" onclick="loadStudentTrend()">조회</button></div>
+<div id="trendResult" style="display:none">
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px" id="trendAvgs"></div>
+<div style="max-width:680px"><canvas id="trendChart"></canvas></div>
+<div style="display:flex;gap:16px;margin-top:16px;flex-wrap:wrap" id="trendTags"></div>
+</div>
+<div id="trendEmpty" class="emp"><div class="ej">📊</div><p>학생 이름을 입력하고 조회하세요</p></div>
+</div>
+<div class="cd" id="statsTeacherCard">
+<div class="ct">👩‍🏫 강사별 입력 현황</div>
+<div class="tbar"><select id="statsDays2"><option value="7">최근 1주</option><option value="14" selected>최근 2주</option><option value="30">최근 1개월</option></select>
+<button class="bs" onclick="loadTeacherStats()">조회</button></div>
+<div id="teacherStatsResult">
+<div style="max-width:680px;margin-bottom:16px"><canvas id="teacherChart"></canvas></div>
+<div class="tw"><table class="tb" id="teacherStatsTbl"><thead></thead><tbody></tbody></table></div>
+</div>
+</div>
+</div>
+
 <!-- PROFILE -->
 <div class="pg" id="p-prof"><div class="etb"><button class="eback" id="prBk" onclick="nav(S.pf)">← 돌아가기</button><h1 class="pt" id="prTi">프로필</h1></div><div id="prC"></div></div>
 
@@ -242,6 +283,7 @@ const MN=[
 {id:'p-alog',ic:'📋',lb:'일일 평가 관리',r:'관리자'},
 {id:'p-atc',ic:'👩‍🏫',lb:'강사 계정',r:'관리자'},
 {sec:'공통',r:'all'},
+{id:'p-stats',ic:'📈',lb:'평가 통계',r:'all'},
 {id:'p-psy',ic:'🧠',lb:'학생 성향 조회',r:'all'},
 {id:'p-rpt',ic:'📄',lb:'2주 리포트',r:'all'},
 ];
@@ -258,7 +300,7 @@ const pg=$(pid);if(pg)pg.classList.add('on');const ni=document.querySelector(`.n
 $('tbTi').textContent=ni?ni.textContent.trim():'';$('svb').style.display=pid==='p-eval'?'flex':'none';
 $('side').classList.remove('op');lPg(pid);}
 
-async function lPg(p){try{switch(p){case'p-dash':await lDash();break;case'p-alog':await lALog();break;case'p-ast':await lSts();break;case'p-acl':await lCls();break;case'p-atc':await lTcs();break;case'p-rpt':await lRpt();break;case'p-psy':await lPsy();break;}}catch(e){ts(e.message,'er');}}
+async function lPg(p){try{switch(p){case'p-dash':await lDash();break;case'p-alog':await lALog();break;case'p-ast':await lSts();break;case'p-acl':await lCls();break;case'p-atc':await lTcs();break;case'p-rpt':await lRpt();break;case'p-psy':await lPsy();break;case'p-stats':await lStats();break;}}catch(e){ts(e.message,'er');}}
 
 // LOGIN
 async function doLogin(){const nm=$('lnm').value.trim(),pw=$('lpw').value.trim(),er=$('lerr'),bt=$('lbtn');
@@ -412,6 +454,86 @@ async function lRpt(){if(!S.allSt.length){try{const r=await gA('tp_admin_allStud
 function rRP(sts){const ac=sts.filter(s=>s.status!=='퇴원');$('rpL').innerHTML=`<div class="tw"><table class="tb"><thead><tr><th>이름</th><th>학년</th><th>학교</th><th></th></tr></thead><tbody>
 ${ac.map(s=>`<tr><td>${s.name}</td><td>${s.grade}</td><td>${s.school||''}</td><td><a href="#" onclick="oPr('${esc(s.name)}','p-rpt');return false" style="font-size:.82rem">프로필 · 리포트</a></td></tr>`).join('')}</tbody></table></div>`;}
 function fRp(){const q=$('rpSrch').value.trim().toLowerCase();rRP(S.allSt.filter(s=>s.name.toLowerCase().includes(q)));}
+
+// STATS
+let trendChart=null,dailyChart=null,teacherChart=null;
+async function lStats(){loadTeacherStats();}
+
+async function loadStudentTrend(){
+const name=$('stTrendSrch').value.trim();if(!name){ts('학생 이름을 입력하세요','er');return;}
+const days=$('stTrendDays').value;sh('추이 로딩...');
+const r=await gA('tp_evalTrend',{student:name,days,token:S.tk});hd();
+if(!r.ok){ts(r.error,'er');$('trendResult').innerHTML=`<p style="color:var(--er);font-size:.82rem">${r.error}</p>`;return;}
+if(!r.trend.length){$('trendResult').innerHTML='<div class="emp"><div class="ej">📭</div><p>해당 기간에 평가 데이터가 없습니다</p></div>';return;}
+
+let h=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+<div style="padding:10px 16px;background:var(--bg);border-radius:8px;text-align:center"><div style="font-size:.68rem;color:var(--sb)">총 평가</div><div style="font-size:1.2rem;font-weight:700;color:var(--nv)">${r.totalEntries}회</div></div>
+<div style="padding:10px 16px;background:var(--bg);border-radius:8px;text-align:center"><div style="font-size:.68rem;color:var(--sb)">과제 평균</div><div style="font-size:1.2rem;font-weight:700;color:var(--nv)">${r.averages.homework||'-'}</div></div>
+<div style="padding:10px 16px;background:var(--bg);border-radius:8px;text-align:center"><div style="font-size:.68rem;color:var(--sb)">이해도 평균</div><div style="font-size:1.2rem;font-weight:700;color:var(--nv)">${r.averages.understanding||'-'}</div></div>
+<div style="padding:10px 16px;background:var(--bg);border-radius:8px;text-align:center"><div style="font-size:.68rem;color:var(--sb)">집중도 평균</div><div style="font-size:1.2rem;font-weight:700;color:var(--nv)">${r.averages.focus||'-'}</div></div>
+<div style="padding:10px 16px;background:var(--bg);border-radius:8px;text-align:center"><div style="font-size:.68rem;color:var(--sb)">끈기 평균</div><div style="font-size:1.2rem;font-weight:700;color:var(--nv)">${r.averages.persistence||'-'}</div></div></div>
+<canvas id="trendCanvas" style="margin-bottom:20px"></canvas>`;
+
+if(r.topGrowthPoints.length||r.topWeaknesses.length){
+h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">`;
+if(r.topGrowthPoints.length)h+=`<div style="padding:12px;border:1px solid var(--bd);border-radius:8px"><div style="font-size:.72rem;font-weight:600;color:var(--ok);margin-bottom:8px">성장 포인트 TOP</div>${r.topGrowthPoints.map(g=>`<div style="display:flex;justify-content:space-between;font-size:.78rem;padding:3px 0"><span>${g.name}</span><span style="color:var(--sb)">${g.count}회</span></div>`).join('')}</div>`;
+if(r.topWeaknesses.length)h+=`<div style="padding:12px;border:1px solid var(--bd);border-radius:8px"><div style="font-size:.72rem;font-weight:600;color:var(--er);margin-bottom:8px">주요 약점 TOP</div>${r.topWeaknesses.map(w=>`<div style="display:flex;justify-content:space-between;font-size:.78rem;padding:3px 0"><span>${w.name}</span><span style="color:var(--sb)">${w.count}회</span></div>`).join('')}</div>`;
+h+=`</div>`;}
+
+$('trendResult').innerHTML=h;
+if(trendChart){trendChart.destroy();}
+const labels=r.trend.map(t=>t.date.slice(5));
+trendChart=new Chart($('trendCanvas').getContext('2d'),{type:'line',
+data:{labels,datasets:[
+{label:'과제',data:r.trend.map(t=>t.homework),borderColor:'#534AB7',backgroundColor:'#534AB733',tension:.3,pointRadius:4,borderWidth:2},
+{label:'이해도',data:r.trend.map(t=>t.understanding),borderColor:'#1D9E75',backgroundColor:'#1D9E7533',tension:.3,pointRadius:4,borderWidth:2},
+{label:'집중도',data:r.trend.map(t=>t.focus),borderColor:'#D85A30',backgroundColor:'#D85A3033',tension:.3,pointRadius:4,borderWidth:2},
+{label:'끈기',data:r.trend.map(t=>t.persistence),borderColor:'#378ADD',backgroundColor:'#378ADD33',tension:.3,pointRadius:4,borderWidth:2}]},
+options:{responsive:true,scales:{y:{min:0,max:5.5,ticks:{stepSize:1,font:{size:11}},grid:{color:'rgba(0,0,0,.05)'}},x:{ticks:{font:{size:10}},grid:{display:false}}},
+plugins:{legend:{position:'bottom',labels:{font:{size:11,family:'Noto Sans KR'},usePointStyle:true,padding:16}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+c.raw+'점'}}}}});}
+
+async function loadTeacherStats(){
+const days=$('stStatsDays').value;sh('통계 로딩...');
+const r=await gA('tp_evalStats',{days,token:S.tk});hd();
+if(!r.ok){ts(r.error,'er');return;}
+
+let h=`<div style="margin-bottom:16px;font-size:.82rem;color:var(--sb)">기간: 최근 ${r.period} · 총 ${r.totalEntries}건</div>`;
+
+// 강사별 테이블
+if(r.teachers.length){h+=`<div class="tw" style="margin-bottom:20px"><table class="tb"><thead><tr><th>강사</th><th>입력수</th><th>활동일</th><th>과제</th><th>이해</th><th>집중</th><th>끈기</th></tr></thead><tbody>
+${r.teachers.map(t=>`<tr><td style="font-weight:600">${t.teacher}</td><td>${t.totalEntries}</td><td>${t.activeDays}일</td>
+<td style="color:${t.avgHomework>=4?'var(--ok)':t.avgHomework>=3?'var(--nv)':'var(--er)'};font-weight:600">${t.avgHomework||'-'}</td>
+<td style="color:${t.avgUnderstanding>=4?'var(--ok)':t.avgUnderstanding>=3?'var(--nv)':'var(--er)'};font-weight:600">${t.avgUnderstanding||'-'}</td>
+<td style="color:${t.avgFocus>=4?'var(--ok)':t.avgFocus>=3?'var(--nv)':'var(--er)'};font-weight:600">${t.avgFocus||'-'}</td>
+<td style="color:${t.avgPersistence>=4?'var(--ok)':t.avgPersistence>=3?'var(--nv)':'var(--er)'};font-weight:600">${t.avgPersistence||'-'}</td></tr>`).join('')}
+</tbody></table></div>`;}
+
+// 강사별 입력수 바 차트
+h+=`<canvas id="teacherCanvas" style="margin-bottom:20px"></canvas>`;
+
+// 일별 추이
+if(r.dailyTrend.length){h+=`<div style="margin-top:16px"><div style="font-size:.82rem;font-weight:600;color:var(--nv);margin-bottom:8px">일별 평가 입력 추이</div><canvas id="dailyCanvas"></canvas></div>`;}
+
+$('statsResult').innerHTML=h;
+
+// 강사별 바 차트
+if(r.teachers.length){
+if(teacherChart)teacherChart.destroy();
+teacherChart=new Chart($('teacherCanvas').getContext('2d'),{type:'bar',
+data:{labels:r.teachers.map(t=>t.teacher.replace(/^(국어|영어|수학)_/,'')),datasets:[
+{label:'과제',data:r.teachers.map(t=>t.avgHomework),backgroundColor:'#534AB755',borderColor:'#534AB7',borderWidth:1,borderRadius:4},
+{label:'이해도',data:r.teachers.map(t=>t.avgUnderstanding),backgroundColor:'#1D9E7555',borderColor:'#1D9E75',borderWidth:1,borderRadius:4},
+{label:'집중도',data:r.teachers.map(t=>t.avgFocus),backgroundColor:'#D85A3055',borderColor:'#D85A30',borderWidth:1,borderRadius:4},
+{label:'끈기',data:r.teachers.map(t=>t.avgPersistence),backgroundColor:'#378ADD55',borderColor:'#378ADD',borderWidth:1,borderRadius:4}]},
+options:{responsive:true,scales:{y:{min:0,max:5.5,ticks:{stepSize:1}},x:{ticks:{font:{size:10}}}},
+plugins:{legend:{position:'bottom',labels:{font:{size:11,family:'Noto Sans KR'},usePointStyle:true}}}}});}
+
+// 일별 추이
+if(r.dailyTrend.length&&$('dailyCanvas')){
+if(dailyChart)dailyChart.destroy();
+dailyChart=new Chart($('dailyCanvas').getContext('2d'),{type:'bar',
+data:{labels:r.dailyTrend.map(d=>d.date.slice(5)),datasets:[{label:'입력 건수',data:r.dailyTrend.map(d=>d.count),backgroundColor:'#D4A84355',borderColor:'#D4A843',borderWidth:1,borderRadius:4}]},
+options:{responsive:true,scales:{y:{beginAtZero:true,ticks:{stepSize:5}},x:{ticks:{font:{size:9}}}},plugins:{legend:{display:false}}}});}}
 
 // PROFILE — FULL VISUALIZATION
 const LBL={intrinsic_motivation:'내재적 동기',identified_regulation:'동일시 조절',self_efficacy:'자기효능감',achievement_pressure:'성취 압박감',academic_lethargy:'학업 무기력',
