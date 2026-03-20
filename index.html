@@ -172,7 +172,7 @@ a{color:var(--inf);text-decoration:none}
 <div class="main">
 
 <!-- DASHBOARD -->
-<div class="pg" id="p-dash"><h1 class="pt" id="dT"></h1><p class="pd" id="dD"></p><div class="sr" id="dS"></div><div class="cd"><div class="ct">📚 반별 평가 현황</div><div id="dC" class="cg"></div></div></div>
+<div class="pg" id="p-dash"><h1 class="pt" id="dT"></h1><p class="pd" id="dD"></p><div class="sr" id="dS"></div><div id="dAdmin" style="display:none;margin-bottom:16px"><button class="bs bgd" onclick="doSync()" id="syncBtn" style="padding:10px 20px">🔄 counsel 성향분석 동기화</button><span id="syncResult" style="font-size:.82rem;color:var(--sb);margin-left:12px"></span></div><div class="cd"><div class="ct">📚 반별 평가 현황</div><div id="dC" class="cg"></div></div></div>
 
 <!-- EVAL INPUT -->
 <div class="pg" id="p-eval"><div class="etb"><button class="eback" onclick="nav('p-dash')">← 돌아가기</button><div><h1 class="pt" id="eT"></h1><p class="pd" id="eSb" style="margin-bottom:0"></p></div><span class="bd bdnv" id="eBd" style="margin-left:auto;font-size:.85rem;padding:6px 16px">0/0</span></div><div id="eL" class="ecn"></div></div>
@@ -279,6 +279,7 @@ $('dS').innerHTML=`<div class="sc an"><div class="sl">전체 학생</div><div cl
 <div class="sc gd an"><div class="sl">오늘 입력</div><div class="sv">${r.completedStudents}</div><div class="ss">/ ${r.totalStudents}명</div></div>
 <div class="sc gn an"><div class="sl">달성률</div><div class="sv">${pc}%</div></div>
 <div class="sc${pc<100?' rd':''} an"><div class="sl">미입력</div><div class="sv">${r.totalStudents-r.completedStudents}</div><div class="ss">명</div></div>`;
+$('dAdmin').style.display=S.t.role==='관리자'?'block':'none';
 const cl=$('dC');
 if(!r.classes||!r.classes.length){cl.innerHTML='<div class="emp"><div class="ej">📭</div><p>담당 반이 없습니다</p></div>';return;}
 cl.innerHTML=r.classes.map(c=>{const em=SE[c.subject]||'📚';const cs=SC[c.subject]||'k';const p=c.total>0?Math.round(c.completed/c.total*100):0;
@@ -345,6 +346,13 @@ if(!evs.length){ts('저장할 평가가 없습니다','er');btn.disabled=false;b
 try{const r=await pA({action:'tp_saveEval',evaluations:evs,teacherLogId:S.t.logId,token:S.tk});
 if(r.ok){ts('✅ '+r.message,'ok');setTimeout(()=>nav('p-dash'),1000);}else ts(r.error||'실패','er');}
 catch(e){ts('서버 연결 실패. 재시도 해주세요.','er');}finally{btn.disabled=false;btn.textContent='저장하기';}}
+
+// COUNSEL SYNC
+async function doSync(){const btn=$('syncBtn');const res=$('syncResult');btn.disabled=true;btn.textContent='🔄 동기화 중...';res.textContent='';
+try{const r=await gA('tp_admin_syncCounsel',{token:S.tk});
+if(r.ok){res.textContent=r.message;ts('✅ '+r.message,'ok');}else{res.textContent=r.error;ts(r.error,'er');}}
+catch(e){res.textContent='서버 연결 실패';ts('동기화 실패','er');}
+finally{btn.disabled=false;btn.textContent='🔄 counsel 성향분석 동기화';}}
 
 // EVAL LOG
 async function lALog(){$('alTb').innerHTML=`<input type="date" id="eld" value="${new Date().toISOString().slice(0,10)}" onchange="fAL()"><input type="text" id="elt" placeholder="강사"><input type="text" id="elc" placeholder="반"><button class="bs" onclick="fAL()">조회</button>`;fAL();}
