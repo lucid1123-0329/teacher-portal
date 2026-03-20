@@ -489,26 +489,62 @@ if(s.levelTestEnglish){try{const le=JSON.parse(s.levelTestEnglish);h+=`<div clas
 if(s.levelTestMath){try{const lm=JSON.parse(s.levelTestMath);h+=`<div class="pi"><div class="pil">수학</div><div class="piv">${lm.totalScore!==undefined?lm.totalScore+'점':lm.level||JSON.stringify(lm).substring(0,60)+'...'}</div></div>`;}catch(e){h+=`<div class="pi"><div class="pil">수학</div><div class="piv">${String(s.levelTestMath).substring(0,80)}</div></div>`;}}
 h+=`</div></div>`;}
 
-// ── 2주 리포트 (AI 분석 포함) ──
+// ── 2주 리포트 (전체 시각화) ──
 try{const rr=await gA('tp_studentReports',{student:sn,token:S.tk});
 if(rr.ok&&rr.reports.length){
 h+=`<div class="cd"><div class="ct">📄 2주 상담 리포트 (${rr.reports.length}건)</div>`;
 rr.reports.slice(0,10).forEach((rp,idx)=>{
-const hasDetail=rp.briefing||rp.checklist||rp.goals||rp.aiAnalysis;
-h+=`<div style="border:1px solid var(--bd);border-radius:var(--r);margin-bottom:10px;overflow:hidden">
-<div style="padding:14px 16px;display:flex;align-items:center;justify-content:space-between;cursor:${hasDetail?'pointer':'default'};background:var(--bg)" ${hasDetail?`onclick="document.getElementById('rp${idx}').classList.toggle('open')"`:''}">
+const hasDetail=rp.briefSummary||rp.checklist||rp.goals||rp.aiSummary||rp.metrics||rp.counselResult||rp.actionPlan;
+h+=`<div style="border:1px solid var(--bd);border-radius:var(--r);margin-bottom:12px;overflow:hidden">
+<div style="padding:14px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;background:var(--bg)" onclick="var el=document.getElementById('rp${idx}');el.style.maxHeight=el.style.maxHeight==='0px'?'3000px':'0px'">
 <div><span style="font-weight:600;font-size:.88rem;color:var(--nv)">${rp.date||''}</span><span style="font-size:.75rem;color:var(--sb);margin-left:8px">${rp.counselor||''}</span></div>
 <div style="display:flex;gap:6px;align-items:center">
-${rp.shortUrl?`<a href="https://go.trueasheard.com/${rp.shortUrl}" target="_blank" style="font-size:.75rem" onclick="event.stopPropagation()">리포트 열기 ↗</a>`:(rp.reportUrl?`<a href="${rp.reportUrl}" target="_blank" style="font-size:.75rem" onclick="event.stopPropagation()">열기 ↗</a>`:'')}
-${hasDetail?'<span style="font-size:.7rem;color:var(--lt)">▼ 상세</span>':''}
-</div></div>`;
-if(hasDetail){h+=`<div class="sbody" id="rp${idx}" style="max-height:0;overflow:hidden;transition:max-height .3s;padding:0 16px"><div style="padding:0 0 16px">`;
-if(rp.goals)h+=`<div style="margin-bottom:12px"><div style="font-size:.72rem;font-weight:600;color:var(--nv);margin-bottom:4px">🎯 다음 목표</div><p style="font-size:.78rem;color:var(--sb);line-height:1.6">${rp.goals}</p></div>`;
-if(rp.briefing)h+=`<div style="margin-bottom:12px"><div style="font-size:.72rem;font-weight:600;color:var(--nv);margin-bottom:4px">🤖 AI 사전 브리핑</div><p style="font-size:.78rem;color:var(--sb);line-height:1.6;max-height:120px;overflow-y:auto">${rp.briefing}</p></div>`;
-if(rp.checklist)h+=`<div style="margin-bottom:12px"><div style="font-size:.72rem;font-weight:600;color:var(--nv);margin-bottom:4px">✅ 상담 체크리스트</div><p style="font-size:.78rem;color:var(--sb);line-height:1.6;white-space:pre-line">${rp.checklist}</p></div>`;
+${rp.shortUrl?`<a href="https://go.trueasheard.com/${rp.shortUrl}" target="_blank" style="font-size:.75rem" onclick="event.stopPropagation()">리포트 ↗</a>`:(rp.reportUrl?`<a href="${rp.reportUrl}" target="_blank" style="font-size:.75rem" onclick="event.stopPropagation()">열기 ↗</a>`:'')}
+<span style="font-size:.7rem;color:var(--lt)">▼</span>
+</div></div>
+<div id="rp${idx}" style="max-height:0;overflow:hidden;transition:max-height .4s ease;padding:0 16px"><div style="padding:12px 0 16px">`;
+
+// 학습 성과 지표
+if(rp.metrics&&rp.metrics.length){h+=`<div style="margin-bottom:14px"><div style="font-size:.72rem;font-weight:600;color:var(--nv);margin-bottom:8px">📊 학습 성과 지표</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap">${rp.metrics.map(m=>{
+const c=m.trend==='up'?'var(--ok)':m.trend==='down'?'var(--er)':'var(--sb)';
+return`<div style="flex:1;min-width:100px;padding:10px 12px;background:var(--bg);border-radius:8px;text-align:center">
+<div style="font-size:.68rem;color:var(--sb)">${m.metricName}</div>
+<div style="font-size:1.2rem;font-weight:700;color:${c}">${m.currentValue}</div>
+<div style="font-size:.65rem;color:${c}">${m.change||''} ${m.unit||''}</div></div>`;}).join('')}</div></div>`;}
+
+// AI 종합 평가
+if(rp.aiSummary)h+=`<div style="margin-bottom:14px"><div style="font-size:.72rem;font-weight:600;color:var(--nv);margin-bottom:4px">🤖 AI 종합 평가</div><p style="font-size:.78rem;color:var(--sb);line-height:1.7">${rp.aiSummary}</p></div>`;
+
+// AI 브리핑 요약
+if(rp.briefSummary)h+=`<div style="margin-bottom:14px"><div style="font-size:.72rem;font-weight:600;color:var(--nv);margin-bottom:4px">💡 상담 핵심 주제</div><p style="font-size:.78rem;color:var(--sb);line-height:1.6">${rp.briefSummary}</p></div>`;
+
+// 상담 결과
+if(rp.counselResult){const cr=rp.counselResult;
+h+=`<div style="margin-bottom:14px"><div style="font-size:.72rem;font-weight:600;color:var(--nv);margin-bottom:6px">📝 상담 결과</div>`;
+if(cr.mainTopics)h+=`<div style="margin-bottom:8px">${cr.mainTopics.map(t=>`<div style="font-size:.75rem;color:var(--tx);line-height:1.6;padding:2px 0">${t}</div>`).join('')}</div>`;
+if(cr.studentFeedback)h+=`<p style="font-size:.75rem;color:var(--sb);line-height:1.6;padding:8px 12px;background:var(--bg);border-radius:8px;margin-bottom:8px">${cr.studentFeedback}</p>`;
+if(cr.newPromise)h+=`<div style="padding:8px 12px;background:rgba(212,168,67,.08);border-radius:8px"><div style="font-size:.7rem;font-weight:600;color:var(--gdd)">약속: ${cr.newPromise.goal||''}</div><div style="font-size:.72rem;color:var(--sb);margin-top:2px">${cr.newPromise.action||''}</div></div>`;
+h+=`</div>`;}
+
+// 체크리스트
+if(rp.checklist)h+=`<div style="margin-bottom:14px"><div style="font-size:.72rem;font-weight:600;color:var(--nv);margin-bottom:4px">✅ 상담 체크리스트</div><p style="font-size:.75rem;color:var(--sb);line-height:1.7;white-space:pre-line">${rp.checklist}</p></div>`;
+
+// 다음 목표
+if(rp.goals)h+=`<div style="margin-bottom:14px"><div style="font-size:.72rem;font-weight:600;color:var(--nv);margin-bottom:4px">🎯 다음 2주 목표</div><p style="font-size:.78rem;color:var(--sb);line-height:1.6">${rp.goals}</p></div>`;
+
+// 실행 계획 (학생/학부모/교사)
+if(rp.actionPlan){const ap=rp.actionPlan;
+h+=`<div style="margin-bottom:8px"><div style="font-size:.72rem;font-weight:600;color:var(--nv);margin-bottom:8px">📋 실행 계획</div>
+<div style="display:grid;gap:8px">`;
+if(ap.forStudent){const fs=ap.forStudent;h+=`<div style="padding:12px;border:1px solid var(--bd);border-radius:8px"><div style="font-size:.72rem;font-weight:600;color:#534AB7;margin-bottom:4px">학생에게</div><div style="font-size:.75rem;font-weight:600;color:var(--nv);margin-bottom:4px">${fs.title||''}</div>${fs.praise?`<p style="font-size:.72rem;color:var(--sb);line-height:1.6;margin-bottom:4px">${fs.praise}</p>`:''}${fs.nextMission?`<p style="font-size:.72rem;color:var(--inf);line-height:1.6">${fs.nextMission}</p>`:''}</div>`;}
+if(ap.forParent){const fp=ap.forParent;h+=`<div style="padding:12px;border:1px solid var(--bd);border-radius:8px"><div style="font-size:.72rem;font-weight:600;color:#1D9E75;margin-bottom:4px">학부모에게</div><div style="font-size:.75rem;font-weight:600;color:var(--nv);margin-bottom:4px">${fp.title||''}</div>${fp.keyData?`<p style="font-size:.72rem;color:var(--sb);line-height:1.6;margin-bottom:4px">${fp.keyData}</p>`:''}${fp.howToHelp?`<p style="font-size:.72rem;color:var(--inf);line-height:1.6">${fp.howToHelp}</p>`:''}</div>`;}
+if(ap.forTeachers){const ft=ap.forTeachers;h+=`<div style="padding:12px;border:1px solid var(--bd);border-radius:8px"><div style="font-size:.72rem;font-weight:600;color:#D85A30;margin-bottom:4px">강사에게</div><div style="font-size:.75rem;font-weight:600;color:var(--nv);margin-bottom:4px">${ft.title||''}</div>${ft.summary?`<p style="font-size:.72rem;color:var(--sb);line-height:1.6">${ft.summary}</p>`:''}</div>`;}
 h+=`</div></div>`;}
-h+=`</div>`;});
-h+=`</div>`;}}catch(e){}
+
+h+=`</div></div></div>`;});
+h+=`</div>`;}}catch(e){h+=`<div class="cd"><div class="ct">📄 2주 리포트</div><p style="color:var(--er);font-size:.82rem">리포트 로딩 실패: ${e.message||'알 수 없는 오류'}</p></div>`;}
+
 
 $('prC').innerHTML=h;
 document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));$('p-prof').classList.add('on');
