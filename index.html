@@ -230,7 +230,7 @@ const API='/api/gs';
 const SE={'국어':'📖','영어':'🌐','수학':'📐'};const SC={'국어':'k','영어':'e','수학':'m'};
 let S={t:null,tk:null,cf:null,cls:[],cc:null,sts:[],ev:{},absent:{},allSt:[],allTc:[],pf:'p-dash',editCl:null};
 
-async function gA(a,p={}){const u=new URL(API);u.searchParams.set('action',a);Object.entries(p).forEach(([k,v])=>v!==undefined&&u.searchParams.set(k,v));const r=await fetch(u);return r.json();}
+async function gA(a,p={}){const u=new URL(API,location.origin);u.searchParams.set('action',a);Object.entries(p).forEach(([k,v])=>v!==undefined&&u.searchParams.set(k,v));const r=await fetch(u);return r.json();}
 async function pA(d){const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(d)});return r.json();}
 
 const MN=[
