@@ -652,66 +652,111 @@ let h=`<div id="cdCapArea" style="padding:16px;background:#fff">`;
 // 헤더
 h+=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--ln)">
 <div><div style="font-size:16px;font-weight:700">${name||''}</div><div style="font-size:11px;color:var(--t3)">${st.grade||''} · ${st.school||''} · ${subject} 레벨테스트</div></div></div>`;
-// 핵심 지표 카드
-h+=`<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">`;
-if(lt.totalScore!==undefined){const maxS=lt.maxScore||100;const pct=Math.round(lt.totalScore/maxS*100);
+
+// ── 구조 감지: action/content 형태 vs totalScore/sections 형태 ──
+const hasAction=lt.action&&Array.isArray(lt.action);
+const hasContent=lt.content&&Array.isArray(lt.content);
+
+if(hasAction||hasContent){
+// === counsel 레벨테스트 구조 (action + content) ===
+
+// action: 영역별 배점 [{subject,A,fullMark}]
+if(hasAction&&lt.action.length){
+const total=lt.action.reduce((s,a)=>s+(a.A||0),0);
+const maxTotal=lt.action.reduce((s,a)=>s+(a.fullMark||0),0);
+const pct=maxTotal>0?Math.round(total/maxTotal*100):0;
 const clr=pct>=70?'var(--ok)':pct>=40?'var(--wn)':'var(--er)';
-h+=`<div style="flex:1;min-width:100px;padding:16px;background:var(--bg);border-radius:10px;text-align:center;border:1px solid var(--ln)">
-<div style="font-size:28px;font-weight:800;color:${clr}">${lt.totalScore}<span style="font-size:14px;font-weight:400;color:var(--t3)">/${maxS}</span></div>
-<div style="font-size:11px;color:var(--t3);margin-top:2px">총점 (${pct}%)</div></div>`;}
-if(lt.level)h+=`<div style="flex:1;min-width:100px;padding:16px;background:var(--acbg);border-radius:10px;text-align:center;border:1px solid #d0e2ff">
-<div style="font-size:24px;font-weight:800;color:var(--ac)">${lt.level}</div>
-<div style="font-size:11px;color:var(--ac);margin-top:2px">판정 레벨</div></div>`;
-if(lt.percentile!==undefined)h+=`<div style="flex:1;min-width:100px;padding:16px;background:var(--bg);border-radius:10px;text-align:center;border:1px solid var(--ln)">
-<div style="font-size:24px;font-weight:800">${lt.percentile}<span style="font-size:12px;font-weight:400">%</span></div>
-<div style="font-size:11px;color:var(--t3);margin-top:2px">상위 백분위</div></div>`;
+
+// 핵심 지표 카드
+h+=`<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+<div style="flex:1;min-width:100px;padding:16px;background:var(--bg);border-radius:10px;text-align:center;border:1px solid var(--ln)">
+<div style="font-size:28px;font-weight:800;color:${clr}">${total}<span style="font-size:14px;font-weight:400;color:var(--t3)">/${maxTotal}</span></div>
+<div style="font-size:11px;color:var(--t3);margin-top:2px">총점 (${pct}%)</div></div>`;
+lt.action.forEach(a=>{const ap=a.fullMark>0?Math.round((a.A||0)/a.fullMark*100):0;
+const ac=ap>=70?'var(--ok)':ap>=40?'var(--wn)':'var(--er)';
+h+=`<div style="flex:1;min-width:80px;padding:14px;background:var(--bg);border-radius:10px;text-align:center;border:1px solid var(--ln)">
+<div style="font-size:22px;font-weight:800;color:${ac}">${a.A||0}<span style="font-size:12px;font-weight:400;color:var(--t3)">/${a.fullMark}</span></div>
+<div style="font-size:10px;color:var(--t3);margin-top:2px">${a.subject||''}</div></div>`;});
 h+=`</div>`;
-// 영역별 분석 차트 + 테이블
-if(lt.sections&&Array.isArray(lt.sections)&&lt.sections.length){
-h+=`<div style="font-size:13px;font-weight:700;margin-bottom:10px">영역별 성취도 분석</div>`;
+
+// 영역별 차트
+h+=`<div style="font-size:13px;font-weight:700;margin-bottom:10px">영역별 성취도</div>`;
 h+=`<div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:16px;flex-wrap:wrap">
 <div style="flex:1;min-width:200px"><canvas id="cdLtBar"></canvas></div>
 <div style="flex:1;min-width:160px"><canvas id="cdLtRadar"></canvas></div></div>`;
-// 영역 상세 테이블
+
+// 영역 테이블
 h+=`<div style="overflow-x:auto;margin-bottom:16px"><table style="width:100%;border-collapse:collapse;font-size:12px">
 <thead><tr style="background:var(--bg)"><th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:600;color:var(--t3)">영역</th>
 <th style="padding:8px 10px;text-align:center;font-size:10px;font-weight:600;color:var(--t3)">점수</th>
 <th style="padding:8px 10px;text-align:center;font-size:10px;font-weight:600;color:var(--t3)">배점</th>
 <th style="padding:8px 10px;text-align:center;font-size:10px;font-weight:600;color:var(--t3)">정답률</th>
 <th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:600;color:var(--t3)">달성도</th></tr></thead><tbody>`;
-lt.sections.forEach(s=>{const pct=s.maxScore>0?Math.round(s.score/s.maxScore*100):0;
-const clr=pct>=70?'var(--ok)':pct>=40?'var(--wn)':'var(--er)';
-h+=`<tr style="border-bottom:1px solid var(--lnl)"><td style="padding:8px 10px;font-weight:500">${s.name||s.section||''}</td>
-<td style="padding:8px 10px;text-align:center;font-weight:700;color:${clr}">${s.score}</td>
-<td style="padding:8px 10px;text-align:center;color:var(--t3)">${s.maxScore}</td>
-<td style="padding:8px 10px;text-align:center;font-weight:600">${pct}%</td>
-<td style="padding:8px 10px"><div style="display:flex;align-items:center;gap:6px">
-<div style="flex:1;height:8px;background:var(--ln);border-radius:4px;overflow:hidden"><div style="width:${pct}%;height:100%;background:${clr};border-radius:4px"></div></div></div></td></tr>`;});
+lt.action.forEach(a=>{const ap=a.fullMark>0?Math.round((a.A||0)/a.fullMark*100):0;const ac=ap>=70?'var(--ok)':ap>=40?'var(--wn)':'var(--er)';
+h+=`<tr style="border-bottom:1px solid var(--lnl)"><td style="padding:8px 10px;font-weight:500">${a.subject||''}</td>
+<td style="padding:8px 10px;text-align:center;font-weight:700;color:${ac}">${a.A||0}</td>
+<td style="padding:8px 10px;text-align:center;color:var(--t3)">${a.fullMark}</td>
+<td style="padding:8px 10px;text-align:center;font-weight:600">${ap}%</td>
+<td style="padding:8px 10px"><div style="height:8px;background:var(--ln);border-radius:4px;overflow:hidden"><div style="width:${ap}%;height:100%;background:${ac};border-radius:4px"></div></div></td></tr>`;});
 h+=`</tbody></table></div>`;}
-// 강점/약점 분석
-if(lt.strengths||lt.weaknesses){h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">`;
-if(lt.strengths){h+=`<div style="padding:12px;background:var(--okbg);border-radius:8px;border-left:3px solid var(--ok)">
-<div style="font-size:11px;font-weight:700;color:#15803d;margin-bottom:4px">강점 영역</div>
-<p style="font-size:11px;color:#166534;line-height:1.7">${typeof lt.strengths==='string'?lt.strengths:Array.isArray(lt.strengths)?lt.strengths.join(', '):JSON.stringify(lt.strengths)}</p></div>`;}
-if(lt.weaknesses){h+=`<div style="padding:12px;background:var(--erbg);border-radius:8px;border-left:3px solid var(--er)">
-<div style="font-size:11px;font-weight:700;color:#b91c1c;margin-bottom:4px">보완 영역</div>
-<p style="font-size:11px;color:#991b1b;line-height:1.7">${typeof lt.weaknesses==='string'?lt.weaknesses:Array.isArray(lt.weaknesses)?lt.weaknesses.join(', '):JSON.stringify(lt.weaknesses)}</p></div>`;}
+
+// content: 문항별 점수 [{name,score,avg}]
+if(hasContent&&lt.content.length){
+h+=`<div style="font-size:13px;font-weight:700;margin-bottom:10px">문항별 상세 분석</div>`;
+h+=`<div style="margin-bottom:16px"><canvas id="cdLtContent" height="${Math.max(200,lt.content.length*28)}"></canvas></div>`;
+
+// 문항 테이블
+h+=`<div style="overflow-x:auto;margin-bottom:14px"><table style="width:100%;border-collapse:collapse;font-size:12px">
+<thead><tr style="background:var(--bg)"><th style="padding:6px 10px;text-align:left;font-size:10px;font-weight:600;color:var(--t3)">문항</th>
+<th style="padding:6px 10px;text-align:center;font-size:10px;font-weight:600;color:var(--t3)">학생 점수</th>
+<th style="padding:6px 10px;text-align:center;font-size:10px;font-weight:600;color:var(--t3)">전체 평균</th>
+<th style="padding:6px 10px;text-align:center;font-size:10px;font-weight:600;color:var(--t3)">평균 대비</th></tr></thead><tbody>`;
+lt.content.forEach(c=>{const diff=((c.score||0)-(c.avg||0)).toFixed(1);const better=parseFloat(diff)>=0;
+h+=`<tr style="border-bottom:1px solid var(--lnl)"><td style="padding:6px 10px;font-weight:500">${c.name||''}</td>
+<td style="padding:6px 10px;text-align:center;font-weight:700">${c.score}</td>
+<td style="padding:6px 10px;text-align:center;color:var(--t3)">${c.avg}</td>
+<td style="padding:6px 10px;text-align:center;font-weight:600;color:${better?'var(--ok)':'var(--er)'}">${better?'+':''}${diff}</td></tr>`;});
+h+=`</tbody></table></div>`;
+
+// 강점/약점 자동 분석
+const sorted=[...lt.content].sort((a,b)=>(b.score-b.avg)-(a.score-a.avg));
+const strengths=sorted.filter(c=>c.score>=c.avg).slice(0,3);
+const weaks=sorted.filter(c=>c.score<c.avg).slice(-3).reverse();
+if(strengths.length||weaks.length){
+h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">`;
+if(strengths.length)h+=`<div style="padding:12px;background:var(--okbg);border-radius:8px;border-left:3px solid var(--ok)">
+<div style="font-size:11px;font-weight:700;color:#15803d;margin-bottom:4px">강점 (평균 이상)</div>
+${strengths.map(s=>`<div style="font-size:11px;color:#166534;padding:1px 0">${s.name} (${s.score}점, 평균 ${s.avg})</div>`).join('')}</div>`;
+if(weaks.length)h+=`<div style="padding:12px;background:var(--erbg);border-radius:8px;border-left:3px solid var(--er)">
+<div style="font-size:11px;font-weight:700;color:#b91c1c;margin-bottom:4px">보완 필요 (평균 미만)</div>
+${weaks.map(w=>`<div style="font-size:11px;color:#991b1b;padding:1px 0">${w.name} (${w.score}점, 평균 ${w.avg})</div>`).join('')}</div>`;
 h+=`</div>`;}
-// AI 분석 / 추천
-if(lt.analysis){h+=`<div style="padding:14px;background:var(--bg);border-radius:8px;margin-bottom:10px">
-<div style="font-size:12px;font-weight:700;margin-bottom:4px">종합 분석</div>
-<p style="font-size:12px;color:var(--t2);line-height:1.8">${typeof lt.analysis==='string'?lt.analysis:JSON.stringify(lt.analysis)}</p></div>`;}
-if(lt.recommendation){h+=`<div style="padding:14px;background:var(--acbg);border-radius:8px;border-left:3px solid var(--ac)">
-<div style="font-size:12px;font-weight:700;color:var(--ac);margin-bottom:4px">학습 방향 추천</div>
-<p style="font-size:12px;color:var(--t1);line-height:1.8">${typeof lt.recommendation==='string'?lt.recommendation:JSON.stringify(lt.recommendation)}</p></div>`;}
-// 기타 필드
-const shown=new Set(['totalScore','maxScore','level','percentile','sections','analysis','recommendation','strengths','weaknesses']);
-const rest=Object.entries(lt).filter(([k])=>!shown.has(k));
-if(rest.length){h+=`<div style="margin-top:12px;padding:12px;background:var(--bg);border-radius:6px">
-<div style="font-size:10px;font-weight:600;color:var(--t3);margin-bottom:6px">추가 데이터</div>`;
-rest.forEach(([k,v])=>{h+=`<div style="display:flex;gap:6px;font-size:11px;padding:3px 0;border-bottom:1px solid var(--lnl)">
-<span style="font-weight:600;color:var(--t2);min-width:80px">${k}</span>
-<span style="color:var(--t1)">${typeof v==='object'?JSON.stringify(v):v}</span></div>`;});
+}
+
+}else{
+// === 표준 구조 (totalScore/sections) ===
+if(lt.totalScore!==undefined||lt.level){
+h+=`<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">`;
+if(lt.totalScore!==undefined){const maxS=lt.maxScore||100;const pct=Math.round(lt.totalScore/maxS*100);const clr=pct>=70?'var(--ok)':pct>=40?'var(--wn)':'var(--er)';
+h+=`<div style="flex:1;min-width:100px;padding:16px;background:var(--bg);border-radius:10px;text-align:center;border:1px solid var(--ln)">
+<div style="font-size:28px;font-weight:800;color:${clr}">${lt.totalScore}<span style="font-size:14px;font-weight:400;color:var(--t3)">/${maxS}</span></div>
+<div style="font-size:11px;color:var(--t3);margin-top:2px">총점</div></div>`;}
+if(lt.level)h+=`<div style="flex:1;min-width:100px;padding:16px;background:var(--acbg);border-radius:10px;text-align:center"><div style="font-size:24px;font-weight:800;color:var(--ac)">${lt.level}</div><div style="font-size:11px;color:var(--ac);margin-top:2px">레벨</div></div>`;
+h+=`</div>`;}
+if(lt.sections&&Array.isArray(lt.sections)){
+h+=`<div style="font-size:13px;font-weight:700;margin-bottom:10px">영역별 분석</div>
+<div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:16px;flex-wrap:wrap">
+<div style="flex:1;min-width:200px"><canvas id="cdLtBar"></canvas></div>
+<div style="flex:1;min-width:160px"><canvas id="cdLtRadar"></canvas></div></div>`;}
+if(lt.analysis)h+=`<div style="padding:14px;background:var(--bg);border-radius:8px;margin-bottom:10px"><div style="font-size:12px;font-weight:700;margin-bottom:4px">종합 분석</div><p style="font-size:12px;color:var(--t2);line-height:1.8">${typeof lt.analysis==='string'?lt.analysis:JSON.stringify(lt.analysis)}</p></div>`;
+if(lt.recommendation)h+=`<div style="padding:14px;background:var(--acbg);border-radius:8px;border-left:3px solid var(--ac)"><div style="font-size:12px;font-weight:700;color:var(--ac);margin-bottom:4px">학습 추천</div><p style="font-size:12px;color:var(--t1);line-height:1.8">${typeof lt.recommendation==='string'?lt.recommendation:JSON.stringify(lt.recommendation)}</p></div>`;
+}
+
+// 기타 필드 (알려진 필드 제외)
+const known=new Set(['action','content','totalScore','maxScore','level','percentile','sections','analysis','recommendation','strengths','weaknesses']);
+const rest=Object.entries(lt).filter(([k])=>!known.has(k));
+if(rest.length){h+=`<div style="margin-top:12px;padding:12px;background:var(--bg);border-radius:6px"><div style="font-size:10px;font-weight:600;color:var(--t3);margin-bottom:6px">추가 데이터</div>`;
+rest.forEach(([k,v])=>{h+=`<div style="display:flex;gap:6px;font-size:11px;padding:3px 0;border-bottom:1px solid var(--lnl)"><span style="font-weight:600;color:var(--t2);min-width:80px">${k}</span><span style="color:var(--t1)">${typeof v==='object'?JSON.stringify(v):v}</span></div>`;});
 h+=`</div>`;}
 h+=`</div>`;return h;
 }catch(e){return `<div id="cdCapArea"><p style="color:var(--er)">파싱 오류: ${e.message}</p></div>`;}}
@@ -719,20 +764,48 @@ h+=`</div>`;return h;
 // ── 레벨테스트 차트 렌더 ──
 function renderLtCharts(jsonStr){
 try{const lt=JSON.parse(jsonStr);
-if(!lt.sections||!Array.isArray(lt.sections)||!lt.sections.length)return;
+const hasAction=lt.action&&Array.isArray(lt.action)&&lt.action.length;
+const hasContent=lt.content&&Array.isArray(lt.content)&&lt.content.length;
+const hasSections=lt.sections&&Array.isArray(lt.sections)&&lt.sections.length;
+
+// action 기반 차트 (영역별)
+if(hasAction){
+const labels=lt.action.map(a=>a.subject||'');
+const pcts=lt.action.map(a=>a.fullMark>0?Math.round((a.A||0)/a.fullMark*100):0);
+const colors=pcts.map(p=>p>=70?'#22c55e':p>=40?'#f59e0b':'#ef4444');
+const barCv=$('cdLtBar');if(barCv){const c=new Chart(barCv.getContext('2d'),{type:'bar',
+data:{labels,datasets:[{label:'정답률',data:pcts,backgroundColor:colors.map(c=>c+'30'),borderColor:colors,borderWidth:1.5,borderRadius:4,barPercentage:.6}]},
+options:{responsive:true,scales:{y:{min:0,max:100,ticks:{stepSize:25,font:{size:9},callback:v=>v+'%'},grid:{color:'#f0f0f0'}},x:{ticks:{font:{size:11,weight:'500'}},grid:{display:false}}},
+plugins:{legend:{display:false}}}});cdCharts.push(c);}
+const radCv=$('cdLtRadar');if(radCv){const c=new Chart(radCv.getContext('2d'),{type:'radar',
+data:{labels,datasets:[{data:pcts,backgroundColor:'rgba(0,102,255,.1)',borderColor:'#0066ff',pointBackgroundColor:colors,pointRadius:5,borderWidth:2}]},
+options:{responsive:true,scales:{r:{min:0,max:100,ticks:{stepSize:25,font:{size:8},backdropColor:'transparent'},pointLabels:{font:{size:11,weight:'600'}},grid:{color:'#e5e5e5'}}},
+plugins:{legend:{display:false}}}});cdCharts.push(c);}}
+
+// content 기반 차트 (문항별 학생vs평균)
+if(hasContent){
+const cCv=$('cdLtContent');if(cCv){const labels=lt.content.map(c=>c.name||'');
+const scores=lt.content.map(c=>c.score||0);const avgs=lt.content.map(c=>c.avg||0);
+const c=new Chart(cCv.getContext('2d'),{type:'bar',
+data:{labels,datasets:[
+{label:'학생 점수',data:scores,backgroundColor:'#0066ff40',borderColor:'#0066ff',borderWidth:1.5,borderRadius:3,barPercentage:.4},
+{label:'전체 평균',data:avgs,backgroundColor:'#e5e5e580',borderColor:'#bbb',borderWidth:1,borderRadius:3,barPercentage:.4}]},
+options:{indexAxis:'y',responsive:true,scales:{x:{beginAtZero:true,ticks:{font:{size:9}},grid:{color:'#f0f0f0'}},y:{ticks:{font:{size:10}},grid:{display:false}}},
+plugins:{legend:{position:'bottom',labels:{font:{size:10},usePointStyle:true,padding:12}}}}});cdCharts.push(c);}}
+
+// sections 기반 (표준 구조)
+if(hasSections&&!hasAction){
 const labels=lt.sections.map(s=>s.name||s.section||'');
 const pcts=lt.sections.map(s=>s.maxScore>0?Math.round(s.score/s.maxScore*100):0);
 const colors=pcts.map(p=>p>=70?'#22c55e':p>=40?'#f59e0b':'#ef4444');
-// 막대 차트
 const barCv=$('cdLtBar');if(barCv){const c=new Chart(barCv.getContext('2d'),{type:'bar',
-data:{labels,datasets:[{label:'정답률 (%)',data:pcts,backgroundColor:colors.map(c=>c+'30'),borderColor:colors,borderWidth:1.5,borderRadius:4,barPercentage:.7}]},
-options:{responsive:true,scales:{y:{min:0,max:100,ticks:{stepSize:25,font:{size:9},callback:v=>v+'%'},grid:{color:'#f0f0f0'}},x:{ticks:{font:{size:10}},grid:{display:false}}},
-plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.parsed.y+'%'}}}}});cdCharts.push(c);}
-// 레이더 차트
+data:{labels,datasets:[{data:pcts,backgroundColor:colors.map(c=>c+'30'),borderColor:colors,borderWidth:1.5,borderRadius:4,barPercentage:.7}]},
+options:{responsive:true,scales:{y:{min:0,max:100,ticks:{stepSize:25,font:{size:9},callback:v=>v+'%'}},x:{ticks:{font:{size:10}}}},
+plugins:{legend:{display:false}}}});cdCharts.push(c);}
 const radCv=$('cdLtRadar');if(radCv){const c=new Chart(radCv.getContext('2d'),{type:'radar',
 data:{labels,datasets:[{data:pcts,backgroundColor:'rgba(0,102,255,.1)',borderColor:'#0066ff',pointBackgroundColor:colors,pointRadius:5,borderWidth:2}]},
-options:{responsive:true,scales:{r:{min:0,max:100,ticks:{stepSize:25,font:{size:8},backdropColor:'transparent'},pointLabels:{font:{size:10,weight:'500'}},grid:{color:'#e5e5e5'}}},
-plugins:{legend:{display:false}}}});cdCharts.push(c);}
+options:{responsive:true,scales:{r:{min:0,max:100,ticks:{stepSize:25,font:{size:8},backdropColor:'transparent'},pointLabels:{font:{size:10,weight:'500'}}}},
+plugins:{legend:{display:false}}}});cdCharts.push(c);}}
 }catch(e){}}
 
 async function captureCd(name,type){
