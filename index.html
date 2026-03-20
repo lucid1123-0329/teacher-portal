@@ -270,7 +270,7 @@ function doLogout(){S={t:null,tk:null,cf:null,cls:[],cc:null,sts:[],ev:{},absent
 async function enter(){$('loginScreen').style.display='none';$('app').classList.add('on');$('sUsr').innerHTML=`${S.t.name} 선생님 <span class="side-role">${S.t.role}</span>`;bNav();try{const c=await gA('tp_config',{token:S.tk});if(c.ok)S.cf=c;}catch(e){}nav('p-dash');}
 
 // DASHBOARD
-async function lDash(){sh('대시보드 로딩...');const r=await gA('tp_todayStatus',{teacher:S.t.name,role:S.t.role,token:S.tk});hd();if(!r.ok){ts(r.error,'er');return;}
+async function lDash(){$('dAdmin').style.display=S.t.role==='관리자'?'block':'none';sh('대시보드 로딩...');const r=await gA('tp_todayStatus',{teacher:S.t.name,role:S.t.role,token:S.tk});hd();if(!r.ok){ts(r.error,'er');return;}
 const d=new Date(),dy=['일','월','화','수','목','금','토'];
 $('dT').textContent=S.t.role==='관리자'?'전체 현황 대시보드':`${S.t.name} 선생님`;
 $('dD').textContent=`${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 (${dy[d.getDay()]})`;
@@ -279,7 +279,6 @@ $('dS').innerHTML=`<div class="sc an"><div class="sl">전체 학생</div><div cl
 <div class="sc gd an"><div class="sl">오늘 입력</div><div class="sv">${r.completedStudents}</div><div class="ss">/ ${r.totalStudents}명</div></div>
 <div class="sc gn an"><div class="sl">달성률</div><div class="sv">${pc}%</div></div>
 <div class="sc${pc<100?' rd':''} an"><div class="sl">미입력</div><div class="sv">${r.totalStudents-r.completedStudents}</div><div class="ss">명</div></div>`;
-$('dAdmin').style.display=S.t.role==='관리자'?'block':'none';
 const cl=$('dC');
 if(!r.classes||!r.classes.length){cl.innerHTML='<div class="emp"><div class="ej">📭</div><p>담당 반이 없습니다</p></div>';return;}
 cl.innerHTML=r.classes.map(c=>{const em=SE[c.subject]||'📚';const cs=SC[c.subject]||'k';const p=c.total>0?Math.round(c.completed/c.total*100):0;
