@@ -47,6 +47,7 @@ a{color:var(--ac);text-decoration:none}::selection{background:var(--acbg)}
 /* --- SHELL --- */
 #app{display:none;min-height:100vh}#app.on{display:flex}
 .side{width:var(--sw);background:var(--sf);border-right:1px solid var(--ln);position:fixed;top:0;left:0;bottom:0;z-index:200;display:flex;flex-direction:column;overflow-y:auto;transition:transform .2s}
+.side-bd{display:none;position:fixed;inset:0;background:rgba(0,0,0,.2);z-index:199;-webkit-tap-highlight-color:transparent}
 .side-logo{padding:18px 16px 14px;font-size:14px;font-weight:700;letter-spacing:-.03em;border-bottom:1px solid var(--ln)}
 .side-user{padding:12px 16px;font-size:11px;color:var(--t2);border-bottom:1px solid var(--ln);display:flex;align-items:center;gap:6px}
 .side-user .chip{height:18px;font-size:9px;padding:0 6px}
@@ -160,7 +161,67 @@ a{color:var(--ac);text-decoration:none}::selection{background:var(--acbg)}
 .info-item{padding:10px 0;border-bottom:1px solid var(--lnl)}.info-label{font-size:10px;color:var(--t3);font-weight:600;margin-bottom:1px}.info-val{font-size:13px;font-weight:500}
 
 /* RESPONSIVE */
-@media(max-width:768px){.side{transform:translateX(-100%)}.side.op{transform:translateX(0)}.main{margin-left:0}.mbar{display:flex}.save-bar{left:0}.stats{grid-template-columns:1fr 1fr}.info-grid{grid-template-columns:1fr}.pg{padding:18px 14px 80px}.sc-btn{width:26px;height:26px;font-size:10px}}
+@media(max-width:768px){
+.side{transform:translateX(-100%);width:260px}.side.op{transform:translateX(0)}
+.main{margin-left:0}
+.mbar{display:flex}
+.save-bar{left:0;bottom:56px}
+.pg{padding:16px 14px 140px}
+
+/* 하단 탭바 */
+.btab{display:flex!important}
+
+/* 통계 카드 콤팩트 */
+.stats{grid-template-columns:1fr 1fr;gap:6px}
+.stat{padding:10px 12px}.stat-v{font-size:16px}.stat-l{font-size:9px}
+
+/* 반 카드 리스트형 */
+.cls-grid{grid-template-columns:1fr;gap:4px}
+.cls-card{padding:12px;gap:10px}
+.cls-ico{width:32px;height:32px;font-size:12px;border-radius:6px}
+.cls-nm{font-size:12px}.cls-meta{font-size:10px}
+.cls-prog .v{font-size:13px}
+
+/* 평가 그리드 모바일 */
+.grid th,.grid td{padding:3px 2px;font-size:11px}
+.grid th:first-child,.grid td:first-child{min-width:60px;padding-left:8px;font-size:11px}
+.sc-btn{width:24px;height:24px;font-size:10px}
+.sc-group{gap:1px}
+.detail-inner.open{padding:8px}
+.detail-grid{grid-template-columns:1fr}
+.det-ta{font-size:11px}
+
+/* 테이블 모바일 */
+.tb th,.tb td{padding:6px 8px;font-size:11px}
+
+/* 프로필 */
+.info-grid{grid-template-columns:1fr}
+.tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap}
+.tab{white-space:nowrap;flex-shrink:0}
+
+/* 모달 모바일 */
+.modal-box{padding:18px;max-height:85vh;border-radius:12px 12px 0 0;align-self:flex-end}
+.modal{align-items:flex-end}
+
+/* 기타 */
+.toolbar{gap:4px}.toolbar .ipt{font-size:12px;height:30px}
+.btn{height:30px;font-size:11px}
+.card{padding:14px}
+.page-h{font-size:17px}.page-sub{font-size:11px;margin-bottom:16px}
+.eval-title{font-size:14px}
+}
+
+@media(max-width:380px){
+.stats{grid-template-columns:1fr 1fr}
+.stat-v{font-size:14px}
+.sc-btn{width:22px;height:22px;font-size:9px}
+.grid td:first-child{min-width:50px;font-size:10px}
+}
+
+/* 하단 탭바 기본 숨김 */
+.btab{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--sf);border-top:1px solid var(--ln);z-index:300;padding:4px 0 env(safe-area-inset-bottom,4px);justify-content:space-around}
+.btab-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;color:var(--t3);font-size:9px;font-weight:500;cursor:pointer;transition:.12s;flex:1;text-align:center;-webkit-tap-highlight-color:transparent}
+.btab-item.on{color:var(--ink)}.btab-item .btico{font-size:18px;line-height:1}
 </style>
 </head>
 <body>
@@ -191,13 +252,15 @@ a{color:var(--ac);text-decoration:none}::selection{background:var(--acbg)}
 
 <!-- APP -->
 <div id="app">
+<div class="side-bd" id="sideBd" onclick="$('side').classList.remove('op');this.style.display='none'"></div>
 <aside class="side" id="side">
 <div class="side-logo">명불허전</div>
 <div class="side-user" id="sUsr"></div>
 <nav class="side-nav" id="sNav"></nav>
 <div class="side-ft"><button onclick="nav('p-set')">설정</button><button onclick="doLogout()">로그아웃</button></div>
 </aside>
-<div class="mbar" id="mbar"><button onclick="$('side').classList.toggle('op')">☰</button><span id="mbar-t"></span></div>
+<div class="mbar" id="mbar"><button onclick="tglSide()">☰</button><span id="mbar-t"></span></div>
+<div class="btab" id="btab"></div>
 <div class="main">
 
 <!-- DASHBOARD -->
@@ -303,12 +366,36 @@ const MN=[{id:'p-dash',lb:'대시보드',r:'all'},{sec:'관리',r:'관리자'},
 
 function bNav(){let h='';for(const m of MN){if(m.sec){if(m.r!=='all'&&m.r!==S.t.role)continue;h+=`<div class="nav-g">${m.sec}</div>`;}
 else{if(m.r!=='all'&&m.r!==S.t.role)continue;h+=m.ext?`<div class="ni" onclick="window.open('${m.ext}','_blank')">${m.lb} ↗</div>`:`<div class="ni" data-p="${m.id}" onclick="nav('${m.id}')">${m.lb}</div>`;}}
-$('sNav').innerHTML=h;}
+$('sNav').innerHTML=h;buildBtab();}
+
+function buildBtab(){
+const isAdmin=S.t.role==='관리자';
+const tabs=isAdmin?[
+{id:'p-dash',ico:'⊞',lb:'대시보드'},
+{id:'p-enroll',ico:'＋',lb:'입학'},
+{id:'p-ast',ico:'∷',lb:'학생'},
+{id:'p-stats',ico:'↗',lb:'통계'},
+{id:'_more',ico:'☰',lb:'더보기'}
+]:[
+{id:'p-dash',ico:'⊞',lb:'대시보드'},
+{id:'p-stats',ico:'↗',lb:'통계'},
+{id:'p-psy',ico:'◎',lb:'성향'},
+{id:'p-rpt',ico:'□',lb:'리포트'},
+{id:'p-set',ico:'⚙',lb:'설정'}
+];
+$('btab').innerHTML=tabs.map(t=>`<div class="btab-item" data-bp="${t.id}" onclick="${t.id==='_more'?'tglSide()':`nav('${t.id}')`}"><div class="btico">${t.ico}</div>${t.lb}</div>`).join('');}
+
+function tglSide(){const s=$('side'),bd=$('sideBd');const open=!s.classList.contains('op');s.classList.toggle('op');bd.style.display=open?'block':'none';}
 
 function nav(p){document.querySelectorAll('.pg').forEach(x=>x.classList.remove('on'));document.querySelectorAll('.ni').forEach(x=>x.classList.remove('on'));
 const pg=$(p);if(pg)pg.classList.add('on');const ni=document.querySelector(`.ni[data-p="${p}"]`);if(ni)ni.classList.add('on');
 $('mbar-t').textContent=ni?ni.textContent.trim():'';$('saveBar').style.display=p==='p-eval'?'flex':'none';
-$('side').classList.remove('op');lP(p);}
+// 평가 입력 시 하단 탭바 숨김
+if($('btab'))$('btab').style.display=p==='p-eval'?'none':'';
+$('side').classList.remove('op');$('sideBd').style.display='none';
+// 하단 탭바 활성
+document.querySelectorAll('.btab-item').forEach(b=>b.classList.toggle('on',b.dataset.bp===p));
+lP(p);}
 
 async function lP(p){try{switch(p){case'p-dash':await lDash();break;case'p-alog':await lALog();break;case'p-ast':await lSts();break;
 case'p-enroll':await lEnroll();break;case'p-acl':await lCls();break;case'p-atc':await lTcs();break;
