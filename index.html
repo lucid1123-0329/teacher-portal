@@ -122,14 +122,18 @@ a{color:var(--ac);text-decoration:none}::selection{background:var(--acbg)}
 /* Expand row for details */
 .detail-row td{padding:0!important;border:0!important}
 .detail-inner{max-height:0;overflow:hidden;transition:max-height .25s;padding:0 12px}
-.detail-inner.open{max-height:400px;padding:10px 12px 14px}
-.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.detail-grid .ms{display:flex;flex-wrap:wrap;gap:3px}
-.detail-grid .ms label{padding:3px 8px;border:1px solid var(--ln);border-radius:5px;font-size:11px;color:var(--t3);cursor:pointer;transition:.1s}
-.detail-grid .ms label.ck{background:var(--ink);border-color:var(--ink);color:#fff}
-.detail-grid .ms input{display:none}
-.det-label{font-size:11px;font-weight:600;color:var(--t3);margin-bottom:3px}
-.det-ta{width:100%;padding:6px 8px;border:1px solid var(--ln);border-radius:5px;font-size:13px;color:var(--ink);background:var(--bg);resize:none;height:36px;outline:0;transition:.1s}.det-ta:focus{border-color:var(--ac);background:var(--sf)}
+.detail-inner.open{max-height:600px;overflow-y:auto;padding:10px 12px 14px}
+.det-sec{padding:8px 10px;border-radius:6px;margin-bottom:6px;border-left:3px solid var(--ln);background:var(--bg)}
+.det-sec-h{font-size:12px;font-weight:600;margin-bottom:6px}
+.det-sec .ms{display:flex;flex-wrap:wrap;gap:4px}
+.det-sec .ms label{padding:5px 11px;border:1px solid var(--ln);border-radius:14px;font-size:12px;color:var(--t2);cursor:pointer;transition:.12s;background:var(--sf);user-select:none;white-space:nowrap}
+.det-sec .ms label:hover{border-color:var(--t4)}
+.det-sec .ms input{display:none}
+.det-sec.sec-gp{border-left-color:#22c55e}.det-sec.sec-gp .ms label.ck{background:#f0fdf4;border-color:#22c55e;color:#15803d}
+.det-sec.sec-wk{border-left-color:#f59e0b}.det-sec.sec-wk .ms label.ck{background:#fffbeb;border-color:#f59e0b;color:#92400e}
+.det-sec.sec-mg{border-left-color:#6366f1}.det-sec.sec-mg .ms label.ck{background:#eef2ff;border-color:#6366f1;color:#4338ca}
+.det-sec.sec-ua{border-left-color:#ef4444}.det-sec.sec-ua .ms label.ck{background:#fef2f2;border-color:#ef4444;color:#b91c1c}
+.det-ta{width:100%;padding:8px 10px;border:1px solid var(--ln);border-radius:6px;font-size:13px;color:var(--ink);background:var(--bg);resize:none;height:40px;outline:0;transition:.12s}.det-ta:focus{border-color:var(--ac);background:var(--sf)}
 
 /* Save bar */
 .save-bar{position:fixed;bottom:0;left:var(--sw);right:0;background:var(--sf);padding:10px 20px;border-top:1px solid var(--ln);z-index:100;display:none;align-items:center;justify-content:center;gap:12px}
@@ -191,7 +195,7 @@ a{color:var(--ac);text-decoration:none}::selection{background:var(--acbg)}
 .sc-btn{width:28px;height:28px;font-size:12px}
 .sc-group{gap:1px}
 .detail-inner.open{padding:8px}
-.detail-grid{grid-template-columns:1fr}
+.det-sec{padding:6px 8px}
 .det-ta{font-size:12px}
 
 /* 테이블 모바일 */
@@ -520,12 +524,13 @@ const wkSel=(ev.wk||'').split(', ').filter(Boolean);
 const mgSel=(ev.mg||'').split(', ').filter(Boolean);
 const uaSel=ev.ua||'';
 const cm=ev.cm||'';
-return`<div class="detail-grid">
-${gp.length?`<div><div class="det-label">성장 포인트</div><div class="ms">${gp.map(g=>`<label class="${gpSel.includes(g)?'ck':''}"><input type="checkbox" data-i="${i}" data-f="gp" value="${esc(g)}" ${gpSel.includes(g)?'checked':''} onchange="gChk(${i},'gp')">${g}</label>`).join('')}</div></div>`:''}
-${wk.length?`<div><div class="det-label">학업 약점</div><div class="ms">${wk.map(w=>`<label class="${wkSel.includes(w)?'ck':''}"><input type="checkbox" data-i="${i}" data-f="wk" value="${esc(w)}" ${wkSel.includes(w)?'checked':''} onchange="gChk(${i},'wk')">${w}</label>`).join('')}</div></div>`:''}
-${mg.length?`<div><div class="det-label">관리 영역</div><div class="ms">${mg.map(m=>`<label class="${mgSel.includes(m)?'ck':''}"><input type="checkbox" data-i="${i}" data-f="mg" value="${esc(m)}" ${mgSel.includes(m)?'checked':''} onchange="gChk(${i},'mg')">${m}</label>`).join('')}</div></div>`:''}
-${ua.length?`<div><div class="det-label">긴급 조치</div><div class="ms">${ua.map(u=>`<label class="${uaSel===u?'ck':''}"><input type="radio" name="ua${i}" data-i="${i}" data-f="ua" value="${esc(u)}" ${uaSel===u?'checked':''} onchange="gRad(this)">${u}</label>`).join('')}</div></div>`:''}
-</div><div style="margin-top:6px"><div class="det-label">코멘트</div><textarea class="det-ta" data-i="${i}" oninput="gCm(this)" placeholder="코멘트 입력">${cm}</textarea></div>`;}
+let h='';
+if(gp.length)h+=`<div class="det-sec sec-gp"><div class="det-sec-h">성장 포인트</div><div class="ms">${gp.map(g=>`<label class="${gpSel.includes(g)?'ck':''}"><input type="checkbox" data-i="${i}" data-f="gp" value="${esc(g)}" ${gpSel.includes(g)?'checked':''} onchange="gChk(${i},'gp')">${g}</label>`).join('')}</div></div>`;
+if(wk.length)h+=`<div class="det-sec sec-wk"><div class="det-sec-h">학업 약점</div><div class="ms">${wk.map(w=>`<label class="${wkSel.includes(w)?'ck':''}"><input type="checkbox" data-i="${i}" data-f="wk" value="${esc(w)}" ${wkSel.includes(w)?'checked':''} onchange="gChk(${i},'wk')">${w}</label>`).join('')}</div></div>`;
+if(mg.length)h+=`<div class="det-sec sec-mg"><div class="det-sec-h">관리 영역</div><div class="ms">${mg.map(m=>`<label class="${mgSel.includes(m)?'ck':''}"><input type="checkbox" data-i="${i}" data-f="mg" value="${esc(m)}" ${mgSel.includes(m)?'checked':''} onchange="gChk(${i},'mg')">${m}</label>`).join('')}</div></div>`;
+if(ua.length)h+=`<div class="det-sec sec-ua"><div class="det-sec-h">긴급 조치</div><div class="ms">${ua.map(u=>`<label class="${uaSel===u?'ck':''}"><input type="radio" name="ua${i}" data-i="${i}" data-f="ua" value="${esc(u)}" ${uaSel===u?'checked':''} onchange="gRad(this)">${u}</label>`).join('')}</div></div>`;
+h+=`<div style="margin-top:6px"><textarea class="det-ta" data-i="${i}" oninput="gCm(this)" placeholder="코멘트 입력">${cm}</textarea></div>`;
+return h;}
 
 function gSc(btn){const{i,f,v}=btn.dataset;btn.parentElement.querySelectorAll('.sc-btn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');
 if(!S.ev[i])S.ev[i]={};S.ev[i][f]=v;uRow(+i);uProg();}
