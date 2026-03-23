@@ -142,6 +142,9 @@ a{color:var(--ac);text-decoration:none}::selection{background:var(--acbg)}
 
 /* --- TOOLBAR --- */
 .toolbar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;align-items:center}
+.fgr{display:flex;gap:2px;background:var(--lnl);border:1px solid var(--ln);border-radius:6px;padding:2px}
+.fgr-b{padding:3px 10px;border-radius:4px;font-size:12px;font-weight:500;color:var(--t3);border:none;background:none;cursor:pointer;transition:all .12s}
+.fgr-b.on{background:var(--tx);color:#fff}.fgr-b:hover:not(.on){color:var(--tx)}
 
 /* --- MODAL --- */
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.15);z-index:500;display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(3px)}
@@ -289,7 +292,7 @@ a{color:var(--ac);text-decoration:none}::selection{background:var(--acbg)}
 
 <div class="pg" id="p-ast"><div class="page-h">학생</div><p class="page-sub">전체 학생 관리</p><div class="toolbar"><input type="text" id="stSrch" class="ipt" placeholder="이름 또는 학교" oninput="fSt()" style="flex:1;max-width:240px"><button class="btn btn-a btn-sm" onclick="oSM()">추가</button></div><div class="card"><div class="tw"><table class="tb" id="stTbl"><thead></thead><tbody></tbody></table></div></div></div>
 
-<div class="pg" id="p-enroll"><div class="page-h">입학 관리</div><p class="page-sub">신규 상담 완료 학생의 입학 확정</p><div class="toolbar"><input type="text" id="enSrch" class="ipt" placeholder="이름 검색" oninput="fEn()" style="flex:1;max-width:240px"><button class="btn btn-g btn-sm" onclick="lEnroll()">새로고침</button></div><div class="card"><div class="tw"><table class="tb" id="enTbl"><thead></thead><tbody></tbody></table></div></div></div>
+<div class="pg" id="p-enroll"><div class="page-h">입학 관리</div><p class="page-sub">신규 상담 완료 학생의 입학 확정</p><div class="toolbar"><input type="text" id="enSrch" class="ipt" placeholder="이름 검색" oninput="fEn()" style="flex:1;max-width:240px"><div class="fgr" id="enFilters"><button class="fgr-b on" data-ef="all" onclick="setEnF('all')">전체</button><button class="fgr-b" data-ef="progress" onclick="setEnF('progress')">진행</button><button class="fgr-b" data-ef="enrolled" onclick="setEnF('enrolled')">입학</button><button class="fgr-b" data-ef="incomplete" onclick="setEnF('incomplete')">미완</button></div><button class="btn btn-g btn-sm" onclick="lEnroll()">새로고침</button></div><div class="card"><div class="tw"><table class="tb" id="enTbl"><thead></thead><tbody></tbody></table></div></div></div>
 
 <div class="pg" id="p-acl"><div class="page-h">반 관리</div><p class="page-sub">반 구조 · 담당 교사</p><div class="toolbar"><button class="btn btn-a btn-sm" onclick="oCM()">반 추가</button></div><div class="card"><div class="tw"><table class="tb" id="clTbl"><thead></thead><tbody></tbody></table></div></div></div>
 
@@ -629,8 +632,8 @@ async function svTc(){const tc={name:$('tm_n').value.trim(),subject:$('tm_sb').v
 if(!tc.name){ts('이름 필요','er');return;}sh('');const r=await pA({action:'tp_admin_saveTeacher',teacher:tc,token:S.tk});hd();cM('tmMo');r.ok?ts(r.message,'ok')&&lTcs():ts(r.error,'er');}
 
 // ENROLL
-let enSts=[],enTgt='';
-async function lEnroll(){sh('');const r=await gA('tp_admin_counselStudents',{token:S.tk});hd();if(!r.ok){ts(r.error,'er');return;}enSts=r.students;rEN(r.students);}
+let enSts=[],enTgt='',enFilter='all';
+async function lEnroll(){sh('');const r=await gA('tp_admin_counselStudents',{token:S.tk});hd();if(!r.ok){ts(r.error,'er');return;}enSts=r.students.reverse();fEn();}
 function rEN(l){$('enTbl').querySelector('thead').innerHTML='<tr><th>이름</th><th>학년</th><th>학교</th><th>성향</th><th>영어LT</th><th>수학LT</th><th>상태</th><th></th></tr>';
 $('enTbl').querySelector('tbody').innerHTML=l.map(s=>{const en=s.alreadyEnrolled;return`<tr style="${en?'opacity:.35':''}"><td style="font-weight:500">${s.name}</td><td>${s.grade}</td><td>${s.school||''}</td>
 <td>${s.hasSurvey?`<button class="btn btn-g btn-sm" style="font-size:11px;padding:0 8px;height:22px" onclick="viewCounselDetail('${esc(s.name)}','psy')">보기</button>`:'<span class="chip chip-er">미완</span>'}</td>
@@ -638,7 +641,8 @@ $('enTbl').querySelector('tbody').innerHTML=l.map(s=>{const en=s.alreadyEnrolled
 <td>${s.hasMathLT?`<button class="btn btn-g btn-sm" style="font-size:11px;padding:0 8px;height:22px" onclick="viewCounselDetail('${esc(s.name)}','math')">보기</button>`:'<span class="chip chip-n">—</span>'}</td>
 <td>${en?'<span class="chip chip-ac">입학</span>':`<span class="chip chip-n">${s.status||'진행'}</span>`}</td>
 <td>${en?'':'<button class="btn btn-a btn-sm" onclick="oEnMo(\''+esc(s.name)+'\')">입학</button>'}</td></tr>`;}).join('')||'<tr><td colspan=8 style="text-align:center;padding:20px;color:var(--t3)">없음</td></tr>';}
-function fEn(){const q=$('enSrch').value.trim().toLowerCase();rEN(enSts.filter(s=>s.name.toLowerCase().includes(q)));}
+function fEn(){const q=$('enSrch').value.trim().toLowerCase();rEN(enSts.filter(s=>{if(q&&!s.name.toLowerCase().includes(q))return false;if(enFilter==='all')return true;if(enFilter==='enrolled')return s.alreadyEnrolled;if(enFilter==='progress')return !s.alreadyEnrolled&&s.hasSurvey;if(enFilter==='incomplete')return !s.hasSurvey;return true;}));}
+function setEnF(f){enFilter=f;document.querySelectorAll('#enFilters .fgr-b').forEach(b=>b.classList.toggle('on',b.dataset.ef===f));fEn();}
 async function oEnMo(n){enTgt=n;$('enMoTi').textContent=n+' — 입학 확정';
 if(!S.cls.length){try{const r=await gA('tp_admin_allClasses',{token:S.tk});if(r.ok)S.cls=r.classes||[];}catch(e){}}
 $('enMoClasses').innerHTML=S.cls.map(c=>`<label style="display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--ln);border-radius:6px;cursor:pointer;font-size:13px">
