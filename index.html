@@ -17,32 +17,32 @@
 --ac:#0066ff;--acbg:#eff5ff;--ok:#22c55e;--okbg:#f0fdf4;--wn:#f59e0b;--wnbg:#fffbeb;--er:#ef4444;--erbg:#fef2f2;
 --r:8px;--sw:220px}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font:13px/1.55 var(--f);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+body{font:15px/1.55 var(--f);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
 button{font:inherit;cursor:pointer;border:0;background:0}input,select,textarea{font:inherit}
 a{color:var(--ac);text-decoration:none}::selection{background:var(--acbg)}
 .hd{display:none!important}
 
 /* --- ATOMS --- */
-.chip{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:11px;font-size:11px;font-weight:600}
+.chip{display:inline-flex;align-items:center;height:24px;padding:0 9px;border-radius:12px;font-size:12px;font-weight:600}
 .chip-ok{background:var(--okbg);color:#15803d}.chip-wn{background:var(--wnbg);color:#92400e}.chip-er{background:var(--erbg);color:#b91c1c}.chip-ac{background:var(--acbg);color:#1d4ed8}.chip-n{background:var(--lnl);color:var(--t2)}
-.btn{display:inline-flex;align-items:center;justify-content:center;height:32px;padding:0 14px;border-radius:6px;font-size:12px;font-weight:500;transition:.12s}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:34px;padding:0 16px;border-radius:6px;font-size:13px;font-weight:500;transition:.12s}
 .btn-p{background:var(--ink);color:#fff}.btn-p:hover{background:#333}
 .btn-a{background:var(--ac);color:#fff}.btn-a:hover{background:#0052cc}
 .btn-g{background:var(--sf);color:var(--t1);border:1px solid var(--ln)}.btn-g:hover{background:var(--bg)}
 .btn-d{background:var(--er);color:#fff}.btn-d:hover{background:#dc2626}
-.btn-sm{height:26px;padding:0 10px;font-size:11px}
-.ipt{height:34px;padding:0 10px;border:1px solid var(--ln);border-radius:6px;font-size:13px;color:var(--ink);background:var(--sf);outline:0;transition:.12s}
+.btn-sm{height:28px;padding:0 12px;font-size:12px}
+.ipt{height:36px;padding:0 12px;border:1px solid var(--ln);border-radius:6px;font-size:14px;color:var(--ink);background:var(--sf);outline:0;transition:.12s}
 .ipt:focus{border-color:var(--ac);box-shadow:0 0 0 2px var(--acbg)}
 .ipt::placeholder{color:var(--t4)}
 
 /* --- LOGIN --- */
 #loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg)}
-.auth-card{width:320px}.auth-h{font-size:20px;font-weight:700;letter-spacing:-.04em;margin-bottom:2px}
-.auth-sub{font-size:12px;color:var(--t3);margin-bottom:32px}
-.fg{margin-bottom:16px}.fl{display:block;font-size:11px;font-weight:600;color:var(--t2);margin-bottom:5px}
+.auth-card{width:320px}.auth-h{font-size:22px;font-weight:700;letter-spacing:-.04em;margin-bottom:2px}
+.auth-sub{font-size:13px;color:var(--t3);margin-bottom:32px}
+.fg{margin-bottom:16px}.fl{display:block;font-size:12px;font-weight:600;color:var(--t2);margin-bottom:5px}
 .auth-btn{width:100%;height:38px;margin-top:6px}
-.auth-err{font-size:11px;color:var(--er);margin-top:10px;min-height:1em}
-.auth-hint{font-size:11px;color:var(--t4);text-align:center;margin-top:24px}
+.auth-err{font-size:12px;color:var(--er);margin-top:10px;min-height:1em}
+.auth-hint{font-size:12px;color:var(--t4);text-align:center;margin-top:24px}
 
 /* --- PW CHANGE --- */
 #pwScreen{min-height:100vh;display:none;align-items:center;justify-content:center;background:var(--bg)}
@@ -51,35 +51,35 @@ a{color:var(--ac);text-decoration:none}::selection{background:var(--acbg)}
 #app{display:none;min-height:100vh}#app.on{display:flex}
 .side{width:var(--sw);background:var(--sf);border-right:1px solid var(--ln);position:fixed;top:0;left:0;bottom:0;z-index:200;display:flex;flex-direction:column;overflow-y:auto;transition:transform .2s}
 .side-bd{display:none;position:fixed;inset:0;background:rgba(0,0,0,.2);z-index:199;-webkit-tap-highlight-color:transparent}
-.side-logo{padding:18px 16px 14px;font-size:14px;font-weight:700;letter-spacing:-.03em;border-bottom:1px solid var(--ln)}
-.side-user{padding:12px 16px;font-size:11px;color:var(--t2);border-bottom:1px solid var(--ln);display:flex;align-items:center;gap:6px}
-.side-user .chip{height:18px;font-size:9px;padding:0 6px}
+.side-logo{padding:18px 16px 14px;font-size:15px;font-weight:700;letter-spacing:-.03em;border-bottom:1px solid var(--ln)}
+.side-user{padding:12px 16px;font-size:12px;color:var(--t2);border-bottom:1px solid var(--ln);display:flex;align-items:center;gap:6px}
+.side-user .chip{height:18px;font-size:10px;padding:0 6px}
 .side-nav{flex:1;padding:6px 0}
-.nav-g{padding:0 16px;margin-top:14px;margin-bottom:3px;font-size:10px;font-weight:700;color:var(--t4);letter-spacing:.06em;text-transform:uppercase}
-.ni{display:block;padding:7px 16px;font-size:13px;color:var(--t2);cursor:pointer;transition:.1s;border-left:2px solid transparent}
+.nav-g{padding:0 16px;margin-top:14px;margin-bottom:3px;font-size:11px;font-weight:700;color:var(--t4);letter-spacing:.06em;text-transform:uppercase}
+.ni{display:block;padding:7px 16px;font-size:14px;color:var(--t2);cursor:pointer;transition:.1s;border-left:2px solid transparent}
 .ni:hover{color:var(--ink);background:var(--bg)}.ni.on{color:var(--ink);font-weight:600;background:var(--bg);border-left-color:var(--ink)}
 .side-ft{padding:10px 16px;border-top:1px solid var(--ln);display:flex;flex-direction:column;gap:4px}
-.side-ft button{text-align:left;padding:6px 0;font-size:12px;color:var(--t3)}.side-ft button:hover{color:var(--ink)}
+.side-ft button{text-align:left;padding:6px 0;font-size:13px;color:var(--t3)}.side-ft button:hover{color:var(--ink)}
 .main{margin-left:var(--sw);flex:1;min-height:100vh}
 .mbar{display:none;background:var(--sf);border-bottom:1px solid var(--ln);padding:10px 14px;position:sticky;top:0;z-index:100;align-items:center;gap:8px}
-.mbar button{font-size:18px;color:var(--ink)}.mbar span{font-size:13px;font-weight:600}
+.mbar button{font-size:20px;color:var(--ink)}.mbar span{font-size:14px;font-weight:600}
 .pg{display:none;padding:28px 28px 80px;max-width:960px;margin:0 auto}.pg.on{display:block}
-.page-h{font-size:20px;font-weight:700;letter-spacing:-.03em}.page-sub{font-size:12px;color:var(--t3);margin-top:1px;margin-bottom:22px}
+.page-h{font-size:24px;font-weight:700;letter-spacing:-.03em}.page-sub{font-size:13px;color:var(--t3);margin-top:1px;margin-bottom:22px}
 
 /* --- CARD --- */
 .card{background:var(--sf);border:1px solid var(--ln);border-radius:var(--r);padding:18px;margin-bottom:12px}
-.card-h{font-size:13px;font-weight:600;margin-bottom:12px}
+.card-h{font-size:14px;font-weight:600;margin-bottom:12px}
 
 /* --- STAT ROW --- */
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:20px}
 .stat{background:var(--sf);border:1px solid var(--ln);border-radius:var(--r);padding:14px}
-.stat-l{font-size:10px;color:var(--t3);font-weight:500;margin-bottom:3px;text-transform:uppercase;letter-spacing:.03em}
-.stat-v{font-size:20px;font-weight:700;letter-spacing:-.02em;line-height:1.1}
-.stat-s{font-size:10px;color:var(--t4);margin-top:1px}
+.stat-l{font-size:11px;color:var(--t3);font-weight:500;margin-bottom:3px;text-transform:uppercase;letter-spacing:.03em}
+.stat-v{font-size:24px;font-weight:700;letter-spacing:-.02em;line-height:1.1}
+.stat-s{font-size:11px;color:var(--t4);margin-top:1px}
 
 /* --- TABLE --- */
-.tw{overflow-x:auto}table.tb{width:100%;border-collapse:collapse;font-size:12px}
-.tb th{color:var(--t3);padding:7px 10px;text-align:left;font-weight:600;font-size:10px;letter-spacing:.02em;border-bottom:1px solid var(--ln);white-space:nowrap}
+.tw{overflow-x:auto}table.tb{width:100%;border-collapse:collapse;font-size:13px}
+.tb th{color:var(--t3);padding:7px 10px;text-align:left;font-weight:600;font-size:11px;letter-spacing:.02em;border-bottom:1px solid var(--ln);white-space:nowrap}
 .tb td{padding:8px 10px;border-bottom:1px solid var(--lnl);vertical-align:middle}.tb tr:hover td{background:var(--bg)}
 .tb a{font-weight:500}
 
@@ -87,20 +87,20 @@ a{color:var(--ac);text-decoration:none}::selection{background:var(--acbg)}
 .cls-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
 .cls-card{background:var(--sf);border:1px solid var(--ln);border-radius:var(--r);padding:14px;cursor:pointer;transition:.12s;display:flex;align-items:center;gap:12px}
 .cls-card:hover{border-color:var(--t4);transform:translateY(-1px)}
-.cls-ico{width:36px;height:36px;border-radius:8px;background:var(--lnl);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--t2);flex-shrink:0}
-.cls-nm{font-size:13px;font-weight:600}.cls-meta{font-size:11px;color:var(--t3);margin-top:1px}
-.cls-prog{margin-left:auto;text-align:right}.cls-prog .v{font-size:15px;font-weight:700}.cls-prog .bar{width:40px;height:3px;background:var(--ln);border-radius:2px;margin-top:2px;margin-left:auto;overflow:hidden}.cls-prog .fill{height:100%;border-radius:2px}
+.cls-ico{width:36px;height:36px;border-radius:8px;background:var(--lnl);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:var(--t2);flex-shrink:0}
+.cls-nm{font-size:14px;font-weight:600}.cls-meta{font-size:12px;color:var(--t3);margin-top:1px}
+.cls-prog{margin-left:auto;text-align:right}.cls-prog .v{font-size:16px;font-weight:700}.cls-prog .bar{width:40px;height:3px;background:var(--ln);border-radius:2px;margin-top:2px;margin-left:auto;overflow:hidden}.cls-prog .fill{height:100%;border-radius:2px}
 
 /* ============================
    EVAL GRID — 핵심 재설계
    ============================ */
 .eval-top{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
-.eval-title{font-size:16px;font-weight:700;letter-spacing:-.02em}
-.eval-sub{font-size:12px;color:var(--t3)}
+.eval-title{font-size:18px;font-weight:700;letter-spacing:-.02em}
+.eval-sub{font-size:13px;color:var(--t3)}
 
 .grid-wrap{overflow-x:auto;border:1px solid var(--ln);border-radius:var(--r);background:var(--sf)}
-.grid{width:100%;border-collapse:collapse;font-size:12px}
-.grid th{position:sticky;top:0;background:var(--bg);padding:8px 6px;text-align:center;font-size:10px;font-weight:600;color:var(--t3);border-bottom:1px solid var(--ln);white-space:nowrap;z-index:1}
+.grid{width:100%;border-collapse:collapse;font-size:13px}
+.grid th{position:sticky;top:0;background:var(--bg);padding:8px 6px;text-align:center;font-size:11px;font-weight:600;color:var(--t3);border-bottom:1px solid var(--ln);white-space:nowrap;z-index:1}
 .grid th:first-child{text-align:left;padding-left:12px;min-width:100px}
 .grid td{padding:4px 3px;text-align:center;border-bottom:1px solid var(--lnl);vertical-align:middle}
 .grid td:first-child{text-align:left;padding-left:12px;font-weight:500}
@@ -110,13 +110,13 @@ a{color:var(--ac);text-decoration:none}::selection{background:var(--acbg)}
 
 /* Score cell — 5개 원형 버튼 */
 .sc-group{display:inline-flex;gap:2px}
-.sc-btn{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--ln);background:var(--sf);color:var(--t3);font-size:11px;font-weight:600;transition:.1s;display:inline-flex;align-items:center;justify-content:center}
+.sc-btn{width:32px;height:32px;border-radius:50%;border:1.5px solid var(--ln);background:var(--sf);color:var(--t3);font-size:12px;font-weight:600;transition:.1s;display:inline-flex;align-items:center;justify-content:center}
 .sc-btn:hover{border-color:var(--t4);color:var(--ink)}
 .sc-btn.on{background:var(--ink);border-color:var(--ink);color:#fff}
 
 /* Absent toggle in grid */
 .abs-cell{cursor:pointer;user-select:none}
-.abs-check{width:16px;height:16px;border:1.5px solid var(--ln);border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;color:transparent;transition:.1s}
+.abs-check{width:16px;height:16px;border:1.5px solid var(--ln);border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;color:transparent;transition:.1s}
 .abs-check.on{background:var(--er);border-color:var(--er);color:#fff}
 
 /* Expand row for details */
@@ -125,15 +125,15 @@ a{color:var(--ac);text-decoration:none}::selection{background:var(--acbg)}
 .detail-inner.open{max-height:400px;padding:10px 12px 14px}
 .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .detail-grid .ms{display:flex;flex-wrap:wrap;gap:3px}
-.detail-grid .ms label{padding:3px 8px;border:1px solid var(--ln);border-radius:5px;font-size:10px;color:var(--t3);cursor:pointer;transition:.1s}
+.detail-grid .ms label{padding:3px 8px;border:1px solid var(--ln);border-radius:5px;font-size:11px;color:var(--t3);cursor:pointer;transition:.1s}
 .detail-grid .ms label.ck{background:var(--ink);border-color:var(--ink);color:#fff}
 .detail-grid .ms input{display:none}
-.det-label{font-size:10px;font-weight:600;color:var(--t3);margin-bottom:3px}
-.det-ta{width:100%;padding:6px 8px;border:1px solid var(--ln);border-radius:5px;font-size:12px;color:var(--ink);background:var(--bg);resize:none;height:36px;outline:0;transition:.1s}.det-ta:focus{border-color:var(--ac);background:var(--sf)}
+.det-label{font-size:11px;font-weight:600;color:var(--t3);margin-bottom:3px}
+.det-ta{width:100%;padding:6px 8px;border:1px solid var(--ln);border-radius:5px;font-size:13px;color:var(--ink);background:var(--bg);resize:none;height:36px;outline:0;transition:.1s}.det-ta:focus{border-color:var(--ac);background:var(--sf)}
 
 /* Save bar */
 .save-bar{position:fixed;bottom:0;left:var(--sw);right:0;background:var(--sf);padding:10px 20px;border-top:1px solid var(--ln);z-index:100;display:none;align-items:center;justify-content:center;gap:12px}
-.save-bar .info{font-size:12px;color:var(--t2)}.save-bar strong{color:var(--ink)}
+.save-bar .info{font-size:13px;color:var(--t2)}.save-bar strong{color:var(--ink)}
 
 /* --- TOOLBAR --- */
 .toolbar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;align-items:center}
@@ -141,27 +141,27 @@ a{color:var(--ac);text-decoration:none}::selection{background:var(--acbg)}
 /* --- MODAL --- */
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.15);z-index:500;display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(3px)}
 .modal-box{background:var(--sf);border-radius:10px;padding:24px;width:100%;max-width:440px;max-height:90vh;overflow-y:auto;border:1px solid var(--ln)}
-.modal-h{font-size:15px;font-weight:700;margin-bottom:16px}
+.modal-h{font-size:16px;font-weight:700;margin-bottom:16px}
 .modal-ft{display:flex;gap:6px;justify-content:flex-end;margin-top:18px}
 
 /* --- TOAST --- */
-.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--ink);color:#fff;padding:8px 18px;border-radius:6px;font-size:12px;font-weight:500;z-index:1000;opacity:0;transition:.25s;pointer-events:none}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--ink);color:#fff;padding:8px 18px;border-radius:6px;font-size:13px;font-weight:500;z-index:1000;opacity:0;transition:.25s;pointer-events:none}
 .toast.sh{opacity:1;transform:translateX(-50%) translateY(0)}.toast.ok{background:var(--ok)}.toast.er{background:var(--er)}
 
 /* --- LOADING --- */
 .loading{position:fixed;inset:0;background:rgba(248,248,248,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:500}
 .spinner{width:24px;height:24px;border:2px solid var(--ln);border-top-color:var(--ink);border-radius:50%;animation:spin .5s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}.loading-t{margin-top:10px;font-size:11px;color:var(--t3)}
+@keyframes spin{to{transform:rotate(360deg)}}.loading-t{margin-top:10px;font-size:12px;color:var(--t3)}
 
 /* --- PROFILE TABS --- */
 .tabs{display:flex;gap:0;border-bottom:1px solid var(--ln);margin-bottom:16px}
-.tab{padding:8px 16px;font-size:12px;font-weight:500;color:var(--t3);cursor:pointer;border-bottom:2px solid transparent;transition:.1s}
+.tab{padding:8px 16px;font-size:13px;font-weight:500;color:var(--t3);cursor:pointer;border-bottom:2px solid transparent;transition:.1s}
 .tab:hover{color:var(--ink)}.tab.on{color:var(--ink);font-weight:600;border-bottom-color:var(--ink)}
 .tab-body{display:none}.tab-body.on{display:block}
 
 .radar-wrap{max-width:280px;margin:0 auto}
 .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:0}
-.info-item{padding:10px 0;border-bottom:1px solid var(--lnl)}.info-label{font-size:10px;color:var(--t3);font-weight:600;margin-bottom:1px}.info-val{font-size:13px;font-weight:500}
+.info-item{padding:10px 0;border-bottom:1px solid var(--lnl)}.info-label{font-size:11px;color:var(--t3);font-weight:600;margin-bottom:1px}.info-val{font-size:14px;font-weight:500}
 
 /* RESPONSIVE */
 @media(max-width:768px){
@@ -176,26 +176,26 @@ a{color:var(--ac);text-decoration:none}::selection{background:var(--acbg)}
 
 /* 통계 카드 콤팩트 */
 .stats{grid-template-columns:1fr 1fr;gap:6px}
-.stat{padding:10px 12px}.stat-v{font-size:16px}.stat-l{font-size:9px}
+.stat{padding:10px 12px}.stat-v{font-size:18px}.stat-l{font-size:10px}
 
 /* 반 카드 리스트형 */
 .cls-grid{grid-template-columns:1fr;gap:4px}
 .cls-card{padding:12px;gap:10px}
-.cls-ico{width:32px;height:32px;font-size:12px;border-radius:6px}
-.cls-nm{font-size:12px}.cls-meta{font-size:10px}
-.cls-prog .v{font-size:13px}
+.cls-ico{width:32px;height:32px;font-size:13px;border-radius:6px}
+.cls-nm{font-size:13px}.cls-meta{font-size:11px}
+.cls-prog .v{font-size:14px}
 
 /* 평가 그리드 모바일 */
-.grid th,.grid td{padding:3px 2px;font-size:11px}
-.grid th:first-child,.grid td:first-child{min-width:60px;padding-left:8px;font-size:11px}
-.sc-btn{width:24px;height:24px;font-size:10px}
+.grid th,.grid td{padding:3px 2px;font-size:12px}
+.grid th:first-child,.grid td:first-child{min-width:60px;padding-left:8px;font-size:12px}
+.sc-btn{width:28px;height:28px;font-size:12px}
 .sc-group{gap:1px}
 .detail-inner.open{padding:8px}
 .detail-grid{grid-template-columns:1fr}
-.det-ta{font-size:11px}
+.det-ta{font-size:12px}
 
 /* 테이블 모바일 */
-.tb th,.tb td{padding:6px 8px;font-size:11px}
+.tb th,.tb td{padding:6px 8px;font-size:12px}
 
 /* 프로필 */
 .info-grid{grid-template-columns:1fr}
@@ -207,24 +207,24 @@ a{color:var(--ac);text-decoration:none}::selection{background:var(--acbg)}
 .modal{align-items:flex-end}
 
 /* 기타 */
-.toolbar{gap:4px}.toolbar .ipt{font-size:12px;height:30px}
-.btn{height:30px;font-size:11px}
+.toolbar{gap:4px}.toolbar .ipt{font-size:13px;height:30px}
+.btn{height:30px;font-size:12px}
 .card{padding:14px}
-.page-h{font-size:17px}.page-sub{font-size:11px;margin-bottom:16px}
-.eval-title{font-size:14px}
+.page-h{font-size:17px}.page-sub{font-size:12px;margin-bottom:16px}
+.eval-title{font-size:15px}
 }
 
 @media(max-width:380px){
 .stats{grid-template-columns:1fr 1fr}
-.stat-v{font-size:14px}
-.sc-btn{width:22px;height:22px;font-size:9px}
-.grid td:first-child{min-width:50px;font-size:10px}
+.stat-v{font-size:15px}
+.sc-btn{width:26px;height:26px;font-size:11px}
+.grid td:first-child{min-width:50px;font-size:11px}
 }
 
 /* 하단 탭바 기본 숨김 */
 .btab{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--sf);border-top:1px solid var(--ln);z-index:300;padding:4px 0 env(safe-area-inset-bottom,4px);justify-content:space-around}
-.btab-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;color:var(--t3);font-size:9px;font-weight:500;cursor:pointer;transition:.12s;flex:1;text-align:center;-webkit-tap-highlight-color:transparent}
-.btab-item.on{color:var(--ink)}.btab-item .btico{font-size:18px;line-height:1}
+.btab-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;color:var(--t3);font-size:10px;font-weight:500;cursor:pointer;transition:.12s;flex:1;text-align:center;-webkit-tap-highlight-color:transparent}
+.btab-item.on{color:var(--ink)}.btab-item .btico{font-size:20px;line-height:1}
 </style>
 </head>
 <body>
@@ -269,12 +269,12 @@ a{color:var(--ac);text-decoration:none}::selection{background:var(--acbg)}
 <!-- DASHBOARD -->
 <div class="pg" id="p-dash"><div class="page-h" id="dH"></div><p class="page-sub" id="dD"></p>
 <div class="stats" id="dS"></div>
-<div id="dAdmin" style="display:none;margin-bottom:12px"><button class="btn btn-a btn-sm" onclick="doSync()" id="syncBtn">counsel 동기화</button><span id="syncRes" style="font-size:11px;color:var(--t3);margin-left:8px"></span></div>
+<div id="dAdmin" style="display:none;margin-bottom:12px"><button class="btn btn-a btn-sm" onclick="doSync()" id="syncBtn">counsel 동기화</button><span id="syncRes" style="font-size:12px;color:var(--t3);margin-left:8px"></span></div>
 <div class="card"><div class="card-h">반별 현황</div><div id="dC" class="cls-grid"></div></div></div>
 
 <!-- EVAL GRID -->
 <div class="pg" id="p-eval">
-<div class="eval-top"><button class="btn btn-g btn-sm" onclick="nav('p-dash')">← 뒤로</button><div><div class="eval-title" id="eH"></div><div class="eval-sub" id="eSub"></div></div><div style="margin-left:auto;display:flex;align-items:center;gap:8px"><input type="date" id="eDate" class="ipt" style="height:28px;font-size:12px" onchange="loadEvalDate()"><span class="chip chip-n" id="eProg">0/0</span><span class="chip chip-n" id="eMode" style="display:none">수정모드</span></div></div>
+<div class="eval-top"><button class="btn btn-g btn-sm" onclick="nav('p-dash')">← 뒤로</button><div><div class="eval-title" id="eH"></div><div class="eval-sub" id="eSub"></div></div><div style="margin-left:auto;display:flex;align-items:center;gap:8px"><input type="date" id="eDate" class="ipt" style="height:28px;font-size:13px" onchange="loadEvalDate()"><span class="chip chip-n" id="eProg">0/0</span><span class="chip chip-n" id="eMode" style="display:none">수정모드</span></div></div>
 <div class="grid-wrap"><table class="grid" id="eGrid"><thead></thead><tbody></tbody></table></div>
 </div>
 <div class="save-bar" id="saveBar"><div class="info"><strong id="saveC">0</strong>명 완료</div><button class="btn btn-a" id="saveBtn" onclick="doSave()" disabled>저장</button></div>
@@ -339,7 +339,7 @@ a{color:var(--ac);text-decoration:none}::selection{background:var(--acbg)}
 <div class="modal-ft"><button class="btn btn-g" onclick="cM('clMo')">취소</button><button class="btn btn-p" onclick="svCl()">저장</button></div></div></div>
 
 <div id="enMo" class="modal hd"><div class="modal-box"><div class="modal-h" id="enMoTi">입학 확정</div>
-<p style="font-size:11px;color:var(--t3);margin-bottom:12px" id="enMoDesc">배정할 반을 선택</p>
+<p style="font-size:12px;color:var(--t3);margin-bottom:12px" id="enMoDesc">배정할 반을 선택</p>
 <div id="enMoClasses" style="display:flex;flex-direction:column;gap:4px;max-height:240px;overflow-y:auto;margin-bottom:12px"></div>
 <div class="modal-ft"><button class="btn btn-g" onclick="cM('enMo')">취소</button><button class="btn btn-a" onclick="doEnrollConfirm()">확정</button></div></div></div>
 
@@ -448,7 +448,7 @@ $('dD').textContent=`${d.getFullYear()}. ${d.getMonth()+1}. ${d.getDate()} ${dy[
 const p=r.totalStudents>0?Math.round(r.completedStudents/r.totalStudents*100):0;
 const rem=r.totalStudents-r.completedStudents;
 $('dS').innerHTML=`<div class="stat"><div class="stat-l">전체</div><div class="stat-v">${r.totalStudents}</div></div>
-<div class="stat"><div class="stat-l">입력 완료</div><div class="stat-v">${r.completedStudents}<span style="font-size:12px;font-weight:400;color:var(--t3)"> / ${r.totalStudents}</span></div></div>
+<div class="stat"><div class="stat-l">입력 완료</div><div class="stat-v">${r.completedStudents}<span style="font-size:13px;font-weight:400;color:var(--t3)"> / ${r.totalStudents}</span></div></div>
 <div class="stat"><div class="stat-l">달성률</div><div class="stat-v">${p}%</div></div>
 <div class="stat"><div class="stat-l">미입력</div><div class="stat-v" style="color:${rem>0?'var(--er)':'var(--ok)'}">${rem}</div></div>`;
 const cl=$('dC');if(!r.classes||!r.classes.length){cl.innerHTML='<p style="color:var(--t4);padding:20px;text-align:center">담당 반 없음</p>';return;}
@@ -506,10 +506,10 @@ const scCells=['hw','ud','fc','ps'].map(f=>{
 const curV=ev[f]||'';
 return`<td><div class="sc-group">${nums.map((n,j)=>`<button class="sc-btn${curV===scales[j]?' on':''}" data-i="${i}" data-f="${f}" data-v="${scales[j]}" data-n="${n}" onclick="gSc(this)">${n}</button>`).join('')}</div></td>`;}).join('');
 const isDone=isAbs||(ev.hw&&ev.ud&&ev.fc&&ev.ps);
-return`<tr id="gr${i}" class="${isAbs?'absent':''}${isDone?' done':''}"><td>${st.name}<br><span style="font-size:10px;color:var(--t3)">${st.grade}</span></td>
+return`<tr id="gr${i}" class="${isAbs?'absent':''}${isDone?' done':''}"><td>${st.name}<br><span style="font-size:11px;color:var(--t3)">${st.grade}</span></td>
 <td class="abs-cell" onclick="gAbs(${i})"><div class="abs-check${isAbs?' on':''}" id="ga${i}">✓</div></td>
 ${scCells}
-<td><button class="btn btn-g btn-sm" style="padding:0 6px;font-size:10px" onclick="gDet(${i})">⋯</button></td></tr>
+<td><button class="btn btn-g btn-sm" style="padding:0 6px;font-size:11px" onclick="gDet(${i})">⋯</button></td></tr>
 <tr class="detail-row" id="dr${i}"><td colspan="7"><div class="detail-inner" id="di${i}">${buildDetail(st,i)}</div></td></tr>`;}).join('');
 uProg();}
 
@@ -580,7 +580,7 @@ async function lSts(){if(S.allSt.length){rST(S.allSt);return;}sh('');const r=awa
 function rST(l){$('stTbl').querySelector('thead').innerHTML='<tr><th>이름</th><th>학년</th><th>학교</th><th>상태</th><th>수강</th><th></th></tr>';
 $('stTbl').querySelector('tbody').innerHTML=l.map(s=>`<tr><td><a href="#" onclick="oPr('${esc(s.name)}','p-ast');return false">${s.name}</a></td><td>${s.grade}</td><td>${s.school||''}</td>
 <td><span class="chip ${s.status==='재원'?'chip-ok':'chip-er'}">${s.status||'재원'}</span></td>
-<td style="font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${(s.classes||[]).join(', ')||'—'}</td>
+<td style="font-size:12px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${(s.classes||[]).join(', ')||'—'}</td>
 <td style="white-space:nowrap"><button class="btn btn-g btn-sm" onclick="oSE('${esc(s.name)}')">수강</button> <button class="btn btn-g btn-sm" onclick="eSt('${esc(s.name)}')">수정</button></td></tr>`).join('');}
 function fSt(){const q=$('stSrch').value.trim().toLowerCase();rST(S.allSt.filter(s=>s.name.toLowerCase().includes(q)||(s.school||'').toLowerCase().includes(q)));}
 function oSM(d){$('smTi').textContent=d?'학생 수정':'학생 추가';$('sm_n').value=d?.name||'';$('sm_g').value=d?.grade||'';$('sm_s').value=d?.school||'';$('sm_p').value=d?.parentPhone||'';$('sm_ph').value=d?.studentPhone||'';$('sm_st').value=d?.status||'재원';$('sm_n').readOnly=!!d;$('smMo').classList.remove('hd');}
@@ -593,7 +593,7 @@ async function lCls(){if(S.cls.length){rClTbl();return;}sh('');const r=await gA(
 function rClTbl(){
 $('clTbl').querySelector('thead').innerHTML='<tr><th>반</th><th>과목</th><th>레벨</th><th>담당</th><th>학생</th><th></th></tr>';
 $('clTbl').querySelector('tbody').innerHTML=S.cls.map(c=>`<tr><td style="font-weight:600">${c.name}</td><td><span class="chip chip-n">${c.subject}</span></td><td>${c.level||''}</td>
-<td style="font-size:11px">${c.teachers||''}</td><td style="font-weight:600">${c.studentCount}</td>
+<td style="font-size:12px">${c.teachers||''}</td><td style="font-weight:600">${c.studentCount}</td>
 <td><button class="btn btn-g btn-sm" onclick="eCl('${esc(c.name)}')">수정</button></td></tr>`).join('');}
 function oCM(d){$('clMoTi').textContent=d?'반 수정':'반 추가';$('cl_n').value=d?.name||'';$('cl_sb').value=d?.subject||'국어';$('cl_lv').value=d?.level||'';$('cl_tc').value=d?.teachers||'';$('cl_n').readOnly=!!d;S.editCl=d?.name||null;$('clMo').classList.remove('hd');}
 function eCl(n){oCM(S.cls.find(x=>x.name===n));}
@@ -605,7 +605,7 @@ async function lTcs(){if(S.allTc.length){rTcTbl();return;}sh('');const r=await g
 function rTcTbl(){
 $('tcTbl').querySelector('thead').innerHTML='<tr><th>이름</th><th>과목</th><th>역할</th><th>식별자</th><th>상태</th><th></th></tr>';
 $('tcTbl').querySelector('tbody').innerHTML=S.allTc.map(t=>`<tr><td>${t.name}</td><td><span class="chip chip-n">${t.subject}</span></td>
-<td><span class="chip ${t.role==='관리자'?'chip-ac':'chip-n'}">${t.role}</span></td><td style="font-size:11px;color:var(--t3)">${t.logId}</td>
+<td><span class="chip ${t.role==='관리자'?'chip-ac':'chip-n'}">${t.role}</span></td><td style="font-size:12px;color:var(--t3)">${t.logId}</td>
 <td><span class="chip ${t.status==='활성'?'chip-ok':'chip-er'}">${t.status}</span></td>
 <td><button class="btn btn-g btn-sm" onclick="eTc('${esc(t.name)}')">수정</button></td></tr>`).join('');}
 function oTM(d){$('tmTi').textContent=d?'강사 수정':'강사 추가';$('tm_n').value=d?.name||'';$('tm_sb').value=d?.subject||'국어';$('tm_pw').value='';$('tm_rl').value=d?.role||'강사';$('tm_li').value=d?.logId||'';$('tm_ss').value=d?.status||'활성';$('tm_n').readOnly=!!d;$('tmMo').classList.remove('hd');}
@@ -618,15 +618,15 @@ let enSts=[],enTgt='';
 async function lEnroll(){sh('');const r=await gA('tp_admin_counselStudents',{token:S.tk});hd();if(!r.ok){ts(r.error,'er');return;}enSts=r.students;rEN(r.students);}
 function rEN(l){$('enTbl').querySelector('thead').innerHTML='<tr><th>이름</th><th>학년</th><th>학교</th><th>성향</th><th>영어LT</th><th>수학LT</th><th>상태</th><th></th></tr>';
 $('enTbl').querySelector('tbody').innerHTML=l.map(s=>{const en=s.alreadyEnrolled;return`<tr style="${en?'opacity:.35':''}"><td style="font-weight:500">${s.name}</td><td>${s.grade}</td><td>${s.school||''}</td>
-<td>${s.hasSurvey?`<button class="btn btn-g btn-sm" style="font-size:10px;padding:0 8px;height:22px" onclick="viewCounselDetail('${esc(s.name)}','psy')">보기</button>`:'<span class="chip chip-er">미완</span>'}</td>
-<td>${s.hasEngLT?`<button class="btn btn-g btn-sm" style="font-size:10px;padding:0 8px;height:22px" onclick="viewCounselDetail('${esc(s.name)}','eng')">보기</button>`:'<span class="chip chip-n">—</span>'}</td>
-<td>${s.hasMathLT?`<button class="btn btn-g btn-sm" style="font-size:10px;padding:0 8px;height:22px" onclick="viewCounselDetail('${esc(s.name)}','math')">보기</button>`:'<span class="chip chip-n">—</span>'}</td>
+<td>${s.hasSurvey?`<button class="btn btn-g btn-sm" style="font-size:11px;padding:0 8px;height:22px" onclick="viewCounselDetail('${esc(s.name)}','psy')">보기</button>`:'<span class="chip chip-er">미완</span>'}</td>
+<td>${s.hasEngLT?`<button class="btn btn-g btn-sm" style="font-size:11px;padding:0 8px;height:22px" onclick="viewCounselDetail('${esc(s.name)}','eng')">보기</button>`:'<span class="chip chip-n">—</span>'}</td>
+<td>${s.hasMathLT?`<button class="btn btn-g btn-sm" style="font-size:11px;padding:0 8px;height:22px" onclick="viewCounselDetail('${esc(s.name)}','math')">보기</button>`:'<span class="chip chip-n">—</span>'}</td>
 <td>${en?'<span class="chip chip-ac">입학</span>':`<span class="chip chip-n">${s.status||'진행'}</span>`}</td>
 <td>${en?'':'<button class="btn btn-a btn-sm" onclick="oEnMo(\''+esc(s.name)+'\')">입학</button>'}</td></tr>`;}).join('')||'<tr><td colspan=8 style="text-align:center;padding:20px;color:var(--t3)">없음</td></tr>';}
 function fEn(){const q=$('enSrch').value.trim().toLowerCase();rEN(enSts.filter(s=>s.name.toLowerCase().includes(q)));}
 async function oEnMo(n){enTgt=n;$('enMoTi').textContent=n+' — 입학 확정';
 if(!S.cls.length){try{const r=await gA('tp_admin_allClasses',{token:S.tk});if(r.ok)S.cls=r.classes||[];}catch(e){}}
-$('enMoClasses').innerHTML=S.cls.map(c=>`<label style="display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--ln);border-radius:6px;cursor:pointer;font-size:12px">
+$('enMoClasses').innerHTML=S.cls.map(c=>`<label style="display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--ln);border-radius:6px;cursor:pointer;font-size:13px">
 <input type="checkbox" value="${esc(c.name)}" style="accent-color:var(--ac)"><div><b>${c.name}</b><span style="color:var(--t3);margin-left:4px">${c.subject}</span></div></label>`).join('');
 $('enMo').classList.remove('hd');}
 async function doEnrollConfirm(){const cls=Array.from(document.querySelectorAll('#enMoClasses input:checked')).map(c=>c.value);cM('enMo');sh('');
@@ -634,8 +634,8 @@ const r=await pA({action:'tp_admin_enrollStudent',student:enTgt,classes:cls,toke
 
 // ENROLLMENT EDIT
 async function oSE(n){$('seMoTi').textContent=n+' — 수강';const st=S.allSt.find(s=>s.name===n);const cur=(st&&st.classes)||[];
-$('seMoCur').innerHTML=cur.length?cur.map(c=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 8px;border:1px solid var(--ln);border-radius:6px;margin-bottom:3px;font-size:12px">
-<span>${c}</span><button class="btn btn-g btn-sm" style="color:var(--er)" onclick="rmEnroll('${esc(n)}','${esc(c)}')">해제</button></div>`).join(''):'<p style="font-size:11px;color:var(--t4)">없음</p>';
+$('seMoCur').innerHTML=cur.length?cur.map(c=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 8px;border:1px solid var(--ln);border-radius:6px;margin-bottom:3px;font-size:13px">
+<span>${c}</span><button class="btn btn-g btn-sm" style="color:var(--er)" onclick="rmEnroll('${esc(n)}','${esc(c)}')">해제</button></div>`).join(''):'<p style="font-size:12px;color:var(--t4)">없음</p>';
 if(!S.cls.length){try{const r=await gA('tp_admin_allClasses',{token:S.tk});if(r.ok)S.cls=r.classes||[];}catch(e){}}
 $('se_cls').innerHTML='<option value="">선택</option>'+S.cls.filter(c=>!cur.includes(c.name)).map(c=>`<option value="${esc(c.name)}">${c.name} (${c.subject})</option>`).join('');
 $('seMo').dataset.student=n;$('seMo').classList.remove('hd');}
@@ -673,7 +673,7 @@ try{const pj=JSON.parse(st.surveyJson);const pa=pj.profileAnalysis||{};const ps=
 let h=`<div id="cdCapArea" style="padding:16px;background:#fff">`;
 // 헤더
 h+=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--ln)">
-<div><div style="font-size:16px;font-weight:700">${st.name}</div><div style="font-size:11px;color:var(--t3)">${st.grade} · ${st.school||''}</div></div>
+<div><div style="font-size:18px;font-weight:700">${st.name}</div><div style="font-size:12px;color:var(--t3)">${st.grade} · ${st.school||''}</div></div>
 <div style="display:flex;gap:4px;flex-wrap:wrap">
 <span class="chip ${rl.score==='상'?'chip-ok':rl.score==='중'?'chip-wn':'chip-er'}">신뢰도 ${rl.score||'—'}</span>
 <span class="chip chip-n">${st.surveyDate||''}</span>
@@ -681,36 +681,36 @@ ${cs.recommend_tag_A?`<span class="chip chip-ac">${cs.recommend_tag_A}</span>`:'
 ${cs.recommend_tag_B?`<span class="chip chip-ac">${cs.recommend_tag_B}</span>`:''}
 </div></div>`;
 // 종합 분석
-if(pa.summary_title)h+=`<div style="font-size:14px;font-weight:700;margin-bottom:4px">${pa.summary_title}</div>`;
-if(pa.summary_text)h+=`<p style="font-size:12px;color:var(--t2);line-height:1.8;margin-bottom:16px">${pa.summary_text}</p>`;
+if(pa.summary_title)h+=`<div style="font-size:15px;font-weight:700;margin-bottom:4px">${pa.summary_title}</div>`;
+if(pa.summary_text)h+=`<p style="font-size:13px;color:var(--t2);line-height:1.8;margin-bottom:16px">${pa.summary_text}</p>`;
 // 레이더 차트
 h+=`<div style="display:flex;gap:16px;align-items:center;margin-bottom:20px;flex-wrap:wrap">
 <div style="width:220px;flex-shrink:0"><canvas id="cdRadar"></canvas></div>
-<div style="flex:1;min-width:150px"><div style="font-size:12px;font-weight:600;margin-bottom:8px">5대 핵심 역량</div>`;
+<div style="flex:1;min-width:150px"><div style="font-size:13px;font-weight:600;margin-bottom:8px">5대 핵심 역량</div>`;
 const dims=[['학습 동기',ps.motivation],['계획 수립',ps.planning],['메타인지',ps.metacognition],['자기 조절',ps.self_regulation],['도움 요청',ps.help_seeking]];
 dims.forEach(([l,v])=>{const c=v>=70?'var(--ok)':v>=40?'var(--wn)':'var(--er)';
-h+=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="font-size:11px;width:56px;color:var(--t2);text-align:right">${l}</span>
+h+=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="font-size:12px;width:56px;color:var(--t2);text-align:right">${l}</span>
 <div style="flex:1;height:8px;background:var(--ln);border-radius:4px;overflow:hidden"><div style="width:${v}%;height:100%;background:${c};border-radius:4px"></div></div>
-<span style="font-size:12px;font-weight:700;width:28px;color:${c}">${v}</span></div>`;});
+<span style="font-size:13px;font-weight:700;width:28px;color:${c}">${v}</span></div>`;});
 h+=`</div></div>`;
 // 세부 척도 (5개 섹션 × 5개 = 25개)
 const secNames={section1_motivation:'학습 동기',section2_cognition:'인지 전략',section3_behavior:'행동 조절',section4_emotion:'정서 관리',section5_environment:'학습 환경'};
 const secClrs=['#6366f1','#22c55e','#f59e0b','#ec4899','#0066ff'];
-h+=`<div style="font-size:13px;font-weight:700;margin-bottom:10px;padding-top:12px;border-top:1px solid var(--ln)">25개 세부 척도 분석</div>`;
+h+=`<div style="font-size:14px;font-weight:700;margin-bottom:10px;padding-top:12px;border-top:1px solid var(--ln)">25개 세부 척도 분석</div>`;
 Object.keys(secNames).forEach((sk,idx)=>{const sec=sa[sk];if(!sec)return;
 h+=`<div style="margin-bottom:16px"><div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
 <div style="width:8px;height:8px;border-radius:50%;background:${secClrs[idx]}"></div>
-<span style="font-size:12px;font-weight:600">${secNames[sk]}</span></div>`;
-if(sec.sectionSummary)h+=`<p style="font-size:11px;color:var(--t3);margin-bottom:6px;line-height:1.6">${sec.sectionSummary}</p>`;
+<span style="font-size:13px;font-weight:600">${secNames[sk]}</span></div>`;
+if(sec.sectionSummary)h+=`<p style="font-size:12px;color:var(--t3);margin-bottom:6px;line-height:1.6">${sec.sectionSummary}</p>`;
 h+=`<canvas id="cdSec${idx}" height="100"></canvas></div>`;});
 // 상담 전략
 if(cs.recommend_text){h+=`<div style="padding:14px;background:var(--acbg);border-radius:8px;border-left:3px solid var(--ac);margin-top:12px">
-<div style="font-size:12px;font-weight:700;color:var(--ac);margin-bottom:4px">상담 전략 추천</div>
-<p style="font-size:12px;color:var(--t1);line-height:1.8">${cs.recommend_text}</p></div>`;}
+<div style="font-size:13px;font-weight:700;color:var(--ac);margin-bottom:4px">상담 전략 추천</div>
+<p style="font-size:13px;color:var(--t1);line-height:1.8">${cs.recommend_text}</p></div>`;}
 // 신뢰도 상세
 if(rl.details){h+=`<div style="margin-top:12px;padding:12px;background:var(--bg);border-radius:8px">
-<div style="font-size:11px;font-weight:600;color:var(--t3);margin-bottom:4px">신뢰도 분석</div>
-<p style="font-size:11px;color:var(--t2);line-height:1.6">${typeof rl.details==='string'?rl.details:JSON.stringify(rl.details)}</p></div>`;}
+<div style="font-size:12px;font-weight:600;color:var(--t3);margin-bottom:4px">신뢰도 분석</div>
+<p style="font-size:12px;color:var(--t2);line-height:1.6">${typeof rl.details==='string'?rl.details:JSON.stringify(rl.details)}</p></div>`;}
 if(pj.detected_issues&&pj.detected_issues.length){h+=`<div style="margin-top:8px;display:flex;gap:4px;flex-wrap:wrap">`;
 pj.detected_issues.forEach(d=>{h+=`<span class="chip chip-wn">${d}</span>`;});h+=`</div>`;}
 h+=`</div>`;return h;
@@ -742,7 +742,7 @@ try{const lt=JSON.parse(jsonStr);
 let h=`<div id="cdCapArea" style="padding:16px;background:#fff">`;
 // 헤더
 h+=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--ln)">
-<div><div style="font-size:16px;font-weight:700">${name||''}</div><div style="font-size:11px;color:var(--t3)">${st.grade||''} · ${st.school||''} · ${subject} 레벨테스트</div></div></div>`;
+<div><div style="font-size:18px;font-weight:700">${name||''}</div><div style="font-size:12px;color:var(--t3)">${st.grade||''} · ${st.school||''} · ${subject} 레벨테스트</div></div></div>`;
 
 // ── 구조 감지 ──
 const hasAction=lt.action&&Array.isArray(lt.action);
@@ -771,23 +771,23 @@ const maxTotal=stg.data.reduce((s,d)=>s+(d.full||0),0);
 const pct=maxTotal>0?Math.round(total/maxTotal*100):0;
 const clr=pct>=70?'var(--ok)':pct>=40?'var(--wn)':'var(--er)';
 h+=`<div style="flex:1;min-width:100px;padding:14px;background:var(--bg);border-radius:10px;text-align:center;border:2px solid ${stg.color}20">
-<div style="font-size:10px;font-weight:700;color:${stg.color};margin-bottom:4px">${stg.label}</div>
-<div style="font-size:24px;font-weight:800;color:${clr}">${total.toFixed(1)}<span style="font-size:12px;font-weight:400;color:var(--t3)">/${maxTotal.toFixed(1)}</span></div>
-<div style="font-size:10px;color:var(--t3);margin-top:2px">${pct}%</div></div>`;});
+<div style="font-size:11px;font-weight:700;color:${stg.color};margin-bottom:4px">${stg.label}</div>
+<div style="font-size:26px;font-weight:800;color:${clr}">${total.toFixed(1)}<span style="font-size:13px;font-weight:400;color:var(--t3)">/${maxTotal.toFixed(1)}</span></div>
+<div style="font-size:11px;color:var(--t3);margin-top:2px">${pct}%</div></div>`;});
 h+=`</div>`;
 
 // 성장 추이 비교 차트
-h+=`<div style="font-size:13px;font-weight:700;margin-bottom:10px">영역별 성취도 비교</div>
+h+=`<div style="font-size:14px;font-weight:700;margin-bottom:10px">영역별 성취도 비교</div>
 <div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:16px;flex-wrap:wrap">
 <div style="flex:1;min-width:220px"><canvas id="cdLtBar"></canvas></div>
 <div style="flex:1;min-width:180px"><canvas id="cdLtRadar"></canvas></div></div>`;
 
 // 영역별 상세 테이블
-h+=`<div style="overflow-x:auto;margin-bottom:16px"><table style="width:100%;border-collapse:collapse;font-size:12px">
-<thead><tr style="background:var(--bg)"><th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:600;color:var(--t3)">영역</th>`;
-stages.forEach(stg=>{h+=`<th style="padding:8px 10px;text-align:center;font-size:10px;font-weight:600;color:${stg.color}">${stg.label}</th>`;});
-h+=`<th style="padding:8px 10px;text-align:center;font-size:10px;font-weight:600;color:var(--t3)">배점</th>
-<th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:600;color:var(--t3)">달성도</th></tr></thead><tbody>`;
+h+=`<div style="overflow-x:auto;margin-bottom:16px"><table style="width:100%;border-collapse:collapse;font-size:13px">
+<thead><tr style="background:var(--bg)"><th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--t3)">영역</th>`;
+stages.forEach(stg=>{h+=`<th style="padding:8px 10px;text-align:center;font-size:11px;font-weight:600;color:${stg.color}">${stg.label}</th>`;});
+h+=`<th style="padding:8px 10px;text-align:center;font-size:11px;font-weight:600;color:var(--t3)">배점</th>
+<th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--t3)">달성도</th></tr></thead><tbody>`;
 areaNames.forEach(area=>{
 h+=`<tr style="border-bottom:1px solid var(--lnl)"><td style="padding:8px 10px;font-weight:500">${area}</td>`;
 let fullVal=0;
@@ -814,28 +814,28 @@ const clr=pct>=70?'var(--ok)':pct>=40?'var(--wn)':'var(--er)';
 // 핵심 지표 카드
 h+=`<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
 <div style="flex:1;min-width:100px;padding:16px;background:var(--bg);border-radius:10px;text-align:center;border:1px solid var(--ln)">
-<div style="font-size:28px;font-weight:800;color:${clr}">${total}<span style="font-size:14px;font-weight:400;color:var(--t3)">/${maxTotal}</span></div>
-<div style="font-size:11px;color:var(--t3);margin-top:2px">총점 (${pct}%)</div></div>`;
+<div style="font-size:30px;font-weight:800;color:${clr}">${total}<span style="font-size:15px;font-weight:400;color:var(--t3)">/${maxTotal}</span></div>
+<div style="font-size:12px;color:var(--t3);margin-top:2px">총점 (${pct}%)</div></div>`;
 lt.action.forEach(a=>{const ap=a.fullMark>0?Math.round((a.A||0)/a.fullMark*100):0;
 const ac=ap>=70?'var(--ok)':ap>=40?'var(--wn)':'var(--er)';
 h+=`<div style="flex:1;min-width:80px;padding:14px;background:var(--bg);border-radius:10px;text-align:center;border:1px solid var(--ln)">
-<div style="font-size:22px;font-weight:800;color:${ac}">${a.A||0}<span style="font-size:12px;font-weight:400;color:var(--t3)">/${a.fullMark}</span></div>
-<div style="font-size:10px;color:var(--t3);margin-top:2px">${a.subject||''}</div></div>`;});
+<div style="font-size:24px;font-weight:800;color:${ac}">${a.A||0}<span style="font-size:13px;font-weight:400;color:var(--t3)">/${a.fullMark}</span></div>
+<div style="font-size:11px;color:var(--t3);margin-top:2px">${a.subject||''}</div></div>`;});
 h+=`</div>`;
 
 // 영역별 차트
-h+=`<div style="font-size:13px;font-weight:700;margin-bottom:10px">영역별 성취도</div>`;
+h+=`<div style="font-size:14px;font-weight:700;margin-bottom:10px">영역별 성취도</div>`;
 h+=`<div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:16px;flex-wrap:wrap">
 <div style="flex:1;min-width:200px"><canvas id="cdLtBar"></canvas></div>
 <div style="flex:1;min-width:160px"><canvas id="cdLtRadar"></canvas></div></div>`;
 
 // 영역 테이블
-h+=`<div style="overflow-x:auto;margin-bottom:16px"><table style="width:100%;border-collapse:collapse;font-size:12px">
-<thead><tr style="background:var(--bg)"><th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:600;color:var(--t3)">영역</th>
-<th style="padding:8px 10px;text-align:center;font-size:10px;font-weight:600;color:var(--t3)">점수</th>
-<th style="padding:8px 10px;text-align:center;font-size:10px;font-weight:600;color:var(--t3)">배점</th>
-<th style="padding:8px 10px;text-align:center;font-size:10px;font-weight:600;color:var(--t3)">정답률</th>
-<th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:600;color:var(--t3)">달성도</th></tr></thead><tbody>`;
+h+=`<div style="overflow-x:auto;margin-bottom:16px"><table style="width:100%;border-collapse:collapse;font-size:13px">
+<thead><tr style="background:var(--bg)"><th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--t3)">영역</th>
+<th style="padding:8px 10px;text-align:center;font-size:11px;font-weight:600;color:var(--t3)">점수</th>
+<th style="padding:8px 10px;text-align:center;font-size:11px;font-weight:600;color:var(--t3)">배점</th>
+<th style="padding:8px 10px;text-align:center;font-size:11px;font-weight:600;color:var(--t3)">정답률</th>
+<th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--t3)">달성도</th></tr></thead><tbody>`;
 lt.action.forEach(a=>{const ap=a.fullMark>0?Math.round((a.A||0)/a.fullMark*100):0;const ac=ap>=70?'var(--ok)':ap>=40?'var(--wn)':'var(--er)';
 h+=`<tr style="border-bottom:1px solid var(--lnl)"><td style="padding:8px 10px;font-weight:500">${a.subject||''}</td>
 <td style="padding:8px 10px;text-align:center;font-weight:700;color:${ac}">${a.A||0}</td>
@@ -846,15 +846,15 @@ h+=`</tbody></table></div>`;}
 
 // content: 문항별 점수 [{name,score,avg}]
 if(hasContent&&lt.content.length){
-h+=`<div style="font-size:13px;font-weight:700;margin-bottom:10px">문항별 상세 분석</div>`;
+h+=`<div style="font-size:14px;font-weight:700;margin-bottom:10px">문항별 상세 분석</div>`;
 h+=`<div style="margin-bottom:16px"><canvas id="cdLtContent" height="${Math.max(200,lt.content.length*28)}"></canvas></div>`;
 
 // 문항 테이블
-h+=`<div style="overflow-x:auto;margin-bottom:14px"><table style="width:100%;border-collapse:collapse;font-size:12px">
-<thead><tr style="background:var(--bg)"><th style="padding:6px 10px;text-align:left;font-size:10px;font-weight:600;color:var(--t3)">문항</th>
-<th style="padding:6px 10px;text-align:center;font-size:10px;font-weight:600;color:var(--t3)">학생 점수</th>
-<th style="padding:6px 10px;text-align:center;font-size:10px;font-weight:600;color:var(--t3)">전체 평균</th>
-<th style="padding:6px 10px;text-align:center;font-size:10px;font-weight:600;color:var(--t3)">평균 대비</th></tr></thead><tbody>`;
+h+=`<div style="overflow-x:auto;margin-bottom:14px"><table style="width:100%;border-collapse:collapse;font-size:13px">
+<thead><tr style="background:var(--bg)"><th style="padding:6px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--t3)">문항</th>
+<th style="padding:6px 10px;text-align:center;font-size:11px;font-weight:600;color:var(--t3)">학생 점수</th>
+<th style="padding:6px 10px;text-align:center;font-size:11px;font-weight:600;color:var(--t3)">전체 평균</th>
+<th style="padding:6px 10px;text-align:center;font-size:11px;font-weight:600;color:var(--t3)">평균 대비</th></tr></thead><tbody>`;
 lt.content.forEach(c=>{const diff=((c.score||0)-(c.avg||0)).toFixed(1);const better=parseFloat(diff)>=0;
 h+=`<tr style="border-bottom:1px solid var(--lnl)"><td style="padding:6px 10px;font-weight:500">${c.name||''}</td>
 <td style="padding:6px 10px;text-align:center;font-weight:700">${c.score}</td>
@@ -869,11 +869,11 @@ const weaks=sorted.filter(c=>c.score<c.avg).slice(-3).reverse();
 if(strengths.length||weaks.length){
 h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">`;
 if(strengths.length)h+=`<div style="padding:12px;background:var(--okbg);border-radius:8px;border-left:3px solid var(--ok)">
-<div style="font-size:11px;font-weight:700;color:#15803d;margin-bottom:4px">강점 (평균 이상)</div>
-${strengths.map(s=>`<div style="font-size:11px;color:#166534;padding:1px 0">${s.name} (${s.score}점, 평균 ${s.avg})</div>`).join('')}</div>`;
+<div style="font-size:12px;font-weight:700;color:#15803d;margin-bottom:4px">강점 (평균 이상)</div>
+${strengths.map(s=>`<div style="font-size:12px;color:#166534;padding:1px 0">${s.name} (${s.score}점, 평균 ${s.avg})</div>`).join('')}</div>`;
 if(weaks.length)h+=`<div style="padding:12px;background:var(--erbg);border-radius:8px;border-left:3px solid var(--er)">
-<div style="font-size:11px;font-weight:700;color:#b91c1c;margin-bottom:4px">보완 필요 (평균 미만)</div>
-${weaks.map(w=>`<div style="font-size:11px;color:#991b1b;padding:1px 0">${w.name} (${w.score}점, 평균 ${w.avg})</div>`).join('')}</div>`;
+<div style="font-size:12px;font-weight:700;color:#b91c1c;margin-bottom:4px">보완 필요 (평균 미만)</div>
+${weaks.map(w=>`<div style="font-size:12px;color:#991b1b;padding:1px 0">${w.name} (${w.score}점, 평균 ${w.avg})</div>`).join('')}</div>`;
 h+=`</div>`;}
 }
 
@@ -883,24 +883,24 @@ if(lt.totalScore!==undefined||lt.level){
 h+=`<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">`;
 if(lt.totalScore!==undefined){const maxS=lt.maxScore||100;const pct=Math.round(lt.totalScore/maxS*100);const clr=pct>=70?'var(--ok)':pct>=40?'var(--wn)':'var(--er)';
 h+=`<div style="flex:1;min-width:100px;padding:16px;background:var(--bg);border-radius:10px;text-align:center;border:1px solid var(--ln)">
-<div style="font-size:28px;font-weight:800;color:${clr}">${lt.totalScore}<span style="font-size:14px;font-weight:400;color:var(--t3)">/${maxS}</span></div>
-<div style="font-size:11px;color:var(--t3);margin-top:2px">총점</div></div>`;}
-if(lt.level)h+=`<div style="flex:1;min-width:100px;padding:16px;background:var(--acbg);border-radius:10px;text-align:center"><div style="font-size:24px;font-weight:800;color:var(--ac)">${lt.level}</div><div style="font-size:11px;color:var(--ac);margin-top:2px">레벨</div></div>`;
+<div style="font-size:30px;font-weight:800;color:${clr}">${lt.totalScore}<span style="font-size:15px;font-weight:400;color:var(--t3)">/${maxS}</span></div>
+<div style="font-size:12px;color:var(--t3);margin-top:2px">총점</div></div>`;}
+if(lt.level)h+=`<div style="flex:1;min-width:100px;padding:16px;background:var(--acbg);border-radius:10px;text-align:center"><div style="font-size:26px;font-weight:800;color:var(--ac)">${lt.level}</div><div style="font-size:12px;color:var(--ac);margin-top:2px">레벨</div></div>`;
 h+=`</div>`;}
 if(lt.sections&&Array.isArray(lt.sections)){
-h+=`<div style="font-size:13px;font-weight:700;margin-bottom:10px">영역별 분석</div>
+h+=`<div style="font-size:14px;font-weight:700;margin-bottom:10px">영역별 분석</div>
 <div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:16px;flex-wrap:wrap">
 <div style="flex:1;min-width:200px"><canvas id="cdLtBar"></canvas></div>
 <div style="flex:1;min-width:160px"><canvas id="cdLtRadar"></canvas></div></div>`;}
-if(lt.analysis)h+=`<div style="padding:14px;background:var(--bg);border-radius:8px;margin-bottom:10px"><div style="font-size:12px;font-weight:700;margin-bottom:4px">종합 분석</div><p style="font-size:12px;color:var(--t2);line-height:1.8">${typeof lt.analysis==='string'?lt.analysis:JSON.stringify(lt.analysis)}</p></div>`;
-if(lt.recommendation)h+=`<div style="padding:14px;background:var(--acbg);border-radius:8px;border-left:3px solid var(--ac)"><div style="font-size:12px;font-weight:700;color:var(--ac);margin-bottom:4px">학습 추천</div><p style="font-size:12px;color:var(--t1);line-height:1.8">${typeof lt.recommendation==='string'?lt.recommendation:JSON.stringify(lt.recommendation)}</p></div>`;
+if(lt.analysis)h+=`<div style="padding:14px;background:var(--bg);border-radius:8px;margin-bottom:10px"><div style="font-size:13px;font-weight:700;margin-bottom:4px">종합 분석</div><p style="font-size:13px;color:var(--t2);line-height:1.8">${typeof lt.analysis==='string'?lt.analysis:JSON.stringify(lt.analysis)}</p></div>`;
+if(lt.recommendation)h+=`<div style="padding:14px;background:var(--acbg);border-radius:8px;border-left:3px solid var(--ac)"><div style="font-size:13px;font-weight:700;color:var(--ac);margin-bottom:4px">학습 추천</div><p style="font-size:13px;color:var(--t1);line-height:1.8">${typeof lt.recommendation==='string'?lt.recommendation:JSON.stringify(lt.recommendation)}</p></div>`;
 }
 
 // 기타 필드 (알려진 필드 제외)
 const known=new Set(['action','content','pre','current','post','totalScore','maxScore','level','percentile','sections','analysis','recommendation','strengths','weaknesses']);
 const rest=Object.entries(lt).filter(([k])=>!known.has(k));
-if(rest.length){h+=`<div style="margin-top:12px;padding:12px;background:var(--bg);border-radius:6px"><div style="font-size:10px;font-weight:600;color:var(--t3);margin-bottom:6px">추가 데이터</div>`;
-rest.forEach(([k,v])=>{h+=`<div style="display:flex;gap:6px;font-size:11px;padding:3px 0;border-bottom:1px solid var(--lnl)"><span style="font-weight:600;color:var(--t2);min-width:80px">${k}</span><span style="color:var(--t1)">${typeof v==='object'?JSON.stringify(v):v}</span></div>`;});
+if(rest.length){h+=`<div style="margin-top:12px;padding:12px;background:var(--bg);border-radius:6px"><div style="font-size:11px;font-weight:600;color:var(--t3);margin-bottom:6px">추가 데이터</div>`;
+rest.forEach(([k,v])=>{h+=`<div style="display:flex;gap:6px;font-size:12px;padding:3px 0;border-bottom:1px solid var(--lnl)"><span style="font-weight:600;color:var(--t2);min-width:80px">${k}</span><span style="color:var(--t1)">${typeof v==='object'?JSON.stringify(v):v}</span></div>`;});
 h+=`</div>`;}
 h+=`</div>`;return h;
 }catch(e){return `<div id="cdCapArea"><p style="color:var(--er)">파싱 오류: ${e.message}</p></div>`;}}
@@ -1015,8 +1015,8 @@ let h=`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
 <div class="stat" style="flex:1;min-width:80px"><div class="stat-l">끈기</div><div class="stat-v">${r.averages.persistence||'-'}</div></div></div>
 <canvas id="trendCv" style="margin-bottom:14px"></canvas>`;
 if(r.topGrowthPoints.length||r.topWeaknesses.length){h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">`;
-if(r.topGrowthPoints.length)h+=`<div class="card" style="margin:0"><div class="card-h" style="color:var(--ok)">성장 포인트</div>${r.topGrowthPoints.map(g=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:2px 0"><span>${g.name}</span><span style="color:var(--t3)">${g.count}회</span></div>`).join('')}</div>`;
-if(r.topWeaknesses.length)h+=`<div class="card" style="margin:0"><div class="card-h" style="color:var(--er)">주요 약점</div>${r.topWeaknesses.map(w=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:2px 0"><span>${w.name}</span><span style="color:var(--t3)">${w.count}회</span></div>`).join('')}</div>`;
+if(r.topGrowthPoints.length)h+=`<div class="card" style="margin:0"><div class="card-h" style="color:var(--ok)">성장 포인트</div>${r.topGrowthPoints.map(g=>`<div style="display:flex;justify-content:space-between;font-size:13px;padding:2px 0"><span>${g.name}</span><span style="color:var(--t3)">${g.count}회</span></div>`).join('')}</div>`;
+if(r.topWeaknesses.length)h+=`<div class="card" style="margin:0"><div class="card-h" style="color:var(--er)">주요 약점</div>${r.topWeaknesses.map(w=>`<div style="display:flex;justify-content:space-between;font-size:13px;padding:2px 0"><span>${w.name}</span><span style="color:var(--t3)">${w.count}회</span></div>`).join('')}</div>`;
 h+=`</div>`;}
 $('trendResult').innerHTML=h;
 if(trendCh)trendCh.destroy();
@@ -1028,7 +1028,7 @@ datasets:[{label:'과제',data:r.trend.map(t=>t.homework),borderColor:'#6366f1',
 options:{responsive:true,scales:{y:{min:0,max:5.5,ticks:{stepSize:1,font:{size:10}}},x:{ticks:{font:{size:9}}}},plugins:{legend:{position:'bottom',labels:{font:{size:10},usePointStyle:true,padding:12}}}}});}
 
 async function loadTeacherStats(){sh('');const r=await gA('tp_evalStats',{days:$('stStatsDays').value,token:S.tk});hd();if(!r.ok)return;
-let h=`<div style="font-size:11px;color:var(--t3);margin-bottom:10px">총 ${r.totalEntries}건 · 최근 ${r.period}</div>`;
+let h=`<div style="font-size:12px;color:var(--t3);margin-bottom:10px">총 ${r.totalEntries}건 · 최근 ${r.period}</div>`;
 if(r.teachers.length){h+=`<div class="tw" style="margin-bottom:14px"><table class="tb"><thead><tr><th>강사</th><th>입력</th><th>일수</th><th>과제</th><th>이해</th><th>집중</th><th>끈기</th></tr></thead><tbody>
 ${r.teachers.map(t=>`<tr><td>${t.teacher.replace(/^[^_]+_/,'')}</td><td>${t.totalEntries}</td><td>${t.activeDays}</td>
 <td style="font-weight:600;color:${t.avgHomework>=4?'var(--ok)':'var(--ink)'}">${t.avgHomework||'-'}</td>
@@ -1036,7 +1036,7 @@ ${r.teachers.map(t=>`<tr><td>${t.teacher.replace(/^[^_]+_/,'')}</td><td>${t.tota
 <td style="font-weight:600;color:${t.avgFocus>=4?'var(--ok)':'var(--ink)'}">${t.avgFocus||'-'}</td>
 <td style="font-weight:600;color:${t.avgPersistence>=4?'var(--ok)':'var(--ink)'}">${t.avgPersistence||'-'}</td></tr>`).join('')}</tbody></table></div>`;
 h+=`<canvas id="teachCv"></canvas>`;}
-if(r.dailyTrend.length)h+=`<div style="margin-top:14px"><div style="font-size:11px;font-weight:600;color:var(--t2);margin-bottom:6px">일별 입력 추이</div><canvas id="dailyCv"></canvas></div>`;
+if(r.dailyTrend.length)h+=`<div style="margin-top:14px"><div style="font-size:12px;font-weight:600;color:var(--t2);margin-bottom:6px">일별 입력 추이</div><canvas id="dailyCv"></canvas></div>`;
 $('statsResult').innerHTML=h;
 if(r.teachers.length&&$('teachCv')){if(teachCh)teachCh.destroy();
 teachCh=new Chart($('teachCv').getContext('2d'),{type:'bar',data:{labels:r.teachers.map(t=>t.teacher.replace(/^[^_]+_/,'')),
@@ -1089,16 +1089,16 @@ bodies[1]+=`<div class="card" style="margin-bottom:12px"><div class="card-h">종
 ${cs.recommend_tag_A?`<span class="chip chip-ac">${cs.recommend_tag_A}</span>`:''}
 ${cs.recommend_tag_B?`<span class="chip chip-ac">${cs.recommend_tag_B}</span>`:''}
 </div>
-${pa.summary_text?`<p style="font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:12px">${pa.summary_text}</p>`:''}
+${pa.summary_text?`<p style="font-size:13px;color:var(--t2);line-height:1.7;margin-bottom:12px">${pa.summary_text}</p>`:''}
 <div class="radar-wrap"><canvas id="radarCv"></canvas></div></div>`;
 // 세부 척도
 const sa=pj.sectionAnalysis;
 if(sa){bodies[1]+=`<div class="card"><div class="card-h">세부 척도</div>`;
 ['section1_motivation','section2_cognition','section3_behavior','section4_emotion','section5_environment'].forEach((sk,idx)=>{const sec=sa[sk];if(!sec)return;
-bodies[1]+=`<div style="margin-bottom:14px"><div style="font-size:12px;font-weight:600;color:${SEC_COLORS[idx]};margin-bottom:2px">${SEC_NAMES[sk]}</div>
-<p style="font-size:11px;color:var(--t3);margin-bottom:6px">${sec.sectionSummary||''}</p><canvas id="sec${idx}"></canvas></div>`;});
+bodies[1]+=`<div style="margin-bottom:14px"><div style="font-size:13px;font-weight:600;color:${SEC_COLORS[idx]};margin-bottom:2px">${SEC_NAMES[sk]}</div>
+<p style="font-size:12px;color:var(--t3);margin-bottom:6px">${sec.sectionSummary||''}</p><canvas id="sec${idx}"></canvas></div>`;});
 bodies[1]+=`</div>`;}
-if(cs.recommend_text){bodies[1]+=`<div class="card" style="margin-bottom:0"><div class="card-h">상담 전략</div><p style="font-size:12px;color:var(--t2);line-height:1.7">${cs.recommend_text}</p></div>`;}
+if(cs.recommend_text){bodies[1]+=`<div class="card" style="margin-bottom:0"><div class="card-h">상담 전략</div><p style="font-size:13px;color:var(--t2);line-height:1.7">${cs.recommend_text}</p></div>`;}
 bodies[1]+='</div>'; // close psyCapture
 }
 
@@ -1110,15 +1110,15 @@ bodies[rIdx]=`<div class="card"><div class="card-h">2주 리포트 · ${rr.repor
 rr.reports.slice(0,10).forEach((rp,idx)=>{
 bodies[rIdx]+=`<div style="border:1px solid var(--ln);border-radius:6px;margin-bottom:6px;overflow:hidden">
 <div style="padding:10px 12px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;background:var(--bg)" onclick="var e=$('rpd${idx}');e.style.maxHeight=e.style.maxHeight==='0px'?'2000px':'0px'">
-<div><span style="font-size:13px;font-weight:600">${rp.date||''}</span><span style="font-size:11px;color:var(--t3);margin-left:6px">${rp.counselor||''}</span></div>
+<div><span style="font-size:14px;font-weight:600">${rp.date||''}</span><span style="font-size:12px;color:var(--t3);margin-left:6px">${rp.counselor||''}</span></div>
 <div style="display:flex;gap:4px;align-items:center">
-${rp.shortUrl?`<a href="${rp.shortUrl.startsWith('http')?rp.shortUrl:'https://go.trueasheard.com/'+rp.shortUrl}" target="_blank" style="font-size:11px" onclick="event.stopPropagation()">리포트 ↗</a>`:(rp.reportUrl?`<a href="${rp.reportUrl}" target="_blank" style="font-size:11px" onclick="event.stopPropagation()">열기 ↗</a>`:'')}
-<span style="font-size:10px;color:var(--t4)">▼</span></div></div>
+${rp.shortUrl?`<a href="${rp.shortUrl.startsWith('http')?rp.shortUrl:'https://go.trueasheard.com/'+rp.shortUrl}" target="_blank" style="font-size:12px" onclick="event.stopPropagation()">리포트 ↗</a>`:(rp.reportUrl?`<a href="${rp.reportUrl}" target="_blank" style="font-size:12px" onclick="event.stopPropagation()">열기 ↗</a>`:'')}
+<span style="font-size:11px;color:var(--t4)">▼</span></div></div>
 <div id="rpd${idx}" style="max-height:0;overflow:hidden;transition:max-height .3s;padding:0 12px"><div style="padding:8px 0 12px">`;
-if(rp.metrics&&rp.metrics.length)bodies[rIdx]+=`<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px">${rp.metrics.map(m=>`<div style="flex:1;min-width:70px;padding:6px 8px;background:var(--bg);border-radius:5px;text-align:center"><div style="font-size:9px;color:var(--t3)">${m.metricName}</div><div style="font-size:14px;font-weight:700;color:${m.trend==='up'?'var(--ok)':'var(--ink)'}">${m.currentValue}</div></div>`).join('')}</div>`;
-if(rp.aiSummary)bodies[rIdx]+=`<p style="font-size:11px;color:var(--t2);line-height:1.6;margin-bottom:8px">${rp.aiSummary}</p>`;
-if(rp.goals)bodies[rIdx]+=`<div style="padding:6px 8px;background:var(--acbg);border-radius:5px;font-size:11px;color:#1d4ed8;margin-bottom:6px"><b>목표</b> ${rp.goals}</div>`;
-if(rp.counselResult&&rp.counselResult.mainTopics)bodies[rIdx]+=rp.counselResult.mainTopics.map(t=>`<div style="font-size:11px;color:var(--t2);padding:1px 0">${t}</div>`).join('');
+if(rp.metrics&&rp.metrics.length)bodies[rIdx]+=`<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px">${rp.metrics.map(m=>`<div style="flex:1;min-width:70px;padding:6px 8px;background:var(--bg);border-radius:5px;text-align:center"><div style="font-size:10px;color:var(--t3)">${m.metricName}</div><div style="font-size:15px;font-weight:700;color:${m.trend==='up'?'var(--ok)':'var(--ink)'}">${m.currentValue}</div></div>`).join('')}</div>`;
+if(rp.aiSummary)bodies[rIdx]+=`<p style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:8px">${rp.aiSummary}</p>`;
+if(rp.goals)bodies[rIdx]+=`<div style="padding:6px 8px;background:var(--acbg);border-radius:5px;font-size:12px;color:#1d4ed8;margin-bottom:6px"><b>목표</b> ${rp.goals}</div>`;
+if(rp.counselResult&&rp.counselResult.mainTopics)bodies[rIdx]+=rp.counselResult.mainTopics.map(t=>`<div style="font-size:12px;color:var(--t2);padding:1px 0">${t}</div>`).join('');
 bodies[rIdx]+=`</div></div></div>`;});
 bodies[rIdx]+=`</div>`;}else bodies[rIdx]='<div class="card"><p style="color:var(--t3);text-align:center;padding:16px">리포트 없음</p></div>';}catch(e){bodies[rIdx]=`<div class="card"><p style="color:var(--er)">로딩 실패</p></div>`;}
 
