@@ -95,6 +95,17 @@ function tpHandleGet_(e) {
       case 'tp_admin_counselStudents':r = tpAdminCounselStudents_(p.token); break;
       case 'tp_counselStudentDetail': r = tpCounselStudentDetail_(p.student, p.token); break;
       case 'tp_counselDashboard':    r = tpCounselDashboard_(p.token); break;
+      // counsel 성향검사
+      case 'tp_counsel_surveyStudents': r = tpCounselSurveyStudents_(p.token); break;
+      case 'tp_counsel_surveyQuestions': r = tpCounselSurveyQuestions_(p.type, p.token); break;
+      case 'tp_counsel_surveyResult':   r = tpCounselSurveyResult_(p.student, p.token); break;
+      // counsel 레벨테스트
+      case 'tp_counsel_ltStudents':     r = tpCounselLtStudents_(p.token); break;
+      case 'tp_counsel_answerKey':      r = tpCounselAnswerKey_(p.subject, p.level, p.token); break;
+      // counsel 분석
+      case 'tp_counsel_analysisStudents': r = tpCounselAnalysisStudents_(p.token); break;
+      case 'tp_counsel_analysisResult': r = tpCounselAnalysisResult_(p.student, p.token); break;
+      case 'tp_counsel_verifyAdmin':    r = tpCounselVerifyAdmin_(p.password, p.token); break;
       case 'tp_evalTrend':       r = tpEvalTrend_(p.student, p.days||'30', p.token); break;
       case 'tp_evalStats':       r = tpEvalStats_(p.days||'14', p.token); break;
       case 'tp_getMyEvals':      r = tpGetMyEvals_(p.teacherLogId, p.date, p.className, p.token); break;
@@ -120,6 +131,13 @@ function tpHandlePost_(d) {
       case 'tp_admin_enrollStudent': r = tpAdminEnrollStudent_(d.student, d.classes, d.token); break;
       case 'tp_admin_saveEnrollment': r = tpAdminSaveEnrollment_(d); break;
       case 'tp_counselSubmit':       r = tpCounselSubmit_(d.formData, d.token); break;
+      // counsel 성향검사
+      case 'tp_counsel_surveySubmit': r = tpCounselSurveySubmit_(d.data, d.token); break;
+      case 'tp_counsel_surveyRerun':  r = tpCounselSurveyRerun_(d.studentId, d.token); break;
+      // counsel 레벨테스트
+      case 'tp_counsel_ltSave':       r = tpCounselLtSave_(d.gradeData, d.token); break;
+      // counsel 분석
+      case 'tp_counsel_runAnalysis':  r = tpCounselRunAnalysis_(d.studentId, d.token); break;
       default: r = { ok: false, error: 'Unknown action: ' + d.action };
     }
   } catch (err) {
