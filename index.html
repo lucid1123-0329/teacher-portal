@@ -133,6 +133,7 @@ a{color:var(--ac);text-decoration:none}::selection{background:var(--acbg)}
 .det-sec.sec-wk{border-left-color:#f59e0b}.det-sec.sec-wk .ms label.ck{background:#fffbeb;border-color:#f59e0b;color:#92400e}
 .det-sec.sec-mg{border-left-color:#6366f1}.det-sec.sec-mg .ms label.ck{background:#eef2ff;border-color:#6366f1;color:#4338ca}
 .det-sec.sec-ua{border-left-color:#ef4444}.det-sec.sec-ua .ms label.ck{background:#fef2f2;border-color:#ef4444;color:#b91c1c}
+.det-etc{display:block;width:100%;margin-top:6px;padding:6px 10px;border:1px dashed var(--ln);border-radius:6px;font-size:12px;color:var(--ink);background:transparent;outline:0;transition:.12s}.det-etc:focus{border-color:var(--ac);border-style:solid;background:var(--sf)}.det-etc::placeholder{color:var(--t4)}
 .det-ta{width:100%;padding:8px 10px;border:1px solid var(--ln);border-radius:6px;font-size:13px;color:var(--ink);background:var(--bg);resize:none;height:40px;outline:0;transition:.12s}.det-ta:focus{border-color:var(--ac);background:var(--sf)}
 
 /* Save bar */
@@ -510,11 +511,12 @@ const scCells=['hw','ud','fc','ps'].map(f=>{
 const curV=ev[f]||'';
 return`<td><div class="sc-group">${nums.map((n,j)=>`<button class="sc-btn${curV===scales[j]?' on':''}" data-i="${i}" data-f="${f}" data-v="${scales[j]}" data-n="${n}" onclick="gSc(this)">${n}</button>`).join('')}</div></td>`;}).join('');
 const isDone=isAbs||(ev.hw&&ev.ud&&ev.fc&&ev.ps);
+const hasDetail=ev.gp||ev.wk||ev.mg||ev.ua||ev.cm;
 return`<tr id="gr${i}" class="${isAbs?'absent':''}${isDone?' done':''}"><td>${st.name}<br><span style="font-size:11px;color:var(--t3)">${st.grade}</span></td>
 <td class="abs-cell" onclick="gAbs(${i})"><div class="abs-check${isAbs?' on':''}" id="ga${i}">✓</div></td>
 ${scCells}
-<td><button class="btn btn-g btn-sm" style="padding:0 6px;font-size:11px" onclick="gDet(${i})">⋯</button></td></tr>
-<tr class="detail-row" id="dr${i}"><td colspan="7"><div class="detail-inner" id="di${i}">${buildDetail(st,i)}</div></td></tr>`;}).join('');
+<td><button class="btn btn-g btn-sm" id="db${i}" style="font-size:11px;padding:0 8px;white-space:nowrap" onclick="gDet(${i})">상세 ▼</button></td></tr>
+<tr class="detail-row" id="dr${i}"><td colspan="7"><div class="detail-inner${hasDetail?' open':''}" id="di${i}">${buildDetail(st,i)}</div></td></tr>`;}).join('');
 uProg();}
 
 function buildDetail(st,i){const cfg=S.cf||{};const gp=cfg.growthPts||[];const wk=cfg.weaknesses||[];const mg=cfg.mgmtAreas||[];const ua=cfg.urgentActions||[];
@@ -524,30 +526,34 @@ const wkSel=(ev.wk||'').split(', ').filter(Boolean);
 const mgSel=(ev.mg||'').split(', ').filter(Boolean);
 const uaSel=ev.ua||'';
 const cm=ev.cm||'';
+const gpEtc=ev.gp_etc||'';const wkEtc=ev.wk_etc||'';const mgEtc=ev.mg_etc||'';const uaEtc=ev.ua_etc||'';
 let h='';
-if(gp.length)h+=`<div class="det-sec sec-gp"><div class="det-sec-h">성장 포인트</div><div class="ms">${gp.map(g=>`<label class="${gpSel.includes(g)?'ck':''}"><input type="checkbox" data-i="${i}" data-f="gp" value="${esc(g)}" ${gpSel.includes(g)?'checked':''} onchange="gChk(${i},'gp')">${g}</label>`).join('')}</div></div>`;
-if(wk.length)h+=`<div class="det-sec sec-wk"><div class="det-sec-h">학업 약점</div><div class="ms">${wk.map(w=>`<label class="${wkSel.includes(w)?'ck':''}"><input type="checkbox" data-i="${i}" data-f="wk" value="${esc(w)}" ${wkSel.includes(w)?'checked':''} onchange="gChk(${i},'wk')">${w}</label>`).join('')}</div></div>`;
-if(mg.length)h+=`<div class="det-sec sec-mg"><div class="det-sec-h">관리 영역</div><div class="ms">${mg.map(m=>`<label class="${mgSel.includes(m)?'ck':''}"><input type="checkbox" data-i="${i}" data-f="mg" value="${esc(m)}" ${mgSel.includes(m)?'checked':''} onchange="gChk(${i},'mg')">${m}</label>`).join('')}</div></div>`;
-if(ua.length)h+=`<div class="det-sec sec-ua"><div class="det-sec-h">긴급 조치</div><div class="ms">${ua.map(u=>`<label class="${uaSel===u?'ck':''}"><input type="radio" name="ua${i}" data-i="${i}" data-f="ua" value="${esc(u)}" ${uaSel===u?'checked':''} onchange="gRad(this)">${u}</label>`).join('')}</div></div>`;
-h+=`<div style="margin-top:6px"><textarea class="det-ta" data-i="${i}" oninput="gCm(this)" placeholder="코멘트 입력">${cm}</textarea></div>`;
+if(gp.length)h+=`<div class="det-sec sec-gp"><div class="det-sec-h">성장 포인트 <span style="font-weight:400;color:var(--t3);font-size:11px">오늘 수업에서 잘한 점</span></div><div class="ms">${gp.map(g=>`<label class="${gpSel.includes(g)?'ck':''}"><input type="checkbox" data-i="${i}" data-f="gp" value="${esc(g)}" ${gpSel.includes(g)?'checked':''} onchange="gChk(${i},'gp')">${g}</label>`).join('')}</div><input class="det-etc" data-i="${i}" data-f="gp_etc" value="${esc(gpEtc)}" oninput="gEtc(this)" placeholder="기타 (직접 입력)"></div>`;
+if(wk.length)h+=`<div class="det-sec sec-wk"><div class="det-sec-h">학업 약점 <span style="font-weight:400;color:var(--t3);font-size:11px">보완이 필요한 학습 영역</span></div><div class="ms">${wk.map(w=>`<label class="${wkSel.includes(w)?'ck':''}"><input type="checkbox" data-i="${i}" data-f="wk" value="${esc(w)}" ${wkSel.includes(w)?'checked':''} onchange="gChk(${i},'wk')">${w}</label>`).join('')}</div><input class="det-etc" data-i="${i}" data-f="wk_etc" value="${esc(wkEtc)}" oninput="gEtc(this)" placeholder="기타 (직접 입력)"></div>`;
+if(mg.length)h+=`<div class="det-sec sec-mg"><div class="det-sec-h">관리 영역 <span style="font-weight:400;color:var(--t3);font-size:11px">생활 · 태도 관련 관찰 사항</span></div><div class="ms">${mg.map(m=>`<label class="${mgSel.includes(m)?'ck':''}"><input type="checkbox" data-i="${i}" data-f="mg" value="${esc(m)}" ${mgSel.includes(m)?'checked':''} onchange="gChk(${i},'mg')">${m}</label>`).join('')}</div><input class="det-etc" data-i="${i}" data-f="mg_etc" value="${esc(mgEtc)}" oninput="gEtc(this)" placeholder="기타 (직접 입력)"></div>`;
+if(ua.length)h+=`<div class="det-sec sec-ua"><div class="det-sec-h">긴급 조치 <span style="font-weight:400;color:var(--t3);font-size:11px">즉시 대응이 필요한 사안 (1개 선택)</span></div><div class="ms">${ua.map(u=>`<label class="${uaSel===u?'ck':''}"><input type="radio" name="ua${i}" data-i="${i}" data-f="ua" value="${esc(u)}" ${uaSel===u?'checked':''} onchange="gRad(this)">${u}</label>`).join('')}</div><input class="det-etc" data-i="${i}" data-f="ua_etc" value="${esc(uaEtc)}" oninput="gEtc(this)" placeholder="기타 (직접 입력)"></div>`;
+h+=`<div style="margin-top:6px"><textarea class="det-ta" data-i="${i}" oninput="gCm(this)" placeholder="종합 코멘트 — 오늘 수업 특이사항이나 학부모 전달 사항">${cm}</textarea></div>`;
 return h;}
 
 function gSc(btn){const{i,f,v}=btn.dataset;btn.parentElement.querySelectorAll('.sc-btn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');
-if(!S.ev[i])S.ev[i]={};S.ev[i][f]=v;uRow(+i);uProg();}
+if(!S.ev[i])S.ev[i]={};S.ev[i][f]=v;uRow(+i);uProg();
+// 4개 점수 모두 입력 시 상세 자동 펼침
+const e=S.ev[i];if(e.hw&&e.ud&&e.fc&&e.ps){const di=$(`di${i}`);if(!di.classList.contains('open')){di.classList.add('open');$(`db${i}`).textContent='상세 ▲';}}}
 
 function gAbs(i){const ch=$(`ga${i}`);const isAbs=!ch.classList.contains('on');ch.classList.toggle('on');
 const tr=$(`gr${i}`);tr.classList.toggle('absent',isAbs);
 if(!S.ev[i])S.ev[i]={};S.ev[i]._absent=isAbs;
-if(isAbs){const di=$(`di${i}`);di.classList.remove('open');}
+if(isAbs){const di=$(`di${i}`);di.classList.remove('open');$(`db${i}`).textContent='상세 ▼';}
 uRow(+i);uProg();}
 
-function gDet(i){$(`di${i}`).classList.toggle('open');}
+function gDet(i){const di=$(`di${i}`);const open=!di.classList.contains('open');di.classList.toggle('open');$(`db${i}`).textContent=open?'상세 ▲':'상세 ▼';}
 function gChk(i,f){const chs=document.querySelectorAll(`input[type=checkbox][data-i="${i}"][data-f="${f}"]`);
 chs.forEach(c=>c.parentElement.classList.toggle('ck',c.checked));
 if(!S.ev[i])S.ev[i]={};S.ev[i][f]=Array.from(chs).filter(c=>c.checked).map(c=>c.value).join(', ');}
 function gRad(r){const{i,f}=r.dataset;if(!S.ev[i])S.ev[i]={};S.ev[i][f]=r.value;
 r.closest('.ms').querySelectorAll('label').forEach(l=>l.classList.toggle('ck',l.querySelector('input').checked));}
 function gCm(ta){const i=ta.dataset.i;if(!S.ev[i])S.ev[i]={};S.ev[i].cm=ta.value;}
+function gEtc(el){const i=el.dataset.i,f=el.dataset.f;if(!S.ev[i])S.ev[i]={};S.ev[i][f]=el.value;}
 
 function uRow(i){const e=S.ev[i]||{};const tr=$(`gr${i}`);
 const isAbs=e._absent;const done=isAbs||(e.hw&&e.ud&&e.fc&&e.ps);
@@ -560,8 +566,12 @@ async function doSave(){const btn=$('saveBtn');btn.disabled=true;btn.textContent
 const evalDate=$('eDate').value;
 const evs=[];S.sts.forEach((st,i)=>{const e=S.ev[i]||{};const isAbs=e._absent;
 if(!isAbs&&(!e.hw||!e.ud||!e.fc||!e.ps))return;
+const gpFull=[e.gp,e.gp_etc].filter(Boolean).join(', ');
+const wkFull=[e.wk,e.wk_etc].filter(Boolean).join(', ');
+const mgFull=[e.mg,e.mg_etc].filter(Boolean).join(', ');
+const uaFull=[e.ua,e.ua_etc].filter(Boolean).join(', ');
 evs.push({studentName:st.name,className:S.cc,isAbsent:!!isAbs,homework:e.hw||'',understanding:e.ud||'',focus:e.fc||'',persistence:e.ps||'',
-growthPoints:e.gp||'',weaknesses:e.wk||'',mgmtAreas:e.mg||'',urgentAction:e.ua||'',comment:e.cm||''});});
+growthPoints:gpFull,weaknesses:wkFull,mgmtAreas:mgFull,urgentAction:uaFull,comment:e.cm||''});});
 if(!evs.length){ts('저장할 데이터 없음','er');btn.disabled=false;btn.textContent='저장';return;}
 try{const r=await pA({action:'tp_saveEval',evaluations:evs,teacherLogId:S.t.logId,evalDate:evalDate,token:S.tk});
 if(r.ok){ts(r.message,'ok');setTimeout(()=>nav('p-dash'),600);}else ts(r.error,'er');}
