@@ -106,6 +106,7 @@ function tpHandleGet_(e) {
       case 'tp_counsel_analysisStudents': r = tpCounselAnalysisStudents_(p.token); break;
       case 'tp_counsel_analysisResult': r = tpCounselAnalysisResult_(p.student, p.token); break;
       case 'tp_counsel_verifyAdmin':    r = tpCounselVerifyAdmin_(p.password, p.token); break;
+      case 'tp_counsel_enrolledStudents': r = tpCounselEnrolledStudents_(p.token); break;
       case 'tp_evalTrend':       r = tpEvalTrend_(p.student, p.days||'30', p.token); break;
       case 'tp_evalStats':       r = tpEvalStats_(p.days||'14', p.token); break;
       case 'tp_getMyEvals':      r = tpGetMyEvals_(p.teacherLogId, p.date, p.className, p.token); break;
@@ -138,6 +139,7 @@ function tpHandlePost_(d) {
       case 'tp_counsel_ltSave':       r = tpCounselLtSave_(d.gradeData, d.token); break;
       // counsel 분석
       case 'tp_counsel_runAnalysis':  r = tpCounselRunAnalysis_(d.studentId, d.token); break;
+      case 'tp_counsel_registerEnrolled': r = tpCounselRegisterEnrolled_(d.data, d.token); break;
       default: r = { ok: false, error: 'Unknown action: ' + d.action };
     }
   } catch (err) {
