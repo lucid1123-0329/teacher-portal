@@ -364,8 +364,9 @@ a{color:var(--ac);text-decoration:none}::selection{background:var(--acbg)}
 const API='/api/gs';
 let S={t:null,tk:null,cf:null,cls:[],cc:null,sts:[],ev:{},allSt:[],allTc:[],mySt:null,pf:'p-dash',editCl:null};
 
-async function gA(a,p={}){const u=new URL(API,location.origin);u.searchParams.set('action',a);for(const[k,v]of Object.entries(p))if(v!==undefined)u.searchParams.set(k,v);return(await fetch(u)).json();}
-async function pA(d){return(await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(d)})).json();}
+async function gA(a,p={}){const u=new URL(API,location.origin);u.searchParams.set('action',a);for(const[k,v]of Object.entries(p))if(v!==undefined)u.searchParams.set(k,v);
+try{const r=await(await fetch(u)).json();if(r&&!r.ok&&r.error&&/인증|토큰|권한/.test(r.error)){clearSess();doLogout();ts('인증 만료','er');return{ok:false,error:'세션 만료'};}touchSess();return r;}catch(e){return{ok:false,error:e.message};}}
+async function pA(d){try{const r=await(await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(d)})).json();if(r&&!r.ok&&r.error&&/인증|토큰|권한/.test(r.error)){clearSess();doLogout();ts('인증 만료','er');return{ok:false,error:'세션 만료'};}touchSess();return r;}catch(e){return{ok:false,error:e.message};}}
 
 // NAV
 const MN=[{id:'p-dash',lb:'대시보드',r:'all'},{sec:'관리',r:'관리자'},
@@ -413,12 +414,23 @@ async function lP(p){try{switch(p){case'p-dash':await lDash();break;case'p-alog'
 case'p-enroll':await lEnroll();break;case'p-acl':await lCls();break;case'p-atc':await lTcs();break;
 case'p-rpt':await lRpt();break;case'p-psy':await lPsy();break;case'p-stats':await lStats();break;}}catch(e){ts(e.message,'er');}}
 
+// ═══ 보안 세션 관리 ═══
+const SESS_KEY='tp',SESS_TTL=4*60*60*1000,IDLE_LIM=30*60*1000;
+let _idleTm=null;
+function saveSess(){sessionStorage.setItem(SESS_KEY,JSON.stringify({t:S.t,tk:S.tk,loginAt:Date.now(),lastActive:Date.now()}));}
+function loadSess(){try{var r=sessionStorage.getItem(SESS_KEY);if(!r)return null;var s=JSON.parse(r);if(Date.now()-s.loginAt>SESS_TTL||Date.now()-s.lastActive>IDLE_LIM){sessionStorage.removeItem(SESS_KEY);return null;}return s;}catch(e){sessionStorage.removeItem(SESS_KEY);return null;}}
+function touchSess(){try{var r=sessionStorage.getItem(SESS_KEY);if(!r)return;var s=JSON.parse(r);s.lastActive=Date.now();sessionStorage.setItem(SESS_KEY,JSON.stringify(s));}catch(e){}}
+function clearSess(){sessionStorage.removeItem(SESS_KEY);if(_idleTm)clearTimeout(_idleTm);}
+function resetIdle(){if(_idleTm)clearTimeout(_idleTm);touchSess();_idleTm=setTimeout(function(){if(S.tk){ts('30분간 활동 없어 자동 로그아웃','er');setTimeout(doLogout,2000);}},IDLE_LIM);}
+['click','keydown','scroll','touchstart'].forEach(function(ev){document.addEventListener(ev,resetIdle,{passive:true});});
+document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'&&S.tk){if(!loadSess()){ts('세션 만료','er');setTimeout(doLogout,1000);}}});
+
 // AUTH
 async function doLogin(){const nm=$('lnm').value.trim(),pw=$('lpw').value.trim();
 if(!nm||!pw){$('lerr').textContent='이름과 비밀번호를 입력하세요';return;}
 $('lbtn').disabled=true;$('lbtn').textContent='로그인 중...';$('lerr').textContent='';
 try{const r=await gA('tp_login',{name:nm,pw});
-if(r.ok){S.t=r.teacher;S.tk=r.token;sessionStorage.setItem('tp',JSON.stringify({t:r.teacher,tk:r.token}));
+if(r.ok){S.t=r.teacher;S.tk=r.token;saveSess();
 r.needPasswordChange?($('loginScreen').style.display='none',$('pwScreen').style.display='flex'):enter();}
 else $('lerr').textContent=r.error||'실패';}catch(e){$('lerr').textContent='서버 연결 실패';}
 finally{$('lbtn').disabled=false;$('lbtn').textContent='로그인';}}
@@ -435,9 +447,9 @@ if(nw!==cf){$('stpwerr').textContent='불일치';return;}$('stpwerr').textConten
 try{const r=await pA({action:'tp_changePassword',name:S.t.name,currentPassword:cur,newPassword:nw,token:S.tk});
 if(r.ok){ts('변경 완료','ok');$('st_cpw').value='';$('st_npw').value='';$('st_cpw2').value='';}else $('stpwerr').textContent=r.error;}catch(e){$('stpwerr').textContent='연결 실패';}}
 
-function doLogout(){S={t:null,tk:null,cf:null,cls:[],cc:null,sts:[],ev:{},allSt:[],allTc:[],mySt:null,pf:'p-dash',editCl:null};sessionStorage.removeItem('tp');$('app').classList.remove('on');$('loginScreen').style.display='flex';$('pwScreen').style.display='none';}
+function doLogout(){clearSess();S={t:null,tk:null,cf:null,cls:[],cc:null,sts:[],ev:{},allSt:[],allTc:[],mySt:null,pf:'p-dash',editCl:null};$('app').classList.remove('on');$('loginScreen').style.display='flex';$('pwScreen').style.display='none';}
 async function enter(){$('loginScreen').style.display='none';$('pwScreen').style.display='none';$('app').classList.add('on');
-$('sUsr').innerHTML=`${S.t.name} <span class="chip chip-ac">${S.t.role}</span>`;bNav();
+$('sUsr').innerHTML=`${S.t.name} <span class="chip chip-ac">${S.t.role}</span>`;bNav();resetIdle();
 sh('초기 데이터 로딩...');
 try{const r=await gA('tp_init',{teacher:S.t.name,role:S.t.role,token:S.tk});
 if(r.ok){if(r.config)S.cf=r.config;S._dash=r.todayStatus;S._dashTs=Date.now();}}catch(e){}
@@ -1193,7 +1205,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 $('lpw').addEventListener('keypress',e=>{if(e.key==='Enter')doLogin();});
 $('lnm').addEventListener('keypress',e=>{if(e.key==='Enter')$('lpw').focus();});
 document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.add('hd');}));
-const sv=sessionStorage.getItem('tp');if(sv){try{const d=JSON.parse(sv);S.t=d.t;S.tk=d.tk;enter();}catch(e){sessionStorage.clear();}}});
+const sv=loadSess();if(sv&&sv.t&&sv.tk){S.t=sv.t;S.tk=sv.tk;enter();}});
 </script>
 </body>
 </html>
