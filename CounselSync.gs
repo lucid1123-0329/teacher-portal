@@ -1190,3 +1190,132 @@ function counselCallGemini_(prompt, apiKey, models, maxRetries, temperature) {
   }
   throw lastError || new Error('Gemini API 실패');
 }
+// ═══════════════════════════════════════════════════════════════
+// [추가] 재원생 통합 검색 — CounselSync.gs 맨 끝에 붙여넣기
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * 재원생 목록 조회 (teacher 메인 DB의 [DB] 학생 + [DB] 수강)
+ * counsel 시트에 이미 있는 학생은 제외 (중복 방지)
+ */
+function tpCounselEnrolledStudents_(token) {
+  if (!tpValidToken_(token)) return { ok: false, error: '인증 만료' };
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    
+    // [DB] 학생 읽기
+    var stSheet = ss.getSheetByName(TP.SHEET_STUDENTS);
+    var stData = stSheet.getDataRange().getValues();
+    
+    // [DB] 수강 읽기 — 학생별 수강 반/과목
+    var enrollSheet = ss.getSheetByName(TP.SHEET_ENROLLMENT);
+    var enrollData = enrollSheet.getDataRange().getValues();
+    var classMap = {};
+    for (var i = 1; i < enrollData.length; i++) {
+      var sn = enrollData[i][0];
+      if (!classMap[sn]) classMap[sn] = [];
+      classMap[sn].push(String(enrollData[i][1]));
+    }
+    
+    // [DB] 반 읽기 — 반명 → 과목 매핑
+    var classSheet = ss.getSheetByName(TP.SHEET_CLASSES);
+    var classData = classSheet.getDataRange().getValues();
+    var subjMap = {};
+    for (var i = 1; i < classData.length; i++) {
+      subjMap[String(classData[i][0])] = String(classData[i][1] || '');
+    }
+    
+    // counsel [DB] 학생 마스터에서 이름 목록 (중복 제거용)
+    var counselSheet = counselSheet_(SYNC.COUNSEL_TAB);
+    var counselData = counselSheet.getDataRange().getValues();
+    var counselNames = {};
+    for (var i = 1; i < counselData.length; i++) {
+      var n = String(counselData[i][SYNC.C_NAME] || '').trim();
+      if (n) counselNames[n] = true;
+    }
+    
+    // 재원생 목록 구성 (퇴원 제외, counsel 미등록자만)
+    var enrolled = [];
+    for (var i = 1; i < stData.length; i++) {
+      var name = String(stData[i][0] || '').trim();
+      var status = String(stData[i][5] || '재원');
+      if (!name || status === '퇴원') continue;
+      if (counselNames[name]) continue; // 이미 counsel에 있으면 스킵
+      
+      var classes = classMap[name] || [];
+      var subjects = [];
+      classes.forEach(function(cn) {
+        var subj = subjMap[cn];
+        if (subj && subjects.indexOf(subj) < 0) subjects.push(subj);
+      });
+      
+      enrolled.push({
+        name: name,
+        grade: String(stData[i][1] || ''),
+        school: String(stData[i][2] || ''),
+        parentPhone: String(stData[i][3] || ''),
+        studentPhone: String(stData[i][4] || ''),
+        subjects: subjects,
+        classes: classes,
+        source: 'enrolled'
+      });
+    }
+    
+    enrolled.sort(function(a, b) { return a.name.localeCompare(b.name, 'ko'); });
+    return { ok: true, students: enrolled };
+  } catch (e) {
+    return { ok: false, error: '재원생 조회 실패: ' + e.message };
+  }
+}
+
+
+/**
+ * 재원생을 counsel [DB] 학생 마스터에 등록
+ * 최초 검사/분석 시 한 번만 호출
+ * 이후에는 일반 counsel 학생과 동일하게 처리됨
+ */
+function tpCounselRegisterEnrolled_(data, token) {
+  if (!tpValidToken_(token)) return { ok: false, error: '인증 만료' };
+  if (!data || !data.name) return { ok: false, error: '학생 이름 필수' };
+  
+  try {
+    // 이미 등록되어 있는지 확인
+    var sheet = counselSheet_(SYNC.COUNSEL_TAB);
+    var existing = sheet.getDataRange().getValues();
+    for (var i = 1; i < existing.length; i++) {
+      if (String(existing[i][SYNC.C_NAME] || '').trim() === String(data.name).trim()) {
+        // 이미 있으면 기존 student_id 반환
+        return { ok: true, studentId: String(existing[i][SYNC.C_ID]), message: '이미 등록된 학생입니다.', existing: true };
+      }
+    }
+    
+    // 새 행 생성
+    var studentId = Date.now().toString();
+    var now = new Date();
+    var newRow = new Array(SYNC.C_TOTAL_COLS).fill('');
+    
+    newRow[SYNC.C_ID] = studentId;
+    newRow[SYNC.C_CREATED] = now;
+    newRow[SYNC.C_NAME] = data.name || '';
+    newRow[SYNC.C_PHONE] = data.studentPhone || '';
+    newRow[SYNC.C_PARENT_PHONE] = data.parentPhone || '';
+    newRow[SYNC.C_SCHOOL] = data.school || '';
+    newRow[SYNC.C_GRADE] = data.grade || '';
+    newRow[SYNC.C_SUBJECT] = (data.subjects || []).join('+') || '';
+    newRow[SYNC.C_ROUTE] = '재원생 과목추가';
+    newRow[SYNC.C_CONSENT] = true;
+    newRow[SYNC.C_STATUS] = '재원생등록';
+    newRow[SYNC.C_STEP_CONSULT] = now;
+    
+    sheet.appendRow(newRow);
+    
+    return {
+      ok: true,
+      studentId: studentId,
+      message: data.name + ' 학생이 상담 시스템에 등록되었습니다.',
+      existing: false
+    };
+  } catch (e) {
+    return { ok: false, error: '등록 실패: ' + e.message };
+  }
+}
