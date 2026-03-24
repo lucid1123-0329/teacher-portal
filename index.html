@@ -194,24 +194,13 @@ a{color:var(--ac);text-decoration:none}::selection{background:var(--acbg)}
 .cls-prog .v{font-size:14px}
 
 /* 평가 그리드 모바일 */
-.eval-top{flex-direction:column;align-items:flex-start;gap:6px}
-.eval-top>div:last-child{margin-left:0;width:100%;display:flex;gap:6px;align-items:center}
-.grid-wrap{-webkit-overflow-scrolling:touch;position:relative;overflow-x:auto!important;margin:0 -14px;padding:0 14px}
-.grid{min-width:0!important}
-.grid th,.grid td{padding:2px 1px;font-size:11px;white-space:nowrap}
-.grid th:first-child,.grid td:first-child{min-width:48px;max-width:48px;padding-left:6px;font-size:11px;position:sticky;left:0;z-index:2;background:var(--sf);border-right:1px solid var(--ln)}
-.grid th:first-child{background:var(--bg);border-right:1px solid var(--ln)}
-.sc-btn{width:22px;height:22px;font-size:9px;border-width:1px;border-radius:50%;padding:0}
-.sc-group{gap:0px}
-.abs-check{width:14px;height:14px;font-size:9px}
-.detail-inner.open{padding:8px 6px}
-.det-sec{padding:5px 6px;margin-bottom:4px}
-.det-sec-h{font-size:11px;margin-bottom:4px}
-.det-sec .ms{gap:3px}
-.det-sec .ms label{padding:4px 8px;font-size:11px;border-radius:12px}
-.det-etc{padding:5px 8px;font-size:11px}
-.det-ta{font-size:11px;height:36px;padding:6px 8px}
-.save-bar{padding:8px 16px}.save-bar .info{font-size:12px}
+.grid th,.grid td{padding:3px 2px;font-size:12px}
+.grid th:first-child,.grid td:first-child{min-width:60px;padding-left:8px;font-size:12px}
+.sc-btn{width:28px;height:28px;font-size:12px}
+.sc-group{gap:1px}
+.detail-inner.open{padding:8px}
+.det-sec{padding:6px 8px}
+.det-ta{font-size:12px}
 
 /* 테이블 모바일 */
 .tb th,.tb td{padding:6px 8px;font-size:12px}
@@ -236,9 +225,8 @@ a{color:var(--ac);text-decoration:none}::selection{background:var(--acbg)}
 @media(max-width:380px){
 .stats{grid-template-columns:1fr 1fr}
 .stat-v{font-size:15px}
-.sc-btn{width:20px;height:20px;font-size:8px}
-.grid td:first-child{min-width:42px;max-width:42px;font-size:10px}
-.det-sec .ms label{padding:3px 6px;font-size:10px}
+.sc-btn{width:26px;height:26px;font-size:11px}
+.grid td:first-child{min-width:50px;font-size:11px}
 }
 
 /* 하단 탭바 기본 숨김 */
@@ -368,7 +356,7 @@ a{color:var(--ac);text-decoration:none}::selection{background:var(--acbg)}
 <div class="fg"><label class="fl">반 추가</label><select id="se_cls" class="ipt" style="width:100%"><option value="">선택</option></select></div>
 <div class="modal-ft"><button class="btn btn-g" onclick="cM('seMo')">취소</button><button class="btn btn-p" onclick="addEnroll()">추가</button></div></div></div>
 
-<div id="cdMo" class="modal hd"><div class="modal-box" style="max-width:600px"><div class="modal-h" id="cdMoTi">분석 결과</div>
+<div id="cdMo" class="modal hd"><div class="modal-box" style="max-width:760px"><div class="modal-h" id="cdMoTi">분석 결과</div>
 <div id="cdMoBody" style="max-height:70vh;overflow-y:auto"></div>
 <div class="modal-ft"><button class="btn btn-g" onclick="cM('cdMo')">닫기</button><button class="btn btn-p" id="cdCapBtn" onclick="captureCd()" style="display:none">이미지 저장</button></div></div></div>
 
@@ -376,8 +364,9 @@ a{color:var(--ac);text-decoration:none}::selection{background:var(--acbg)}
 const API='/api/gs';
 let S={t:null,tk:null,cf:null,cls:[],cc:null,sts:[],ev:{},allSt:[],allTc:[],mySt:null,pf:'p-dash',editCl:null};
 
-async function gA(a,p={}){const u=new URL(API,location.origin);u.searchParams.set('action',a);for(const[k,v]of Object.entries(p))if(v!==undefined)u.searchParams.set(k,v);return(await fetch(u)).json();}
-async function pA(d){return(await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(d)})).json();}
+async function gA(a,p={}){const u=new URL(API,location.origin);u.searchParams.set('action',a);for(const[k,v]of Object.entries(p))if(v!==undefined)u.searchParams.set(k,v);
+try{const r=await(await fetch(u)).json();if(r&&!r.ok&&r.error&&/인증|토큰|권한/.test(r.error)){clearSess();doLogout();ts('인증 만료','er');return{ok:false,error:'세션 만료'};}touchSess();return r;}catch(e){return{ok:false,error:e.message};}}
+async function pA(d){try{const r=await(await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(d)})).json();if(r&&!r.ok&&r.error&&/인증|토큰|권한/.test(r.error)){clearSess();doLogout();ts('인증 만료','er');return{ok:false,error:'세션 만료'};}touchSess();return r;}catch(e){return{ok:false,error:e.message};}}
 
 // NAV
 const MN=[{id:'p-dash',lb:'대시보드',r:'all'},{sec:'관리',r:'관리자'},
@@ -425,12 +414,23 @@ async function lP(p){try{switch(p){case'p-dash':await lDash();break;case'p-alog'
 case'p-enroll':await lEnroll();break;case'p-acl':await lCls();break;case'p-atc':await lTcs();break;
 case'p-rpt':await lRpt();break;case'p-psy':await lPsy();break;case'p-stats':await lStats();break;}}catch(e){ts(e.message,'er');}}
 
+// ═══ 보안 세션 관리 ═══
+const SESS_KEY='tp',SESS_TTL=4*60*60*1000,IDLE_LIM=30*60*1000;
+let _idleTm=null;
+function saveSess(){sessionStorage.setItem(SESS_KEY,JSON.stringify({t:S.t,tk:S.tk,loginAt:Date.now(),lastActive:Date.now()}));}
+function loadSess(){try{var r=sessionStorage.getItem(SESS_KEY);if(!r)return null;var s=JSON.parse(r);if(Date.now()-s.loginAt>SESS_TTL||Date.now()-s.lastActive>IDLE_LIM){sessionStorage.removeItem(SESS_KEY);return null;}return s;}catch(e){sessionStorage.removeItem(SESS_KEY);return null;}}
+function touchSess(){try{var r=sessionStorage.getItem(SESS_KEY);if(!r)return;var s=JSON.parse(r);s.lastActive=Date.now();sessionStorage.setItem(SESS_KEY,JSON.stringify(s));}catch(e){}}
+function clearSess(){sessionStorage.removeItem(SESS_KEY);if(_idleTm)clearTimeout(_idleTm);}
+function resetIdle(){if(_idleTm)clearTimeout(_idleTm);touchSess();_idleTm=setTimeout(function(){if(S.tk){ts('30분간 활동 없어 자동 로그아웃','er');setTimeout(doLogout,2000);}},IDLE_LIM);}
+['click','keydown','scroll','touchstart'].forEach(function(ev){document.addEventListener(ev,resetIdle,{passive:true});});
+document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'&&S.tk){if(!loadSess()){ts('세션 만료','er');setTimeout(doLogout,1000);}}});
+
 // AUTH
 async function doLogin(){const nm=$('lnm').value.trim(),pw=$('lpw').value.trim();
 if(!nm||!pw){$('lerr').textContent='이름과 비밀번호를 입력하세요';return;}
 $('lbtn').disabled=true;$('lbtn').textContent='로그인 중...';$('lerr').textContent='';
 try{const r=await gA('tp_login',{name:nm,pw});
-if(r.ok){S.t=r.teacher;S.tk=r.token;sessionStorage.setItem('tp',JSON.stringify({t:r.teacher,tk:r.token}));
+if(r.ok){S.t=r.teacher;S.tk=r.token;saveSess();
 r.needPasswordChange?($('loginScreen').style.display='none',$('pwScreen').style.display='flex'):enter();}
 else $('lerr').textContent=r.error||'실패';}catch(e){$('lerr').textContent='서버 연결 실패';}
 finally{$('lbtn').disabled=false;$('lbtn').textContent='로그인';}}
@@ -447,9 +447,9 @@ if(nw!==cf){$('stpwerr').textContent='불일치';return;}$('stpwerr').textConten
 try{const r=await pA({action:'tp_changePassword',name:S.t.name,currentPassword:cur,newPassword:nw,token:S.tk});
 if(r.ok){ts('변경 완료','ok');$('st_cpw').value='';$('st_npw').value='';$('st_cpw2').value='';}else $('stpwerr').textContent=r.error;}catch(e){$('stpwerr').textContent='연결 실패';}}
 
-function doLogout(){S={t:null,tk:null,cf:null,cls:[],cc:null,sts:[],ev:{},allSt:[],allTc:[],mySt:null,pf:'p-dash',editCl:null};sessionStorage.removeItem('tp');$('app').classList.remove('on');$('loginScreen').style.display='flex';$('pwScreen').style.display='none';}
+function doLogout(){clearSess();S={t:null,tk:null,cf:null,cls:[],cc:null,sts:[],ev:{},allSt:[],allTc:[],mySt:null,pf:'p-dash',editCl:null};$('app').classList.remove('on');$('loginScreen').style.display='flex';$('pwScreen').style.display='none';}
 async function enter(){$('loginScreen').style.display='none';$('pwScreen').style.display='none';$('app').classList.add('on');
-$('sUsr').innerHTML=`${S.t.name} <span class="chip chip-ac">${S.t.role}</span>`;bNav();
+$('sUsr').innerHTML=`${S.t.name} <span class="chip chip-ac">${S.t.role}</span>`;bNav();resetIdle();
 sh('초기 데이터 로딩...');
 try{const r=await gA('tp_init',{teacher:S.t.name,role:S.t.role,token:S.tk});
 if(r.ok){if(r.config)S.cf=r.config;S._dash=r.todayStatus;S._dashTs=Date.now();}}catch(e){}
@@ -707,7 +707,7 @@ h+=`<div style="display:flex;align-items:center;justify-content:space-between;ma
 <div><div style="font-size:18px;font-weight:700">${st.name}</div><div style="font-size:12px;color:var(--t3)">${st.grade} · ${st.school||''}</div></div>
 <div style="display:flex;gap:4px;flex-wrap:wrap">
 <span class="chip ${rl.score==='상'?'chip-ok':rl.score==='중'?'chip-wn':'chip-er'}">신뢰도 ${rl.score||'—'}</span>
-<span class="chip chip-n">${st.surveyDate||''}</span>
+<span class="chip chip-n">${fmtD(st.surveyDate)}</span>
 ${cs.recommend_tag_A?`<span class="chip chip-ac">${cs.recommend_tag_A}</span>`:''}
 ${cs.recommend_tag_B?`<span class="chip chip-ac">${cs.recommend_tag_B}</span>`:''}
 </div></div>`;
@@ -908,8 +908,119 @@ ${weaks.map(w=>`<div style="font-size:12px;color:#991b1b;padding:1px 0">${w.name
 h+=`</div>`;}
 }
 
+}else if(lt.analysis&&typeof lt.analysis==='object'&&!Array.isArray(lt.analysis)&&lt.subject==='math'){
+// === counsel 수학 레벨테스트 (analysis: {scope: {score,total,part,area}}) ===
+const totalQ=lt.totalQuestions||0;const totalS=lt.totalScore||0;const pct=lt.percentage||0;
+const clr=pct>=70?'var(--ok)':pct>=40?'var(--wn)':'var(--er)';
+
+// 점수 카드
+h+=`<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+<div style="flex:1;min-width:100px;padding:16px;background:var(--bg);border-radius:10px;text-align:center;border:1px solid var(--ln)">
+<div style="font-size:30px;font-weight:800;color:${clr}">${totalS}<span style="font-size:15px;font-weight:400;color:var(--t3)">/${totalQ}</span></div>
+<div style="font-size:12px;color:var(--t3);margin-top:2px">총점 (${pct}%)</div></div>`;
+const scopes=Object.keys(lt.analysis).sort();
+scopes.forEach(sc=>{const d=lt.analysis[sc];const sp=d.total>0?Math.round(d.score/d.total*100):0;const scl=sp>=70?'var(--ok)':sp>=40?'var(--wn)':'var(--er)';
+h+=`<div style="flex:1;min-width:80px;padding:14px;background:var(--bg);border-radius:10px;text-align:center;border:1px solid var(--ln)">
+<div style="font-size:24px;font-weight:800;color:${scl}">${d.score}<span style="font-size:13px;font-weight:400;color:var(--t3)">/${d.total}</span></div>
+<div style="font-size:11px;color:var(--t3);margin-top:2px">${sc}</div></div>`;});
+h+=`</div>`;
+
+// Scope별 차트
+h+=`<div style="font-size:14px;font-weight:700;margin-bottom:10px">범위(Scope)별 성취도</div>
+<div style="margin-bottom:16px"><canvas id="cdLtBar"></canvas></div>`;
+
+// Part별 상세 테이블
+const allParts={},allAreas={};
+scopes.forEach(sc=>{const d=lt.analysis[sc];
+Object.keys(d.part||{}).forEach(p=>{if(!allParts[p])allParts[p]={score:0,total:0};allParts[p].score+=d.part[p].score;allParts[p].total+=d.part[p].total;});
+Object.keys(d.area||{}).forEach(a=>{if(!allAreas[a])allAreas[a]={score:0,total:0};allAreas[a].score+=d.area[a].score;allAreas[a].total+=d.area[a].total;});});
+
+if(Object.keys(allParts).length){
+h+=`<div style="font-size:13px;font-weight:700;margin-bottom:8px">영역(Part)별 분석</div>`;
+h+=`<div style="overflow-x:auto;margin-bottom:16px"><table style="width:100%;border-collapse:collapse;font-size:13px">
+<thead><tr style="background:var(--bg)"><th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--t3)">영역</th>
+<th style="padding:8px 10px;text-align:center;font-size:11px;font-weight:600;color:var(--t3)">점수</th>
+<th style="padding:8px 10px;text-align:center;font-size:11px;font-weight:600;color:var(--t3)">배점</th>
+<th style="padding:8px 10px;text-align:center;font-size:11px;font-weight:600;color:var(--t3)">정답률</th>
+<th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--t3)">달성도</th></tr></thead><tbody>`;
+Object.keys(allParts).forEach(p=>{const d=allParts[p];const pp=d.total>0?Math.round(d.score/d.total*100):0;const pc=pp>=70?'var(--ok)':pp>=40?'var(--wn)':'var(--er)';
+h+=`<tr style="border-bottom:1px solid var(--lnl)"><td style="padding:8px 10px;font-weight:500">${p}</td>
+<td style="padding:8px 10px;text-align:center;font-weight:700;color:${pc}">${d.score}</td>
+<td style="padding:8px 10px;text-align:center;color:var(--t3)">${d.total}</td>
+<td style="padding:8px 10px;text-align:center;font-weight:600">${pp}%</td>
+<td style="padding:8px 10px"><div style="height:8px;background:var(--ln);border-radius:4px;overflow:hidden"><div style="width:${pp}%;height:100%;background:${pc};border-radius:4px"></div></div></td></tr>`;});
+h+=`</tbody></table></div>`;}
+
+if(Object.keys(allAreas).length){
+h+=`<div style="font-size:13px;font-weight:700;margin-bottom:8px">유형(Area)별 분석</div>`;
+h+=`<div style="overflow-x:auto;margin-bottom:16px"><table style="width:100%;border-collapse:collapse;font-size:13px">
+<thead><tr style="background:var(--bg)"><th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--t3)">유형</th>
+<th style="padding:8px 10px;text-align:center;font-size:11px;font-weight:600;color:var(--t3)">점수</th>
+<th style="padding:8px 10px;text-align:center;font-size:11px;font-weight:600;color:var(--t3)">배점</th>
+<th style="padding:8px 10px;text-align:center;font-size:11px;font-weight:600;color:var(--t3)">정답률</th>
+<th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--t3)">달성도</th></tr></thead><tbody>`;
+Object.keys(allAreas).forEach(a=>{const d=allAreas[a];const ap=d.total>0?Math.round(d.score/d.total*100):0;const ac=ap>=70?'var(--ok)':ap>=40?'var(--wn)':'var(--er)';
+h+=`<tr style="border-bottom:1px solid var(--lnl)"><td style="padding:8px 10px;font-weight:500">${a}</td>
+<td style="padding:8px 10px;text-align:center;font-weight:700;color:${ac}">${d.score}</td>
+<td style="padding:8px 10px;text-align:center;color:var(--t3)">${d.total}</td>
+<td style="padding:8px 10px;text-align:center;font-weight:600">${ap}%</td>
+<td style="padding:8px 10px"><div style="height:8px;background:var(--ln);border-radius:4px;overflow:hidden"><div style="width:${ap}%;height:100%;background:${ac};border-radius:4px"></div></div></td></tr>`;});
+h+=`</tbody></table></div>`;}
+
+}else if(lt.behavior&&typeof lt.behavior==='object'&&!Array.isArray(lt.behavior)){
+// === counsel 영어 레벨테스트 (behavior: {Listening:{score,total},...}) ===
+const totalQ=lt.totalQuestions||0;const totalS=lt.totalScore||0;const pct=lt.percentage||0;
+const clr=pct>=70?'var(--ok)':pct>=40?'var(--wn)':'var(--er)';
+
+h+=`<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+<div style="flex:1;min-width:100px;padding:16px;background:var(--bg);border-radius:10px;text-align:center;border:1px solid var(--ln)">
+<div style="font-size:30px;font-weight:800;color:${clr}">${totalS}<span style="font-size:15px;font-weight:400;color:var(--t3)">/${totalQ}</span></div>
+<div style="font-size:12px;color:var(--t3);margin-top:2px">총점 (${pct}%)</div></div>`;
+Object.keys(lt.behavior).forEach(bk=>{const d=lt.behavior[bk];const bp=d.total>0?Math.round(d.score/d.total*100):0;const bc=bp>=70?'var(--ok)':bp>=40?'var(--wn)':'var(--er)';
+h+=`<div style="flex:1;min-width:80px;padding:14px;background:var(--bg);border-radius:10px;text-align:center;border:1px solid var(--ln)">
+<div style="font-size:24px;font-weight:800;color:${bc}">${d.score}<span style="font-size:13px;font-weight:400;color:var(--t3)">/${d.total}</span></div>
+<div style="font-size:11px;color:var(--t3);margin-top:2px">${bk}</div></div>`;});
+h+=`</div>`;
+
+// Behavior별 차트
+h+=`<div style="font-size:14px;font-weight:700;margin-bottom:10px">행동영역(Behavior)별 성취도</div>
+<div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:16px;flex-wrap:wrap">
+<div style="flex:1;min-width:200px"><canvas id="cdLtBar"></canvas></div>
+<div style="flex:1;min-width:160px"><canvas id="cdLtRadar"></canvas></div></div>`;
+
+// Behavior 테이블
+h+=`<div style="overflow-x:auto;margin-bottom:16px"><table style="width:100%;border-collapse:collapse;font-size:13px">
+<thead><tr style="background:var(--bg)"><th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--t3)">영역</th>
+<th style="padding:8px 10px;text-align:center;font-size:11px;font-weight:600;color:var(--t3)">점수</th>
+<th style="padding:8px 10px;text-align:center;font-size:11px;font-weight:600;color:var(--t3)">배점</th>
+<th style="padding:8px 10px;text-align:center;font-size:11px;font-weight:600;color:var(--t3)">정답률</th>
+<th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--t3)">달성도</th></tr></thead><tbody>`;
+Object.keys(lt.behavior).forEach(bk=>{const d=lt.behavior[bk];const bp=d.total>0?Math.round(d.score/d.total*100):0;const bc=bp>=70?'var(--ok)':bp>=40?'var(--wn)':'var(--er)';
+h+=`<tr style="border-bottom:1px solid var(--lnl)"><td style="padding:8px 10px;font-weight:500">${bk}</td>
+<td style="padding:8px 10px;text-align:center;font-weight:700;color:${bc}">${d.score}</td>
+<td style="padding:8px 10px;text-align:center;color:var(--t3)">${d.total}</td>
+<td style="padding:8px 10px;text-align:center;font-weight:600">${bp}%</td>
+<td style="padding:8px 10px"><div style="height:8px;background:var(--ln);border-radius:4px;overflow:hidden"><div style="width:${bp}%;height:100%;background:${bc};border-radius:4px"></div></div></td></tr>`;});
+h+=`</tbody></table></div>`;
+
+// Content 영역 (있는 경우)
+if(lt.content&&typeof lt.content==='object'&&!Array.isArray(lt.content)){
+h+=`<div style="font-size:13px;font-weight:700;margin-bottom:8px">내용영역(Content)별 분석</div>`;
+h+=`<div style="overflow-x:auto;margin-bottom:16px"><table style="width:100%;border-collapse:collapse;font-size:13px">
+<thead><tr style="background:var(--bg)"><th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--t3)">영역</th>
+<th style="padding:8px 10px;text-align:center;font-size:11px;font-weight:600;color:var(--t3)">점수</th>
+<th style="padding:8px 10px;text-align:center;font-size:11px;font-weight:600;color:var(--t3)">배점</th>
+<th style="padding:8px 10px;text-align:center;font-size:11px;font-weight:600;color:var(--t3)">정답률</th>
+<th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--t3)">달성도</th></tr></thead><tbody>`;
+Object.keys(lt.content).forEach(ck=>{const d=lt.content[ck];const cp=d.total>0?Math.round(d.score/d.total*100):0;const cc=cp>=70?'var(--ok)':cp>=40?'var(--wn)':'var(--er)';
+h+=`<tr style="border-bottom:1px solid var(--lnl)"><td style="padding:8px 10px;font-weight:500">${ck}</td>
+<td style="padding:8px 10px;text-align:center;font-weight:700;color:${cc}">${d.score}</td>
+<td style="padding:8px 10px;text-align:center;color:var(--t3)">${d.total}</td>
+<td style="padding:8px 10px;text-align:center;font-weight:600">${cp}%</td>
+<td style="padding:8px 10px"><div style="height:8px;background:var(--ln);border-radius:4px;overflow:hidden"><div style="width:${cp}%;height:100%;background:${cc};border-radius:4px"></div></div></td></tr>`;});
+h+=`</tbody></table></div>`;}
+
 }else{
-// === 표준 구조 (totalScore/sections) ===
 if(lt.totalScore!==undefined||lt.level){
 h+=`<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">`;
 if(lt.totalScore!==undefined){const maxS=lt.maxScore||100;const pct=Math.round(lt.totalScore/maxS*100);const clr=pct>=70?'var(--ok)':pct>=40?'var(--wn)':'var(--er)';
@@ -928,7 +1039,7 @@ if(lt.recommendation)h+=`<div style="padding:14px;background:var(--acbg);border-
 }
 
 // 기타 필드 (알려진 필드 제외)
-const known=new Set(['action','content','pre','current','post','totalScore','maxScore','level','percentile','sections','analysis','recommendation','strengths','weaknesses']);
+const known=new Set(['action','content','pre','current','post','totalScore','maxScore','level','percentile','sections','analysis','recommendation','strengths','weaknesses','testType','subject','totalQuestions','percentage','behavior','scores','scoreArray']);
 const rest=Object.entries(lt).filter(([k])=>!known.has(k));
 if(rest.length){h+=`<div style="margin-top:12px;padding:12px;background:var(--bg);border-radius:6px"><div style="font-size:11px;font-weight:600;color:var(--t3);margin-bottom:6px">추가 데이터</div>`;
 rest.forEach(([k,v])=>{h+=`<div style="display:flex;gap:6px;font-size:12px;padding:3px 0;border-bottom:1px solid var(--lnl)"><span style="font-weight:600;color:var(--t2);min-width:80px">${k}</span><span style="color:var(--t1)">${typeof v==='object'?JSON.stringify(v):v}</span></div>`;});
@@ -995,6 +1106,32 @@ data:{labels,datasets:[
 {label:'전체 평균',data:avgs,backgroundColor:'#e5e5e580',borderColor:'#bbb',borderWidth:1,borderRadius:3,barPercentage:.4}]},
 options:{indexAxis:'y',responsive:true,scales:{x:{beginAtZero:true,ticks:{font:{size:9}},grid:{color:'#f0f0f0'}},y:{ticks:{font:{size:10}},grid:{display:false}}},
 plugins:{legend:{position:'bottom',labels:{font:{size:10},usePointStyle:true,padding:12}}}}});cdCharts.push(c);}}
+
+// counsel 수학 LT (analysis 객체)
+if(lt.analysis&&typeof lt.analysis==='object'&&!Array.isArray(lt.analysis)&&lt.subject==='math'){
+const scopes=Object.keys(lt.analysis).sort();
+const labels=scopes;const pcts=scopes.map(s=>{const d=lt.analysis[s];return d.total>0?Math.round(d.score/d.total*100):0;});
+const colors=pcts.map(p=>p>=70?'#22c55e':p>=40?'#f59e0b':'#ef4444');
+const barCv=$('cdLtBar');if(barCv){const c=new Chart(barCv.getContext('2d'),{type:'bar',
+data:{labels,datasets:[{label:'정답률',data:pcts,backgroundColor:colors.map(c=>c+'30'),borderColor:colors,borderWidth:1.5,borderRadius:4,barPercentage:.6}]},
+options:{responsive:true,scales:{y:{min:0,max:100,ticks:{stepSize:25,font:{size:9},callback:v=>v+'%'},grid:{color:'#f0f0f0'}},x:{ticks:{font:{size:11,weight:'500'}},grid:{display:false}}},
+plugins:{legend:{display:false}}}});cdCharts.push(c);}
+return;}
+
+// counsel 영어 LT (behavior 객체)
+if(lt.behavior&&typeof lt.behavior==='object'&&!Array.isArray(lt.behavior)){
+const bkeys=Object.keys(lt.behavior);
+const labels=bkeys;const pcts=bkeys.map(k=>{const d=lt.behavior[k];return d.total>0?Math.round(d.score/d.total*100):0;});
+const colors=pcts.map(p=>p>=70?'#22c55e':p>=40?'#f59e0b':'#ef4444');
+const barCv=$('cdLtBar');if(barCv){const c=new Chart(barCv.getContext('2d'),{type:'bar',
+data:{labels,datasets:[{label:'정답률',data:pcts,backgroundColor:colors.map(c=>c+'30'),borderColor:colors,borderWidth:1.5,borderRadius:4,barPercentage:.6}]},
+options:{responsive:true,scales:{y:{min:0,max:100,ticks:{stepSize:25,font:{size:9},callback:v=>v+'%'},grid:{color:'#f0f0f0'}},x:{ticks:{font:{size:11,weight:'500'}},grid:{display:false}}},
+plugins:{legend:{display:false}}}});cdCharts.push(c);}
+const radCv=$('cdLtRadar');if(radCv){const c=new Chart(radCv.getContext('2d'),{type:'radar',
+data:{labels,datasets:[{data:pcts,backgroundColor:'rgba(0,102,255,.1)',borderColor:'#0066ff',pointBackgroundColor:colors,pointRadius:5,borderWidth:2}]},
+options:{responsive:true,scales:{r:{min:0,max:100,ticks:{stepSize:25,font:{size:8},backdropColor:'transparent'},pointLabels:{font:{size:11,weight:'600'}},grid:{color:'#e5e5e5'}}},
+plugins:{legend:{display:false}}}});cdCharts.push(c);}
+return;}
 
 // sections 기반 (표준 구조)
 if(hasSections&&!hasAction){
@@ -1173,6 +1310,7 @@ document.querySelectorAll('.tab-body').forEach((b,j)=>b.classList.toggle('on',j=
 function $(id){return document.getElementById(id);}
 function esc(s){return String(s).replace(/'/g,"\\'").replace(/"/g,'&quot;');}
 function xS(v){if(!v)return'—';const m=String(v).match(/(\d)점/);return m?m[1]+'점':String(v).substring(0,6);}
+function fmtD(d){if(!d)return'-';try{var dt=new Date(d);if(isNaN(dt))return String(d);return dt.getFullYear()+'.'+(dt.getMonth()+1).toString().padStart(2,'0')+'.'+dt.getDate().toString().padStart(2,'0');}catch(e){return String(d);}}
 function sh(t){$('loader-t').textContent=t||'로딩 중';$('loader').classList.remove('hd');}
 function hd(){$('loader').classList.add('hd');}
 function ts(m,t){const e=$('toast');e.textContent=m;e.className='toast sh'+(t?' '+t:'');setTimeout(()=>e.className='toast',2500);return true;}
@@ -1205,7 +1343,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 $('lpw').addEventListener('keypress',e=>{if(e.key==='Enter')doLogin();});
 $('lnm').addEventListener('keypress',e=>{if(e.key==='Enter')$('lpw').focus();});
 document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.add('hd');}));
-const sv=sessionStorage.getItem('tp');if(sv){try{const d=JSON.parse(sv);S.t=d.t;S.tk=d.tk;enter();}catch(e){sessionStorage.clear();}}});
+const sv=loadSess();if(sv&&sv.t&&sv.tk){S.t=sv.t;S.tk=sv.tk;enter();}});
 </script>
 </body>
 </html>
