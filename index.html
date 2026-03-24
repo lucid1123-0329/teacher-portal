@@ -909,62 +909,74 @@ h+=`</div>`;}
 }
 
 }else if(lt.analysis&&typeof lt.analysis==='object'&&!Array.isArray(lt.analysis)&&lt.subject==='math'){
-// === counsel 수학 레벨테스트 (analysis: {scope: {score,total,part,area}}) ===
+// === counsel 수학 레벨테스트 (analysis: {E6/M1/M2: {score,total,part,area}}) ===
+// scope 정렬: E3<E4<E5<E6<M1<M2<M3 → 선행/현행/후행 매핑
+const scopeOrder={'E3':0,'E4':1,'E5':2,'E6':3,'M1':4,'M2':5,'M3':6};
+const scopeLabel={'E3':'초3','E4':'초4','E5':'초5','E6':'초6','M1':'중1','M2':'중2','M3':'중3'};
+const scopes=Object.keys(lt.analysis).sort((a,b)=>(scopeOrder[a]||0)-(scopeOrder[b]||0));
+const stageColors=[{label:'선행',color:'#6366f1',bg:'#6366f120'},{label:'현행',color:'#0066ff',bg:'#0066ff20'},{label:'후행',color:'#22c55e',bg:'#22c55e20'}];
+// scope를 단계에 매핑 (3개면 1:1, 아니면 균등 분배)
+const stages=scopes.map((sc,idx)=>{
+const stg=scopes.length===3?stageColors[idx]:stageColors[Math.min(idx,2)];
+const d=lt.analysis[sc];
+return{scope:sc,label:stg.label+' ('+( scopeLabel[sc]||sc)+')',color:stg.color,bg:stg.bg,data:d};});
+
 const totalQ=lt.totalQuestions||0;const totalS=lt.totalScore||0;const pct=lt.percentage||0;
 const clr=pct>=70?'var(--ok)':pct>=40?'var(--wn)':'var(--er)';
 
-// 점수 카드
+// 총점 + 단계별 점수 카드
 h+=`<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
 <div style="flex:1;min-width:100px;padding:16px;background:var(--bg);border-radius:10px;text-align:center;border:1px solid var(--ln)">
 <div style="font-size:30px;font-weight:800;color:${clr}">${totalS}<span style="font-size:15px;font-weight:400;color:var(--t3)">/${totalQ}</span></div>
 <div style="font-size:12px;color:var(--t3);margin-top:2px">총점 (${pct}%)</div></div>`;
-const scopes=Object.keys(lt.analysis).sort();
-scopes.forEach(sc=>{const d=lt.analysis[sc];const sp=d.total>0?Math.round(d.score/d.total*100):0;const scl=sp>=70?'var(--ok)':sp>=40?'var(--wn)':'var(--er)';
-h+=`<div style="flex:1;min-width:80px;padding:14px;background:var(--bg);border-radius:10px;text-align:center;border:1px solid var(--ln)">
-<div style="font-size:24px;font-weight:800;color:${scl}">${d.score}<span style="font-size:13px;font-weight:400;color:var(--t3)">/${d.total}</span></div>
-<div style="font-size:11px;color:var(--t3);margin-top:2px">${sc}</div></div>`;});
+stages.forEach(stg=>{const sp=stg.data.total>0?Math.round(stg.data.score/stg.data.total*100):0;const scl=sp>=70?'var(--ok)':sp>=40?'var(--wn)':'var(--er)';
+h+=`<div style="flex:1;min-width:80px;padding:14px;background:var(--bg);border-radius:10px;text-align:center;border:2px solid ${stg.color}30">
+<div style="font-size:11px;font-weight:700;color:${stg.color};margin-bottom:4px">${stg.label}</div>
+<div style="font-size:24px;font-weight:800;color:${scl}">${stg.data.score}<span style="font-size:13px;font-weight:400;color:var(--t3)">/${stg.data.total}</span></div>
+<div style="font-size:10px;color:var(--t3);margin-top:2px">${sp}%</div></div>`;});
 h+=`</div>`;
 
-// Scope별 차트
-h+=`<div style="font-size:14px;font-weight:700;margin-bottom:10px">범위(Scope)별 성취도</div>
-<div style="margin-bottom:16px"><canvas id="cdLtBar"></canvas></div>`;
+// 영역별 성취도 비교 차트 (선행/현행/후행 그룹)
+// Part 이름 수집
+const allPartNames=[...new Set(stages.flatMap(stg=>Object.keys(stg.data.part||{})))];
+if(allPartNames.length){
+h+=`<div style="font-size:14px;font-weight:700;margin-bottom:10px">선행 · 현행 · 후행 영역별 비교</div>
+<div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:16px;flex-wrap:wrap">
+<div style="flex:1;min-width:220px"><canvas id="cdLtBar"></canvas></div>
+<div style="flex:1;min-width:180px"><canvas id="cdLtRadar"></canvas></div></div>`;
 
-// Part별 상세 테이블
-const allParts={},allAreas={};
-scopes.forEach(sc=>{const d=lt.analysis[sc];
-Object.keys(d.part||{}).forEach(p=>{if(!allParts[p])allParts[p]={score:0,total:0};allParts[p].score+=d.part[p].score;allParts[p].total+=d.part[p].total;});
-Object.keys(d.area||{}).forEach(a=>{if(!allAreas[a])allAreas[a]={score:0,total:0};allAreas[a].score+=d.area[a].score;allAreas[a].total+=d.area[a].total;});});
-
-if(Object.keys(allParts).length){
-h+=`<div style="font-size:13px;font-weight:700;margin-bottom:8px">영역(Part)별 분석</div>`;
+// 영역별 상세 테이블
 h+=`<div style="overflow-x:auto;margin-bottom:16px"><table style="width:100%;border-collapse:collapse;font-size:13px">
-<thead><tr style="background:var(--bg)"><th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--t3)">영역</th>
-<th style="padding:8px 10px;text-align:center;font-size:11px;font-weight:600;color:var(--t3)">점수</th>
-<th style="padding:8px 10px;text-align:center;font-size:11px;font-weight:600;color:var(--t3)">배점</th>
-<th style="padding:8px 10px;text-align:center;font-size:11px;font-weight:600;color:var(--t3)">정답률</th>
-<th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--t3)">달성도</th></tr></thead><tbody>`;
-Object.keys(allParts).forEach(p=>{const d=allParts[p];const pp=d.total>0?Math.round(d.score/d.total*100):0;const pc=pp>=70?'var(--ok)':pp>=40?'var(--wn)':'var(--er)';
-h+=`<tr style="border-bottom:1px solid var(--lnl)"><td style="padding:8px 10px;font-weight:500">${p}</td>
-<td style="padding:8px 10px;text-align:center;font-weight:700;color:${pc}">${d.score}</td>
-<td style="padding:8px 10px;text-align:center;color:var(--t3)">${d.total}</td>
-<td style="padding:8px 10px;text-align:center;font-weight:600">${pp}%</td>
-<td style="padding:8px 10px"><div style="height:8px;background:var(--ln);border-radius:4px;overflow:hidden"><div style="width:${pp}%;height:100%;background:${pc};border-radius:4px"></div></div></td></tr>`;});
+<thead><tr style="background:var(--bg)"><th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--t3)">영역</th>`;
+stages.forEach(stg=>{h+=`<th style="padding:8px 10px;text-align:center;font-size:11px;font-weight:600;color:${stg.color}">${stg.label}</th>`;});
+h+=`<th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--t3)">종합 달성도</th></tr></thead><tbody>`;
+allPartNames.forEach(pn=>{
+h+=`<tr style="border-bottom:1px solid var(--lnl)"><td style="padding:8px 10px;font-weight:500">${pn}</td>`;
+let totalPScore=0,totalPTotal=0;
+stages.forEach(stg=>{const pd=(stg.data.part||{})[pn];const psc=pd?pd.score:0;const ptl=pd?pd.total:0;
+totalPScore+=psc;totalPTotal+=ptl;
+const pp=ptl>0?Math.round(psc/ptl*100):0;const pc=pp>=70?'var(--ok)':pp>=40?'var(--wn)':'var(--er)';
+h+=`<td style="padding:8px 10px;text-align:center;font-weight:700;color:${pc}">${psc}/${ptl} (${pp}%)</td>`;});
+const overallP=totalPTotal>0?Math.round(totalPScore/totalPTotal*100):0;const oc=overallP>=70?'var(--ok)':overallP>=40?'var(--wn)':'var(--er)';
+h+=`<td style="padding:8px 10px"><div style="display:flex;align-items:center;gap:6px"><div style="flex:1;height:8px;background:var(--ln);border-radius:4px;overflow:hidden"><div style="width:${overallP}%;height:100%;background:${oc};border-radius:4px"></div></div><span style="font-size:11px;font-weight:600;color:${oc}">${overallP}%</span></div></td></tr>`;});
 h+=`</tbody></table></div>`;}
 
-if(Object.keys(allAreas).length){
+// Area(유형)별 분석
+const allAreaNames=[...new Set(stages.flatMap(stg=>Object.keys(stg.data.area||{})))];
+if(allAreaNames.length){
 h+=`<div style="font-size:13px;font-weight:700;margin-bottom:8px">유형(Area)별 분석</div>`;
 h+=`<div style="overflow-x:auto;margin-bottom:16px"><table style="width:100%;border-collapse:collapse;font-size:13px">
-<thead><tr style="background:var(--bg)"><th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--t3)">유형</th>
-<th style="padding:8px 10px;text-align:center;font-size:11px;font-weight:600;color:var(--t3)">점수</th>
-<th style="padding:8px 10px;text-align:center;font-size:11px;font-weight:600;color:var(--t3)">배점</th>
-<th style="padding:8px 10px;text-align:center;font-size:11px;font-weight:600;color:var(--t3)">정답률</th>
-<th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--t3)">달성도</th></tr></thead><tbody>`;
-Object.keys(allAreas).forEach(a=>{const d=allAreas[a];const ap=d.total>0?Math.round(d.score/d.total*100):0;const ac=ap>=70?'var(--ok)':ap>=40?'var(--wn)':'var(--er)';
-h+=`<tr style="border-bottom:1px solid var(--lnl)"><td style="padding:8px 10px;font-weight:500">${a}</td>
-<td style="padding:8px 10px;text-align:center;font-weight:700;color:${ac}">${d.score}</td>
-<td style="padding:8px 10px;text-align:center;color:var(--t3)">${d.total}</td>
-<td style="padding:8px 10px;text-align:center;font-weight:600">${ap}%</td>
-<td style="padding:8px 10px"><div style="height:8px;background:var(--ln);border-radius:4px;overflow:hidden"><div style="width:${ap}%;height:100%;background:${ac};border-radius:4px"></div></div></td></tr>`;});
+<thead><tr style="background:var(--bg)"><th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--t3)">유형</th>`;
+stages.forEach(stg=>{h+=`<th style="padding:8px 10px;text-align:center;font-size:11px;font-weight:600;color:${stg.color}">${stg.label}</th>`;});
+h+=`<th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--t3)">종합</th></tr></thead><tbody>`;
+allAreaNames.forEach(an=>{
+h+=`<tr style="border-bottom:1px solid var(--lnl)"><td style="padding:8px 10px;font-weight:500">${an}</td>`;
+let tS=0,tT=0;
+stages.forEach(stg=>{const ad=(stg.data.area||{})[an];const as=ad?ad.score:0;const at=ad?ad.total:0;
+tS+=as;tT+=at;const ap=at>0?Math.round(as/at*100):0;const ac=ap>=70?'var(--ok)':ap>=40?'var(--wn)':'var(--er)';
+h+=`<td style="padding:8px 10px;text-align:center;font-weight:700;color:${ac}">${as}/${at}</td>`;});
+const oP=tT>0?Math.round(tS/tT*100):0;const oc=oP>=70?'var(--ok)':oP>=40?'var(--wn)':'var(--er)';
+h+=`<td style="padding:8px 10px;font-weight:600;color:${oc}">${oP}%</td></tr>`;});
 h+=`</tbody></table></div>`;}
 
 }else if(lt.behavior&&typeof lt.behavior==='object'&&!Array.isArray(lt.behavior)){
@@ -1107,15 +1119,29 @@ data:{labels,datasets:[
 options:{indexAxis:'y',responsive:true,scales:{x:{beginAtZero:true,ticks:{font:{size:9}},grid:{color:'#f0f0f0'}},y:{ticks:{font:{size:10}},grid:{display:false}}},
 plugins:{legend:{position:'bottom',labels:{font:{size:10},usePointStyle:true,padding:12}}}}});cdCharts.push(c);}}
 
-// counsel 수학 LT (analysis 객체)
+// counsel 수학 LT (analysis 객체 → 선행/현행/후행 그룹 차트)
 if(lt.analysis&&typeof lt.analysis==='object'&&!Array.isArray(lt.analysis)&&lt.subject==='math'){
-const scopes=Object.keys(lt.analysis).sort();
-const labels=scopes;const pcts=scopes.map(s=>{const d=lt.analysis[s];return d.total>0?Math.round(d.score/d.total*100):0;});
-const colors=pcts.map(p=>p>=70?'#22c55e':p>=40?'#f59e0b':'#ef4444');
+const scopeOrder={'E3':0,'E4':1,'E5':2,'E6':3,'M1':4,'M2':5,'M3':6};
+const scopeLabel={'E3':'초3','E4':'초4','E5':'초5','E6':'초6','M1':'중1','M2':'중2','M3':'중3'};
+const stgColors=[{label:'선행',color:'#6366f1',bg:'#6366f130'},{label:'현행',color:'#0066ff',bg:'#0066ff30'},{label:'후행',color:'#22c55e',bg:'#22c55e30'}];
+const scopes=Object.keys(lt.analysis).sort((a,b)=>(scopeOrder[a]||0)-(scopeOrder[b]||0));
+const stages=scopes.map((sc,idx)=>{const stg=scopes.length===3?stgColors[idx]:stgColors[Math.min(idx,2)];return{scope:sc,label:stg.label+' ('+(scopeLabel[sc]||sc)+')',color:stg.color,bg:stg.bg,data:lt.analysis[sc]};});
+const partNames=[...new Set(stages.flatMap(stg=>Object.keys(stg.data.part||{})))];
+if(partNames.length){
+// 그룹 막대 차트 (Part별 선행/현행/후행)
 const barCv=$('cdLtBar');if(barCv){const c=new Chart(barCv.getContext('2d'),{type:'bar',
-data:{labels,datasets:[{label:'정답률',data:pcts,backgroundColor:colors.map(c=>c+'30'),borderColor:colors,borderWidth:1.5,borderRadius:4,barPercentage:.6}]},
+data:{labels:partNames,datasets:stages.map(stg=>({label:stg.label,
+data:partNames.map(pn=>{const pd=(stg.data.part||{})[pn];return pd&&pd.total>0?Math.round(pd.score/pd.total*100):0;}),
+backgroundColor:stg.bg,borderColor:stg.color,borderWidth:1.5,borderRadius:3,barPercentage:.7}))},
 options:{responsive:true,scales:{y:{min:0,max:100,ticks:{stepSize:25,font:{size:9},callback:v=>v+'%'},grid:{color:'#f0f0f0'}},x:{ticks:{font:{size:11,weight:'500'}},grid:{display:false}}},
-plugins:{legend:{display:false}}}});cdCharts.push(c);}
+plugins:{legend:{position:'bottom',labels:{font:{size:10},usePointStyle:true,padding:10}}}}});cdCharts.push(c);}
+// 레이더 차트 (Part별 선행/현행/후행)
+const radCv=$('cdLtRadar');if(radCv){const c=new Chart(radCv.getContext('2d'),{type:'radar',
+data:{labels:partNames,datasets:stages.map(stg=>({label:stg.label,
+data:partNames.map(pn=>{const pd=(stg.data.part||{})[pn];return pd&&pd.total>0?Math.round(pd.score/pd.total*100):0;}),
+backgroundColor:stg.bg,borderColor:stg.color,pointBackgroundColor:stg.color,pointRadius:4,borderWidth:2}))},
+options:{responsive:true,scales:{r:{min:0,max:100,ticks:{stepSize:25,font:{size:8},backdropColor:'transparent'},pointLabels:{font:{size:11,weight:'600'}},grid:{color:'#e5e5e5'}}},
+plugins:{legend:{position:'bottom',labels:{font:{size:10},usePointStyle:true}}}}});cdCharts.push(c);}}
 return;}
 
 // counsel 영어 LT (behavior 객체)
