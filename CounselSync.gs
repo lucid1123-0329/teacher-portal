@@ -1080,10 +1080,218 @@ function tpCounselVerifyAdmin_(password, token) {
   } catch (e) { return { ok: false, error: e.message }; }
 }
 
+
+// ═══════════════════════════════════════════════════════════════
+// [교체] tpCounselRunAnalysis_ 함수 전체 교체
+// CounselSync.gs에서 기존 tpCounselRunAnalysis_ 함수(1083줄~1147줄)를
+// 아래 코드로 통째로 교체하세요.
+// ═══════════════════════════════════════════════════════════════
+
+
+// ── 분석 출력 JSON 템플릿 (Analysis.gs ANALYSIS_OUTPUT_TEMPLATE과 동일) ──
+var COUNSEL_ANALYSIS_TEMPLATE = {
+  "id": "", "name": "", "date": "",
+  "consultType": "MIDDLE_SCHOOL",
+  "basicProfile": {
+    "name":"","phone":"","parentPhone":"","address":"",
+    "school":"","grade":"","grades":"","consent":true,
+    "route":"","reason":"","duration":"","subject":"","wants":"","targetUniv":""
+  },
+  "propensityData": {
+    "analysis_date":"",
+    "reliability":{"score":"","comment":""},
+    "profileScores":{"motivation":0,"planning":0,"metacognition":0,"self_regulation":0,"help_seeking":0},
+    "profileAnalysis":{"summary_title":"","summary_text":""},
+    "sectionAnalysis":{
+      "section1_motivation":{"sectionName":"학습 동기","sectionSummary":"","detailedScores":{"intrinsic_motivation":0,"identified_regulation":0,"self_efficacy":0,"achievement_pressure":0,"academic_lethargy":0}},
+      "section2_cognition":{"sectionName":"인지 전략","sectionSummary":"","detailedScores":{"metacognition":0,"planning_ability":0,"memory_strategy":0,"comprehension_strategy":0,"error_analysis":0}},
+      "section3_behavior":{"sectionName":"행동 조절","sectionSummary":"","detailedScores":{"execution_power":0,"persistence":0,"env_control":0,"attention_control":0,"digital_detox":0}},
+      "section4_emotion":{"sectionName":"정서 상태","sectionSummary":"","detailedScores":{"academic_self_esteem":0,"test_anxiety":0,"resilience":0,"emotion_regulation":0,"optimism":0}},
+      "section5_environment":{"sectionName":"학습 환경","sectionSummary":"","detailedScores":{"parent_support":0,"autonomy_respect":0,"help_seeking":0,"teacher_rapport":0,"peer_relation":0}}
+    }
+  },
+  "levelTest": {
+    "english":{"action":[],"content":[]},
+    "math":{"pre":[],"current":[],"post":[]}
+  },
+  "mockTest": {
+    "korean":{"score":"","grade":"","analysis":""},
+    "english":{"score":"","grade":"","analysis":""},
+    "math":{"score":"","grade":"","analysis":""},
+    "science":{"score":"","grade":"","analysis":""},
+    "totalAnalysis":""
+  },
+  "extendedAnalysis": {
+    "dnaMap":[
+      {"subject":"끈기 (Grit)","student":0,"topTier":95,"fullMark":100},
+      {"subject":"계획성 (Plan)","student":0,"topTier":90,"fullMark":100},
+      {"subject":"메타인지 (Meta)","student":0,"topTier":98,"fullMark":100},
+      {"subject":"실행력 (Action)","student":0,"topTier":92,"fullMark":100},
+      {"subject":"회복탄력성 (Resil)","student":0,"topTier":96,"fullMark":100}
+    ],
+    "metacognition":{"selfPerceived":0,"actualScore":0,"gap":0,"comment":""},
+    "simulation":[
+      {"name":"Current","value":0,"label":"현재 학습량 유지 시","color":"#94a3b8"},
+      {"name":"Potential","value":0,"label":"솔루션 적용 후 예상","color":"#fbbf24"}
+    ],
+    "goldenTime":{"dDay":0,"deadline":"","decayRate":0},
+    "weakness":[{"subject":"","topic":"","score":"","priority":""}],
+    "studyHours":[
+      {"name":"현재 (Current)","hours":0,"fill":"#94a3b8"},
+      {"name":"목표 (Goal)","hours":0,"fill":"#3b82f6"}
+    ],
+    "riskManagement":{"type":"","risk":"","guide":["","",""]},
+    "roadmap":{
+      "universityGoals":[
+        {"type":"상향 (Dream)","level":"","dna":"","iq":"","parent":"","hours":"","color":"bg-purple-100"},
+        {"type":"적정 (Target)","level":"","dna":"","iq":"","parent":"","hours":"","color":"bg-blue-100"},
+        {"type":"안정 (Safety)","level":"","dna":"","iq":"","parent":"","hours":"","color":"bg-green-100"}
+      ],
+      "subjectCurriculum":[{"subject":"","title":"","steps":["","",""]}],
+      "status":{"formula":"","diagnosis":""}
+    },
+    "agreement":{
+      "docNo":"","diagnosis":{"name":"","detail":""},
+      "prerequisite":{"target":"","dna":"","time":""},
+      "actionPlan":[{"subject":"","detail":""}]
+    }
+  },
+  "levelTestInfo":{"engType":"","mathType":""}
+};
+
+
+// ── 레벨테스트 데이터 변환 (counsel 채점 형식 → 리포트 형식) ──
+function counselTransformLevelTest_(mathData, engData, mathType, engType) {
+  var result = {
+    math: { pre: [], current: [], post: [] },
+    english: { action: [], content: [] },
+    mathType: mathType || '',
+    engType: engType || ''
+  };
+
+  // === 수학 변환 (analysis 객체 → pre/current/post) ===
+  if (mathData && mathData.analysis) {
+    var scopeOrder = {'E3':0,'E4':1,'E5':2,'E6':3,'M1':4,'M2':5,'M3':6};
+    var scopes = Object.keys(mathData.analysis).sort(function(a,b){return (scopeOrder[a]||0)-(scopeOrder[b]||0);});
+    
+    scopes.forEach(function(scope, idx) {
+      var scopeData = mathData.analysis[scope];
+      var period = 'current';
+      if (scopes.length >= 3) {
+        if (idx === 0) period = 'pre';
+        else if (idx === scopes.length - 1) period = 'post';
+        else period = 'current';
+      } else if (scopes.length === 2) {
+        period = idx === 0 ? 'pre' : 'post';
+      }
+
+      if (scopeData.part) {
+        for (var partName in scopeData.part) {
+          var partData = scopeData.part[partName];
+          result.math[period].push({
+            name: partName,
+            value: partData.score || 0,
+            full: partData.total || 0
+          });
+        }
+      }
+    });
+
+    // Part 데이터 합산 (같은 Part 이름끼리)
+    ['pre', 'current', 'post'].forEach(function(period) {
+      var merged = {};
+      result.math[period].forEach(function(item) {
+        if (!merged[item.name]) merged[item.name] = { name: item.name, value: 0, full: 0 };
+        merged[item.name].value += item.value;
+        merged[item.name].full += item.full;
+      });
+      var vals = [];
+      for (var k in merged) vals.push(merged[k]);
+      result.math[period] = vals;
+    });
+  }
+
+  // === 영어 변환 (behavior/content 객체 → action/content 배열) ===
+  if (engData && engData.behavior) {
+    for (var behName in engData.behavior) {
+      var behData = engData.behavior[behName];
+      result.english.action.push({
+        subject: behName,
+        A: behData.score || 0,
+        fullMark: behData.total || 0
+      });
+    }
+  }
+  if (engData && engData.content && typeof engData.content === 'object' && !Array.isArray(engData.content)) {
+    for (var conName in engData.content) {
+      var conData = engData.content[conName];
+      result.english.content.push({
+        name: conName,
+        score: conData.score || 0,
+        total: conData.total || 0
+      });
+    }
+  }
+
+  return result;
+}
+
+function counselTryParse_(jsonStr) {
+  try { return JSON.parse(jsonStr); }
+  catch (e) { return jsonStr || '데이터 없음'; }
+}
+
+
+// ── 분석 프롬프트 생성 (Analysis.gs buildFullAnalysisPrompt_와 동일 구조) ──
+function counselBuildPrompt_(profile, testData, roadmapRef, levelRef, studyRef, mockScores, isHS) {
+  var propData = JSON.stringify(testData.propensityData || '데이터 없음');
+  var engData = isHS ? '생략(고등부)' : JSON.stringify(testData.english || '응시 안함');
+  var mathData = isHS ? '생략(고등부)' : JSON.stringify(testData.math || '응시 안함');
+  var ltFormatted = isHS ? '생략(고등부)' : JSON.stringify(testData.levelTestFormatted || {});
+  var mockDataString = JSON.stringify(mockScores);
+
+  var gradeInstruction = isHS
+    ? '[★★ 고등학생 상담 모드 ★★]\n- 모의고사(mockTest) score/grade 필드에 숫자(Integer)만 입력\n- 로드맵은 수능 최저, 내신 등급, 정시 라인업 관점'
+    : '[★★ 초/중학생 상담 모드 ★★]\n- mockTest 필드는 비워두기\n- 레벨테스트(levelTest) 결과는 아래 [사전 변환된 레벨테스트]를 그대로 사용\n- 기초 학력 완성 및 학습 습관 형성에 초점';
+
+  return '당신은 대한민국 상위 1% 입시 컨설턴트입니다.\n'
+    + '제공된 [학생 데이터]와 [참조 기준표]를 정밀 분석하여 상담 리포트를 작성하세요.\n\n'
+    + '[★★ 핵심 원칙 ★★]\n' + gradeInstruction + '\n\n'
+    + '[데이터 처리 규칙]\n'
+    + '1. dnaMap은 반드시 5개 항목(끈기/계획성/메타인지/실행력/회복탄력성) 100점 만점\n'
+    + '2. 대학 목표 로드맵은 상향/적정/안정 3단 구성\n'
+    + '3. subjectCurriculum: 국어/영어/수학 중 데이터 있는 과목만 작성\n'
+    + '4. mockTest score/grade에 \'점\',\'등급\' 텍스트 절대 포함 금지 (숫자만)\n'
+    + '5. diagnosis.detail: 100자 내외로 핵심만\n'
+    + '6. levelTest.math: pre/current/post 3개 배열 반드시 출력 (값 0이어도)\n'
+    + '7. levelTest.english.content: 입력 데이터의 모든 항목을 1:1 매핑\n\n'
+    + '[학생 데이터]\n'
+    + '1. 프로필: ' + JSON.stringify(profile) + '\n'
+    + '2. 모의고사(고등부): ' + mockDataString + '\n'
+    + '3. 성향검사: ' + propData + '\n'
+    + '4. 영어 레벨테스트 원본: ' + engData + '\n'
+    + '5. 수학 레벨테스트 원본: ' + mathData + '\n'
+    + '6. 레벨테스트 유형: 영어=' + (testData.engType || '미응시') + ', 수학=' + (testData.mathType || '미응시') + '\n\n'
+    + '[★★ 중요: 사전 변환된 레벨테스트 데이터 (초중등 전용) ★★]\n'
+    + '아래 데이터를 levelTest 필드에 **그대로** 복사하세요. 임의로 수정하거나 0으로 만들지 마세요:\n'
+    + ltFormatted + '\n\n'
+    + '[참조 기준표]\n'
+    + '[3-1. 대학 목표 로드맵]: ' + roadmapRef + '\n'
+    + '[3-2. 레벨테스트 기준점]: ' + levelRef + '\n'
+    + '[3-3. 학년별 학습 방향]: ' + studyRef + '\n\n'
+    + '[최종 명령]\n'
+    + '아래 JSON 템플릿의 빈 값을 완벽하게 채워 출력하세요.\n'
+    + '구조(Key)는 절대 변경하지 마세요.\n'
+    + 'consultType: ' + (isHS ? '"HIGH_SCHOOL"' : '"MIDDLE_SCHOOL"') + '\n\n'
+    + '[JSON 템플릿]\n'
+    + JSON.stringify(COUNSEL_ANALYSIS_TEMPLATE);
+}
+
+
+// ── 분석 실행 함수 (교체) ──
 function tpCounselRunAnalysis_(studentId, token) {
   if (!tpValidToken_(token)) return { ok: false, error: '인증 만료' };
   try {
-    var masterSheet = counselSheet_(SYNC.COUNSEL_TAB);
     var student = counselStudentById_(studentId);
     if (!student) throw new Error('학생을 찾을 수 없습니다.');
     var row = student.data;
@@ -1091,38 +1299,80 @@ function tpCounselRunAnalysis_(studentId, token) {
     var grade = String(row[SYNC.C_GRADE] || '');
     var isHS = grade.trim().indexOf('고') === 0;
 
-    var profile = { '학생 이름': studentName, '학교명': row[SYNC.C_SCHOOL]||'', '학년': grade, '학교 성적': row[SYNC.C_GRADES]||'', '유입 경로': row[SYNC.C_ROUTE]||'', '상담 사유': row[SYNC.C_REASON]||'', '희망 과목': row[SYNC.C_SUBJECT]||'', '희망 사항': row[SYNC.C_WANTS]||'', '희망 목표 대학': row[SYNC.C_TARGET_UNIV]||'', '영어LT유형': engType, '수학LT유형': mathType };
-    var mockScores = { korean: row[SYNC.C_MOCK_KOR]||'정보 없음', english: row[SYNC.C_MOCK_ENG]||'정보 없음', math: row[SYNC.C_MOCK_MATH]||'정보 없음', science: row[SYNC.C_MOCK_SCI]||'정보 없음' };
+    // 기본 프로필
+    var profile = {
+      '학생 이름': studentName,
+      '학생 전화번호': row[SYNC.C_PHONE] || '',
+      '부모님 연락처': row[SYNC.C_PARENT_PHONE] || '',
+      '주소': row[SYNC.C_ADDRESS] || '',
+      '학교명': row[SYNC.C_SCHOOL] || '',
+      '학년': grade,
+      '학교 성적': row[SYNC.C_GRADES] || '',
+      '유입 경로': row[SYNC.C_ROUTE] || '',
+      '상담 사유': row[SYNC.C_REASON] || '',
+      '희망 과목': row[SYNC.C_SUBJECT] || '',
+      '희망 사항': row[SYNC.C_WANTS] || '',
+      '희망 목표 대학': row[SYNC.C_TARGET_UNIV] || ''
+    };
+
+    var mockScores = {
+      korean: row[SYNC.C_MOCK_KOR] || '정보 없음',
+      english: row[SYNC.C_MOCK_ENG] || '정보 없음',
+      math: row[SYNC.C_MOCK_MATH] || '정보 없음',
+      science: row[SYNC.C_MOCK_SCI] || '정보 없음'
+    };
+
+    // 성향검사 + 레벨테스트 데이터
     var surveyJson = row[SYNC.C_SURVEY_JSON] || '{}';
     var engJson = row[SYNC.C_LT_ENG_JSON] || '{}';
     var mathJson = row[SYNC.C_LT_MATH_JSON] || '{}';
     var engType = row[SYNC.C_LT_ENG_TYPE] || '';
     var mathType = row[SYNC.C_LT_MATH_TYPE] || '';
 
+    // 레벨테스트 원본을 리포트 형식으로 변환
+    var engParsed = counselTryParse_(engJson);
+    var mathParsed = counselTryParse_(mathJson);
+    var transformedLevelTest = counselTransformLevelTest_(mathParsed, engParsed, mathType, engType);
+
+    // 통합 테스트 데이터
+    var testData = {
+      propensityData: counselTryParse_(surveyJson),
+      english: engParsed,
+      math: mathParsed,
+      levelTestFormatted: transformedLevelTest,
+      engType: engType,
+      mathType: mathType
+    };
+
     // 참조 데이터
-    var refRoadmap = counselGetRefData_(SYNC.TAB_REF_ROADMAP, 'Tier_Name', row[SYNC.C_TARGET_UNIV]||'');
+    var refRoadmap = counselGetRefData_(SYNC.TAB_REF_ROADMAP, 'Tier_Name', row[SYNC.C_TARGET_UNIV] || '');
     var refStudy = counselGetRefData_(SYNC.TAB_REF_STUDY, 'Grade_Level', grade);
     var refLevel = counselGetRefLevel_();
 
-    // 프롬프트 (Analysis.gs와 동일)
-    var propData = surveyJson; var engData = isHS ? '생략' : engJson; var mathData = isHS ? '생략' : mathJson;
-    var gradeInst = isHS ? '[고등학생 상담 모드] mockTest에 숫자만, 수능/내신 관점' : '[초중학생 상담 모드] mockTest 비워두기, 기초 학력 형성 초점';
+    // 프롬프트 생성 (Analysis.gs와 동일 구조)
+    var prompt = counselBuildPrompt_(profile, testData, refRoadmap, refLevel, refStudy, mockScores, isHS);
 
-    var prompt = '당신은 대한민국 상위 1% 입시 컨설턴트입니다.\n' + gradeInst + '\n\n[학생 데이터]\n1. 프로필: ' + JSON.stringify(profile) + '\n2. 모의고사: ' + JSON.stringify(mockScores) + '\n3. 성향검사: ' + propData + '\n4. 영어LT: ' + engData + '\n5. 수학LT: ' + mathData + '\n\n[참조]\n로드맵: ' + refRoadmap + '\n레벨기준: ' + refLevel + '\n학습방향: ' + refStudy + '\n\n반드시 아래 JSON 스키마에 맞춰 응답하세요. 누락 없이 모든 필드를 포함해야 합니다.\n\n```json\n{\n  "propensityData": {\n    "analysis_date": "YYYY-MM-DD",\n    "reliability": { "score": "상|중|하", "comment": "신뢰도 상세 설명" },\n    "profileScores": { "motivation": 0-100, "planning": 0-100, "metacognition": 0-100, "self_regulation": 0-100, "help_seeking": 0-100 },\n    "profileAnalysis": { "summary_title": "핵심 제목 1줄", "summary_text": "종합 분석 3-5문장" },\n    "sectionAnalysis": {\n      "section1_motivation": { "sectionName": "학습 동기", "sectionSummary": "분석 2-3문장", "detailedScores": { "intrinsic_motivation": 0-100, "identified_regulation": 0-100, "self_efficacy": 0-100, "achievement_pressure": 0-100, "academic_lethargy": 0-100 } },\n      "section2_cognition": { "sectionName": "인지 전략", "sectionSummary": "...", "detailedScores": { "metacognition": 0-100, "planning_ability": 0-100, "memory_strategy": 0-100, "comprehension_strategy": 0-100, "error_analysis": 0-100 } },\n      "section3_behavior": { "sectionName": "행동 조절", "sectionSummary": "...", "detailedScores": { "execution_power": 0-100, "persistence": 0-100, "env_control": 0-100, "attention_control": 0-100, "digital_detox": 0-100 } },\n      "section4_emotion": { "sectionName": "정서 상태", "sectionSummary": "...", "detailedScores": { "academic_self_esteem": 0-100, "test_anxiety": 0-100, "resilience": 0-100, "emotion_regulation": 0-100, "optimism": 0-100 } },\n      "section5_environment": { "sectionName": "학습 환경", "sectionSummary": "...", "detailedScores": { "parent_support": 0-100, "autonomy_respect": 0-100, "help_seeking": 0-100, "teacher_rapport": 0-100, "peer_relation": 0-100 } }\n    }\n  },\n  "levelTest": {\n    "math": { "pre": [{"name":"영역명","value":점수,"full":배점}], "current": [...], "post": [...] },\n    "english": { "action": [{"subject":"영역명","A":점수,"fullMark":배점}], "content": [{"name":"문항명","score":점수,"avg":전체평균}] }\n  },\n  "mockTest": {\n    "korean": {"score":"","grade":"","analysis":""},\n    "english": {"score":"","grade":"","analysis":""},\n    "math": {"score":"","grade":"","analysis":""},\n    "science": {"score":"","grade":"","analysis":""},\n    "totalAnalysis": ""\n  },\n  "extendedAnalysis": {\n    "dnaMap": [{"subject":"끈기 (Grit)","student":0-100,"topTier":99,"fullMark":100}, {"subject":"계획성 (Plan)",...}, {"subject":"메타인지 (Meta)",...}, {"subject":"실행력 (Action)",...}, {"subject":"회복탄력성 (Resil)",...}],\n    "metacognition": {"selfPerceived":0-100,"actualScore":0-100,"gap":차이,"comment":"메타인지 분석"},\n    "simulation": [{"name":"Current","value":현재예상,"label":"현재 학습량 유지 시","color":"#94a3b8"},{"name":"Potential","value":솔루션후,"label":"솔루션 적용 후 예상","color":"#fbbf24"}],\n    "goldenTime": {"dDay":숫자,"deadline":"다음 입시","decayRate":0.0-1.0},\n    "weakness": [{"subject":"과목","topic":"구체적 취약 영역","score":"점수","priority":"1"}],\n    "studyHours": [{"name":"현재 (Current)","hours":현재시간,"fill":"#94a3b8"},{"name":"목표 (Goal)","hours":목표시간,"fill":"#3b82f6"}],\n    "riskManagement": {"type":"리스크 유형","risk":"설명","guide":["가이드1","가이드2","가이드3"]},\n    "roadmap": {\n      "universityGoals": [\n        {"type":"상향 (Dream)","level":"대학군","dna":"필요 역량","iq":"학습 능력","parent":"부모 역할","hours":"주당시간","color":"bg-purple-100"},\n        {"type":"적정 (Target)","level":"...","dna":"...","iq":"...","parent":"...","hours":"...","color":"bg-blue-100"},\n        {"type":"안정 (Safety)","level":"...","dna":"...","iq":"...","parent":"...","hours":"...","color":"bg-green-100"}\n      ],\n      "subjectCurriculum": [{"subject":"과목","title":"커리큘럼 제목","steps":["단계1","단계2","단계3"]}],\n      "status": {"formula":"핵심 수식","diagnosis":"진단 요약"}\n    },\n    "agreement": {\n      "docNo":"AGR-YYYYMMDD",\n      "diagnosis": {"name":"진단명","detail":"상세 진단"},\n      "prerequisite": {"target":"목표대학","dna":"필요역량","time":"주당 순공시간"},\n      "actionPlan": [{"subject":"과목/영역","detail":"실천 계획"}]\n    }\n  },\n  "levelTestInfo": {"engType":"레벨코드","mathType":"레벨코드"}\n}\n```\n\n중요 규칙:\n- 성향검사 데이터가 없으면 propensityData.profileScores는 모두 0, sectionAnalysis의 detailedScores도 0으로 채우세요.\n- 레벨테스트 데이터가 없거나 "{}"이면 levelTest의 해당 과목을 빈 배열로 채우세요.\n- 모의고사 데이터가 "정보 없음"이면 score를 빈 문자열로 두세요.\n- extendedAnalysis는 반드시 모든 하위 필드를 포함해야 합니다. 데이터가 부족하면 성향검사와 기존 프로필 정보를 바탕으로 추론하세요.\n- levelTestInfo에 engType과 mathType을 반드시 포함하세요.\n- JSON만 응답하세요. 설명이나 마크다운 없이 순수 JSON만 출력하세요.';
-
+    // Gemini 호출
     var apiKey = counselConfig_('GEMINI_API_KEY');
     var models = [counselConfig_('GEMINI_MODEL_PRIMARY')];
-    try { var fb = counselConfig_('GEMINI_MODEL_FALLBACK'); if(fb) models.push(fb); } catch(e){}
-    var temperature = 0.2; try { temperature = parseFloat(counselConfig_('GEMINI_TEMPERATURE')); } catch(e) {}
+    try { var fb = counselConfig_('GEMINI_MODEL_FALLBACK'); if (fb) models.push(fb); } catch(e) {}
+    var temperature = 0.2;
+    try { temperature = parseFloat(counselConfig_('GEMINI_TEMPERATURE')); } catch(e) {}
 
     var analysisResult = counselCallGemini_(prompt, apiKey, models, 5, temperature);
-    var now = new Date(); var todayStr = counselToday_();
+
+    // 메타 필드 추가
+    var now = new Date();
+    var todayStr = counselToday_();
     analysisResult.id = Date.now().toString();
     analysisResult.name = studentName;
     analysisResult.date = todayStr;
     analysisResult.consultType = isHS ? 'HIGH_SCHOOL' : 'MIDDLE_SCHOOL';
     if (!analysisResult.basicProfile) analysisResult.basicProfile = {};
     analysisResult.basicProfile.targetUniv = row[SYNC.C_TARGET_UNIV] || '';
+    if (!analysisResult.levelTestInfo) analysisResult.levelTestInfo = {};
+    analysisResult.levelTestInfo.engType = engType;
+    analysisResult.levelTestInfo.mathType = mathType;
 
     var resultJson = JSON.stringify(analysisResult);
     var reportToken = Utilities.getUuid();
@@ -1145,6 +1395,7 @@ function tpCounselRunAnalysis_(studentId, token) {
     return { ok: false, error: '분석 실패: ' + e.message };
   }
 }
+
 
 function counselGetRefData_(tabName, filterCol, filterVal) {
   try {
