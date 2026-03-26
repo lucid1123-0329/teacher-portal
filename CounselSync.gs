@@ -698,15 +698,39 @@ function tpCounselSubmit_(formData, token) {
 // COUNSEL 시트 헬퍼 함수 (counsel Apps Script 무변경 원칙)
 // ═══════════════════════════════════════════════════════════════
 
+// ═══ 성능 최적화: 외부 시트 캐싱 ═══
+var _counselSSCache = null;
+var _counselSheetCache = {};
+
 function counselSS_() {
-  return SpreadsheetApp.openById(SYNC.COUNSEL_SHEET_ID);
+  if (!_counselSSCache) _counselSSCache = SpreadsheetApp.openById(SYNC.COUNSEL_SHEET_ID);
+  return _counselSSCache;
 }
 
 function counselSheet_(tabName) {
-  var ss = counselSS_();
-  var sh = ss.getSheetByName(tabName);
-  if (!sh) throw new Error('counsel 탭을 찾을 수 없습니다: ' + tabName);
-  return sh;
+  if (!_counselSheetCache[tabName]) {
+    var ss = counselSS_();
+    var sh = ss.getSheetByName(tabName);
+    if (!sh) throw new Error('counsel 탭을 찾을 수 없습니다: ' + tabName);
+    _counselSheetCache[tabName] = sh;
+  }
+  return _counselSheetCache[tabName];
+}
+
+// ═══ 학생 목록 경량 캐시 (같은 실행 내 중복 읽기 방지) ═══
+var _studentListCache = null;
+var _studentListCacheTs = 0;
+
+function counselStudentListData_() {
+  // 같은 실행 내에서 10초 이내 재호출 시 캐시 반환
+  if (_studentListCache && Date.now() - _studentListCacheTs < 10000) return _studentListCache;
+  var sheet = counselSheet_(SYNC.COUNSEL_TAB);
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) { _studentListCache = []; return []; }
+  // AG열(STATUS, index 32)까지만 읽기 (AH~AO 스텝 타임스탬프/메모 제외)
+  _studentListCache = sheet.getRange(1, 1, lastRow, SYNC.C_STATUS + 1).getValues();
+  _studentListCacheTs = Date.now();
+  return _studentListCache;
 }
 
 function counselStudentById_(studentId) {
@@ -748,8 +772,7 @@ function counselToday_() {
 function tpCounselSurveyStudents_(token) {
   if (!tpValidToken_(token)) return { ok: false, error: '인증 만료' };
   try {
-    var sheet = counselSheet_(SYNC.COUNSEL_TAB);
-    var data = sheet.getDataRange().getValues();
+    var data = counselStudentListData_();
     var students = [];
     for (var i = 1; i < data.length; i++) {
       if (!data[i][SYNC.C_ID]) continue;
@@ -759,7 +782,7 @@ function tpCounselSurveyStudents_(token) {
         grade: String(data[i][SYNC.C_GRADE] || ''),
         school: String(data[i][SYNC.C_SCHOOL] || ''),
         status: String(data[i][SYNC.C_STATUS] || ''),
-        has_survey: !!data[i][SYNC.C_SURVEY_JSON],
+        has_survey: !!data[i][SYNC.C_SURVEY_TYPE],
         survey_type: String(data[i][SYNC.C_SURVEY_TYPE] || ''),
         survey_date: String(data[i][SYNC.C_SURVEY_DATE] || ''),
         survey_reliability: String(data[i][SYNC.C_RELIABILITY] || '')
@@ -941,8 +964,7 @@ function counselBuildSurveySchema_(dateStr) {
 function tpCounselLtStudents_(token) {
   if (!tpValidToken_(token)) return { ok: false, error: '인증 만료' };
   try {
-    var sheet = counselSheet_(SYNC.COUNSEL_TAB);
-    var data = sheet.getDataRange().getValues();
+    var data = counselStudentListData_();
     var students = [];
     for (var i = 1; i < data.length; i++) {
       if (!data[i][SYNC.C_ID]) continue;
@@ -1037,8 +1059,7 @@ function tpCounselLtSave_(gradeData, token) {
 function tpCounselAnalysisStudents_(token) {
   if (!tpValidToken_(token)) return { ok: false, error: '인증 만료' };
   try {
-    var sheet = counselSheet_(SYNC.COUNSEL_TAB);
-    var data = sheet.getDataRange().getValues();
+    var data = counselStudentListData_();
     var students = [];
     for (var i = 1; i < data.length; i++) {
       if (!data[i][SYNC.C_ID]) continue;
@@ -1048,10 +1069,10 @@ function tpCounselAnalysisStudents_(token) {
         grade: String(data[i][SYNC.C_GRADE] || ''),
         school: String(data[i][SYNC.C_SCHOOL] || ''),
         status: String(data[i][SYNC.C_STATUS] || ''),
-        has_survey: !!data[i][SYNC.C_SURVEY_JSON],
-        has_eng: !!data[i][SYNC.C_LT_ENG_JSON],
-        has_math: !!data[i][SYNC.C_LT_MATH_JSON],
-        has_analysis: !!data[i][SYNC.C_ANALYSIS_JSON],
+        has_survey: !!data[i][SYNC.C_SURVEY_TYPE],
+        has_eng: !!data[i][SYNC.C_LT_ENG_TYPE],
+        has_math: !!data[i][SYNC.C_LT_MATH_TYPE],
+        has_analysis: !!data[i][SYNC.C_ANALYSIS_DATE],
         analysis_date: String(data[i][SYNC.C_ANALYSIS_DATE] || ''),
         report_token: String(data[i][SYNC.C_REPORT_TOKEN] || '')
       });
