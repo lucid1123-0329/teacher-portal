@@ -733,11 +733,25 @@ function counselStudentListData_() {
   return _studentListCache;
 }
 
-function counselStudentById_(studentId) {
+// ═══ 전체 행 캐시 (JSON 열 포함, 같은 실행 내 중복 읽기 방지) ═══
+var _studentFullCache = null;
+var _studentFullCacheTs = 0;
+
+function counselStudentFullData_() {
+  if (_studentFullCache && Date.now() - _studentFullCacheTs < 10000) return _studentFullCache;
   var sheet = counselSheet_(SYNC.COUNSEL_TAB);
-  var data = sheet.getDataRange().getValues();
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) { _studentFullCache = []; return []; }
+  _studentFullCache = sheet.getDataRange().getValues();
+  _studentFullCacheTs = Date.now();
+  return _studentFullCache;
+}
+
+function counselStudentById_(studentId) {
+  var data = counselStudentFullData_();
+  var id = String(studentId).trim();
   for (var i = 1; i < data.length; i++) {
-    if (String(data[i][0]).trim() === String(studentId).trim()) {
+    if (String(data[i][0]).trim() === id) {
       return { row_index: i + 1, data: data[i] };
     }
   }
@@ -746,9 +760,22 @@ function counselStudentById_(studentId) {
 
 function counselUpdateCells_(rowIndex, updates) {
   var sheet = counselSheet_(SYNC.COUNSEL_TAB);
-  for (var col in updates) {
-    sheet.getRange(rowIndex, parseInt(col)).setValue(updates[col]);
+  var cols = Object.keys(updates).map(function(c) { return parseInt(c); });
+  if (cols.length === 0) return;
+
+  var minCol = Math.min.apply(null, cols);
+  var maxCol = Math.max.apply(null, cols);
+  var range = sheet.getRange(rowIndex, minCol, 1, maxCol - minCol + 1);
+  var row = range.getValues()[0];
+
+  for (var i = 0; i < cols.length; i++) {
+    row[cols[i] - minCol] = updates[cols[i]];
   }
+  range.setValues([row]);
+
+  // 캐시 무효화 (행이 변경됨)
+  _studentFullCache = null;
+  _studentListCache = null;
 }
 
 function counselConfig_(key) {
@@ -1497,9 +1524,8 @@ function tpCounselEnrolledStudents_(token) {
       subjMap[String(classData[i][0])] = String(classData[i][1] || '');
     }
     
-    // counsel [DB] 학생 마스터에서 이름 목록 (중복 제거용)
-    var counselSheet = counselSheet_(SYNC.COUNSEL_TAB);
-    var counselData = counselSheet.getDataRange().getValues();
+    // counsel [DB] 학생 마스터에서 이름 목록 (중복 제거용) — 경량 캐시 활용
+    var counselData = counselStudentListData_();
     var counselNames = {};
     for (var i = 1; i < counselData.length; i++) {
       var n = String(counselData[i][SYNC.C_NAME] || '').trim();
@@ -1551,9 +1577,8 @@ function tpCounselRegisterEnrolled_(data, token) {
   if (!data || !data.name) return { ok: false, error: '학생 이름 필수' };
   
   try {
-    // 이미 등록되어 있는지 확인
-    var sheet = counselSheet_(SYNC.COUNSEL_TAB);
-    var existing = sheet.getDataRange().getValues();
+    // 이미 등록되어 있는지 확인 — 경량 캐시 활용
+    var existing = counselStudentListData_();
     for (var i = 1; i < existing.length; i++) {
       if (String(existing[i][SYNC.C_NAME] || '').trim() === String(data.name).trim()) {
         // 이미 있으면 기존 student_id 반환

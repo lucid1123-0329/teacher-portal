@@ -364,9 +364,10 @@ a{color:var(--ac);text-decoration:none}::selection{background:var(--acbg)}
 const API='/api/gs';
 let S={t:null,tk:null,cf:null,cls:[],cc:null,sts:[],ev:{},allSt:[],allTc:[],mySt:null,pf:'p-dash',editCl:null};
 
+async function _fetchRetry(fn,retries=2){for(let i=0;i<=retries;i++){try{const r=await fn();return r;}catch(e){if(i===retries)throw e;await new Promise(ok=>setTimeout(ok,1000*(i+1)));}}};
 async function gA(a,p={}){const u=new URL(API,location.origin);u.searchParams.set('action',a);for(const[k,v]of Object.entries(p))if(v!==undefined)u.searchParams.set(k,v);
-try{const r=await(await fetch(u)).json();if(r&&!r.ok&&r.error&&/인증|토큰|권한/.test(r.error)){clearSess();doLogout();ts('인증 만료','er');return{ok:false,error:'세션 만료'};}touchSess();return r;}catch(e){return{ok:false,error:e.message};}}
-async function pA(d){try{const r=await(await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(d)})).json();if(r&&!r.ok&&r.error&&/인증|토큰|권한/.test(r.error)){clearSess();doLogout();ts('인증 만료','er');return{ok:false,error:'세션 만료'};}touchSess();return r;}catch(e){return{ok:false,error:e.message};}}
+try{const r=await _fetchRetry(async()=>(await fetch(u)).json());if(r&&!r.ok&&r.error&&/인증|토큰|권한/.test(r.error)){clearSess();doLogout();ts('인증 만료','er');return{ok:false,error:'세션 만료'};}touchSess();return r;}catch(e){return{ok:false,error:e.message};}}
+async function pA(d){try{const r=await _fetchRetry(async()=>(await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(d)})).json());if(r&&!r.ok&&r.error&&/인증|토큰|권한/.test(r.error)){clearSess();doLogout();ts('인증 만료','er');return{ok:false,error:'세션 만료'};}touchSess();return r;}catch(e){return{ok:false,error:e.message};}}
 
 // NAV
 const MN=[{id:'p-dash',lb:'대시보드',r:'all'},{sec:'관리',r:'관리자'},
