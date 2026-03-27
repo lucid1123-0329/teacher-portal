@@ -31,6 +31,7 @@ const TP = {
   SHEET_PERSONALITY: '[DB] 성향분석',
   SHEET_TEACHERS: '[MASTER] 강사계정',
   SHEET_MASTER_LIST: 'Master List (Helper)',
+  SHEET_SCHEDULE: '[MASTER] 수업시간표',
   // 메인 시트의 상담 관련 탭
   SHEET_CONSULT_LOG: '[DB] 상담로그',
   SHEET_DASHBOARD: '[DASHBOARD] 상담 주기 관리',
@@ -95,6 +96,7 @@ function tpHandleGet_(e) {
       case 'tp_classes':      r = tpGetClasses_(p.teacher, p.role, p.token); break;
       case 'tp_students':     r = tpGetStudents_(p.className, p.token); break;
       case 'tp_todayStatus':  r = tpGetTodayStatus_(p.teacher, p.role, p.token); break;
+      case 'tp_schedule':     r = tpGetSchedule_(p.teacher, p.role, p.token); break;
       case 'tp_studentProfile': r = tpGetStudentProfile_(p.student, p.token); break;
       case 'tp_studentReports': r = tpGetStudentReports_(p.student, p.token); break;
       case 'tp_myStudents':    r = tpGetMyStudents_(p.teacher, p.role, p.token); break;
@@ -227,7 +229,64 @@ function tpInit_(teacherName, role, token) {
   if (!tpValidToken_(token)) return { ok: false, error: '인증 만료' };
   var config = tpGetConfig_(token);
   var today = tpGetTodayStatus_(teacherName, role, token);
-  return { ok: true, config: config.ok ? config : null, todayStatus: today.ok ? today : null };
+  var schedule = tpGetSchedule_(teacherName, role, token);
+  return { ok: true, config: config.ok ? config : null, todayStatus: today.ok ? today : null, schedule: schedule.ok ? schedule.schedule : [] };
+}
+
+// ═══════════════════════════════════════════════════════
+// 수업 시간표
+// ═══════════════════════════════════════════════════════
+function tpGetSchedule_(teacherName, role, token) {
+  if (!tpValidToken_(token)) return { ok: false, error: '인증 만료' };
+
+  // 캐시 확인 (6시간 — 시간표는 자주 안 바뀜)
+  var cacheKey = 'tp_schedule_' + (role === '관리자' ? 'admin' : teacherName);
+  var cache = CacheService.getScriptCache();
+  var cached = cache.get(cacheKey);
+  if (cached) {
+    try { return JSON.parse(cached); } catch (e) { /* 캐시 파싱 실패 시 재로딩 */ }
+  }
+
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName(TP.SHEET_SCHEDULE);
+  if (!sh) return { ok: true, schedule: [] };
+
+  var data = sh.getDataRange().getValues();
+  // 헤더: 반명 | 과목 | 요일 | 시작 | 종료 | 학생목록
+
+  // 강사의 담당반 목록 (관리자가 아닌 경우)
+  var myClassSet = null;
+  if (role !== '관리자') {
+    myClassSet = new Set();
+    var classSheet = ss.getSheetByName(TP.SHEET_CLASSES);
+    var classData = classSheet.getDataRange().getValues();
+    for (var i = 1; i < classData.length; i++) {
+      var teachers = classData[i][3];
+      if (teachers && String(teachers).includes(teacherName)) {
+        myClassSet.add(String(classData[i][0]));
+      }
+    }
+  }
+
+  var schedule = [];
+  for (var i = 1; i < data.length; i++) {
+    var cn = String(data[i][0]).trim();
+    if (!cn) continue;
+    if (myClassSet && !myClassSet.has(cn)) continue;
+    schedule.push({
+      className: cn,
+      subject: String(data[i][1]).trim(),
+      day: String(data[i][2]).trim(),
+      start: String(data[i][3]).trim(),
+      end: String(data[i][4]).trim(),
+      students: String(data[i][5] || '').trim()
+    });
+  }
+
+  var result = { ok: true, schedule: schedule };
+  // 캐시 저장 (6시간 = 21600초, GAS 제한 내)
+  try { cache.put(cacheKey, JSON.stringify(result), 21600); } catch (e) { /* 캐시 실패 무시 */ }
+  return result;
 }
 
 // ═══════════════════════════════════════════════════════

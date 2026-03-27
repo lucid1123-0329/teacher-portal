@@ -91,6 +91,27 @@ a{color:var(--ac);text-decoration:none}::selection{background:var(--acbg)}
 .cls-nm{font-size:14px;font-weight:600}.cls-meta{font-size:12px;color:var(--t3);margin-top:1px}
 .cls-prog{margin-left:auto;text-align:right}.cls-prog .v{font-size:16px;font-weight:700}.cls-prog .bar{width:40px;height:3px;background:var(--ln);border-radius:2px;margin-top:2px;margin-left:auto;overflow:hidden}.cls-prog .fill{height:100%;border-radius:2px}
 
+/* --- SCHEDULE TIMELINE --- */
+.sch-filter{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.sch-fbtn{padding:4px 12px;border-radius:12px;border:1px solid var(--ln);background:var(--sf);font-size:12px;cursor:pointer;transition:.12s}
+.sch-fbtn.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.sch-slot{margin-bottom:14px}
+.sch-time{font-size:13px;font-weight:700;color:var(--t2);padding:6px 0;border-bottom:1px solid var(--ln);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.sch-time::before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.sch-time.now::before{background:var(--ok);box-shadow:0 0 6px var(--ok)}
+.sch-time.past::before{background:var(--t4)}
+.sch-time.future::before{background:var(--ac)}
+.sch-cls{display:flex;align-items:center;gap:10px;padding:8px 12px;margin:4px 0;background:var(--sf);border:1px solid var(--lnl);border-radius:var(--r);cursor:pointer;transition:.12s}
+.sch-cls:hover{border-color:var(--t4);transform:translateY(-1px)}
+.sch-cls .ico{width:28px;height:28px;border-radius:6px;background:var(--lnl);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--t2);flex-shrink:0}
+.sch-cls .nm{font-size:13px;font-weight:600}
+.sch-cls .meta{font-size:11px;color:var(--t3)}
+.sch-cls .sts{font-size:11px;color:var(--t4);margin-top:2px;line-height:1.4}
+.sch-cls .sts.exp{display:block}.sch-cls .sts.col{display:none}
+.sch-cls .arr{margin-left:auto;color:var(--t4);font-size:14px;flex-shrink:0}
+.sch-toggle{font-size:11px;color:var(--ac);cursor:pointer;margin-left:4px}
+.sch-empty{padding:20px;text-align:center;color:var(--t4);font-size:13px}
+
 /* ============================
    EVAL GRID — 핵심 재설계
    ============================ */
@@ -278,6 +299,7 @@ a{color:var(--ac);text-decoration:none}::selection{background:var(--acbg)}
 <div class="pg" id="p-dash"><div class="page-h" id="dH"></div><p class="page-sub" id="dD"></p>
 <div class="stats" id="dS"></div>
 <div id="dAdmin" style="display:none;margin-bottom:12px"><button class="btn btn-a btn-sm" onclick="doSync()" id="syncBtn">counsel 동기화</button><span id="syncRes" style="font-size:12px;color:var(--t3);margin-left:8px"></span></div>
+<div class="card" id="schedCard"><div class="card-h">오늘 시간표 <span id="schDay" style="font-size:13px;color:var(--t3)"></span></div><div id="schFilter" class="sch-filter"></div><div id="schGrid"></div></div>
 <div class="card"><div class="card-h">반별 현황</div><div id="dC" class="cls-grid"></div></div></div>
 
 <!-- EVAL GRID -->
@@ -459,13 +481,13 @@ if(nw!==cf){$('stpwerr').textContent='불일치';return;}$('stpwerr').textConten
 try{const r=await pA({action:'tp_changePassword',name:S.t.name,currentPassword:cur,newPassword:nw,token:S.tk});
 if(r.ok){ts('변경 완료','ok');$('st_cpw').value='';$('st_npw').value='';$('st_cpw2').value='';}else $('stpwerr').textContent=r.error;}catch(e){$('stpwerr').textContent='연결 실패';}}
 
-function doLogout(){clearSess();S={t:null,tk:null,cf:null,cls:[],cc:null,sts:[],ev:{},allSt:[],allTc:[],mySt:null,pf:'p-dash',editCl:null};$('app').classList.remove('on');$('loginScreen').style.display='flex';$('pwScreen').style.display='none';}
+function doLogout(){clearSess();S={t:null,tk:null,cf:null,cls:[],cc:null,sts:[],ev:{},allSt:[],allTc:[],mySt:null,pf:'p-dash',editCl:null,_sched:null};$('app').classList.remove('on');$('loginScreen').style.display='flex';$('pwScreen').style.display='none';}
 async function enter(){if(!S.t||!S.tk){doLogout();return;}$('loginScreen').style.display='none';$('pwScreen').style.display='none';$('app').classList.add('on');
 $('sUsr').innerHTML=`${S.t.name} <span class="chip chip-ac">${S.t.role}</span>`;bNav();resetIdle();
 sh('초기 데이터 로딩...');
 try{const r=await gA('tp_init',{teacher:S.t.name,role:S.t.role,token:S.tk});
 if(!S.t){return;}
-if(r.ok){if(r.config)S.cf=r.config;S._dash=r.todayStatus;S._dashTs=Date.now();}}catch(e){}
+if(r.ok){if(r.config)S.cf=r.config;S._dash=r.todayStatus;S._dashTs=Date.now();if(r.schedule)S._sched=r.schedule;}}catch(e){}
 if(!S.t){return;}
 hd();nav('p-dash');}
 
@@ -488,7 +510,59 @@ $('dS').innerHTML=`<div class="stat"><div class="stat-l">전체</div><div class=
 const cl=$('dC');if(!r.classes||!r.classes.length){cl.innerHTML='<p style="color:var(--t4);padding:20px;text-align:center">담당 반 없음</p>';return;}
 cl.innerHTML=r.classes.map(c=>{const pct=c.total>0?Math.round(c.completed/c.total*100):0;
 return`<div class="cls-card" onclick="oC('${esc(c.name)}')"><div class="cls-ico">${c.subject[0]}</div><div><div class="cls-nm">${c.name}</div><div class="cls-meta">${c.subject} · ${c.total}명</div></div>
-<div class="cls-prog"><div class="v">${c.completed}/${c.total}</div><div class="bar"><div class="fill" style="width:${pct}%;background:${pct===100?'var(--ok)':pct>0?'var(--ac)':'var(--ln)'}"></div></div></div></div>`;}).join('');}
+<div class="cls-prog"><div class="v">${c.completed}/${c.total}</div><div class="bar"><div class="fill" style="width:${pct}%;background:${pct===100?'var(--ok)':pct>0?'var(--ac)':'var(--ln)'}"></div></div></div></div>`;}).join('');
+rSched();}
+
+// ═══ 시간표 렌더링 ═══
+let _schSubj='전체';
+function rSched(){
+const dy=['일','월','화','수','목','금','토'];
+const d=new Date();const today=dy[d.getDay()];
+const hh=d.getHours(),mm=d.getMinutes();
+const nowMin=hh*60+mm;
+$('schDay').textContent=today+'요일';
+const sched=S._sched||[];
+// 오늘 요일 필터
+let items=sched.filter(s=>s.day===today);
+// 강사: 담당반만 (S._dash.classes 기준)
+if(S.t.role!=='관리자'&&S._dash&&S._dash.classes){
+const mySet=new Set(S._dash.classes.map(c=>c.name));
+items=items.filter(s=>mySet.has(s.className));}
+// 과목 필터
+const subjects=[...new Set(sched.map(s=>s.subject))].sort();
+$('schFilter').innerHTML=['전체',...subjects].map(s=>
+`<div class="sch-fbtn${_schSubj===s?' on':''}" onclick="_schSubj='${esc(s)}';rSched()">${s}</div>`).join('');
+if(_schSubj!=='전체')items=items.filter(s=>s.subject===_schSubj);
+if(!items.length){$('schGrid').innerHTML='<div class="sch-empty">오늘은 수업이 없습니다</div>';return;}
+// 시간대별 그룹
+const slots={};
+items.forEach(s=>{const k=s.start+'~'+s.end;if(!slots[k])slots[k]={start:s.start,end:s.end,classes:[]};slots[k].classes.push(s);});
+const sorted=Object.values(slots).sort((a,b)=>a.start.localeCompare(b.start));
+let h='';
+for(const slot of sorted){
+const sMin=parseInt(slot.start.split(':')[0])*60+parseInt(slot.start.split(':')[1]);
+const eMin=parseInt(slot.end.split(':')[0])*60+parseInt(slot.end.split(':')[1]);
+const cls=nowMin>=sMin&&nowMin<eMin?'now':nowMin>=eMin?'past':'future';
+h+=`<div class="sch-slot"><div class="sch-time ${cls}">${slot.start} ~ ${slot.end}${cls==='now'?' <span style="font-size:11px;color:var(--ok)">진행중</span>':''}</div>`;
+for(const c of slot.classes){
+const stArr=c.students?c.students.split(',').map(s=>s.trim()):[];
+const cnt=stArr.length;
+const short=cnt>5?stArr.slice(0,5).join(', ')+' ...':stArr.join(', ');
+const full=stArr.join(', ');
+const id='sch_'+esc(c.className)+'_'+esc(slot.start);
+h+=`<div class="sch-cls" onclick="oC('${esc(c.className)}')">
+<div class="ico">${c.subject[0]}</div>
+<div style="flex:1;min-width:0"><div class="nm">${c.className}</div><div class="meta">${c.subject} · ${cnt}명</div>
+${cnt>0?`<div class="sts" id="${id}">${cnt>5?short:`${full}`}</div>`:''}
+${cnt>5?`<span class="sch-toggle" onclick="event.stopPropagation();schTgl('${id}','${esc(full)}','${esc(short)}')">${cnt}명 전체보기</span>`:''}
+</div><div class="arr">▸</div></div>`;
+}
+h+='</div>';}
+$('schGrid').innerHTML=h;}
+
+function schTgl(id,full,short){const el=$(id);if(!el)return;const t=el.nextElementSibling;
+if(el.textContent.includes('...')){el.textContent=full;if(t&&t.classList.contains('sch-toggle'))t.textContent='접기';}
+else{el.textContent=short;if(t&&t.classList.contains('sch-toggle'))t.textContent=el.textContent.split(',').length+'명 전체보기';}}
 
 // ==============================
 // EVAL GRID — 핵심 재설계
