@@ -42,6 +42,20 @@ const TP = {
   TOKEN_EXPIRY_HOURS: 24,
 };
 
+// ─── 로그 시트 최적화 유틸 ───
+// 전체 getDataRange() 대신 최근 N행만 읽어서 성능 개선
+// maxRows: 읽을 최대 행 수 (기본 2000 ≈ 약 1달분)
+function tpGetRecentLogData_(ss, maxRows) {
+  maxRows = maxRows || 2000;
+  var sh = ss.getSheetByName(TP.SHEET_DAILY_LOG);
+  if (!sh || sh.getLastRow() < 2) return [];
+  var lastRow = sh.getLastRow();
+  var startRow = Math.max(2, lastRow - maxRows + 1);
+  var numRows = lastRow - startRow + 1;
+  var cols = sh.getLastColumn();
+  return sh.getRange(startRow, 1, numRows, Math.min(cols, 13)).getValues();
+}
+
 // ─── doGet / doPost (Sheet 1 전용 — 기존 Code.gs/JSONParser.gs와 충돌 없음) ───
 // ⚠️ Sheet 1(데이터베이스)에는 기존 doGet이 없으므로 여기서 새로 정의합니다.
 //    기존 Code.gs의 onOpen() 메뉴, JSONParser.gs의 맞춤함수는 그대로 작동합니다.
@@ -152,23 +166,57 @@ function tpHandlePost_(d) {
 // ═══════════════════════════════════════════════════════
 // AUTH
 // ═══════════════════════════════════════════════════════
+
+// 비밀번호 해싱 유틸
+function tpHashPw_(pw) {
+  var digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, 'mbhj-salt:' + pw, Utilities.Charset.UTF_8);
+  return digest.map(function(b){return ('0' + (b & 0xFF).toString(16)).slice(-2);}).join('');
+}
+
+// 비밀번호 비교 (평문 호환 + 해시)
+function tpCheckPw_(stored, input) {
+  // 해시된 비밀번호 (64자 hex)
+  if (stored && stored.length === 64 && /^[0-9a-f]+$/.test(stored)) {
+    return stored === tpHashPw_(input);
+  }
+  // 레거시 평문 비밀번호 — 로그인 시 자동 마이그레이션
+  return String(stored) === String(input);
+}
+
 function tpLogin_(name, pw) {
   if (!name || !pw) return { ok: false, error: '이름과 비밀번호를 입력해주세요.' };
+
+  // 브루트포스 방지: 5회 실패 시 15분 차단
+  var cache = CacheService.getScriptCache();
+  var failKey = 'login_fail_' + name;
+  var failCount = parseInt(cache.get(failKey) || '0');
+  if (failCount >= 5) return { ok: false, error: '로그인 시도 횟수 초과. 15분 후 다시 시도해주세요.' };
+
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sh = ss.getSheetByName(TP.SHEET_TEACHERS);
   if (!sh) return { ok: false, error: '강사계정 시트가 없습니다. tpSetup()을 먼저 실행하세요.' };
   const data = sh.getDataRange().getValues();
   // 헤더: [강사명, 과목, 비밀번호, 역할, 로그식별자, 상태]
   for (let i = 1; i < data.length; i++) {
-    if (data[i][0] === name && String(data[i][2]) === String(pw) && data[i][5] !== '비활성') {
-      return {
-        ok: true,
-        teacher: { name: data[i][0], subject: data[i][1], role: data[i][3], logId: data[i][4] },
-        token: tpGenToken_(name),
-        needPasswordChange: String(pw) === '1234',
-      };
+    if (String(data[i][0]).trim() === String(name).trim() && data[i][5] !== '비활성') {
+      if (tpCheckPw_(String(data[i][2]), String(pw))) {
+        cache.remove(failKey); // 성공 시 카운터 리셋
+        // 평문 비밀번호 → 해시로 자동 마이그레이션
+        var stored = String(data[i][2]);
+        if (!(stored.length === 64 && /^[0-9a-f]+$/.test(stored))) {
+          sh.getRange(i + 1, 3).setValue(tpHashPw_(pw));
+        }
+        return {
+          ok: true,
+          teacher: { name: data[i][0], subject: data[i][1], role: data[i][3], logId: data[i][4] },
+          token: tpGenToken_(String(data[i][0]).trim()),
+          needPasswordChange: String(pw) === '1234',
+        };
+      }
     }
   }
+  // 실패 카운터 증가
+  cache.put(failKey, String(failCount + 1), 900); // 15분 TTL
   return { ok: false, error: '이름 또는 비밀번호가 올바르지 않습니다.' };
 }
 
@@ -487,33 +535,28 @@ function tpGetMyEvals_(teacherLogId, dateStr, className, token) {
   var targetDate = dateStr || Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy-MM-dd');
   var evals = {};
   
-  function scan(sheetName) {
-    var sh = ss.getSheetByName(sheetName);
-    if (!sh || sh.getLastRow() < 2) return;
-    var data = sh.getDataRange().getValues();
-    for (var i = 1; i < data.length; i++) {
-      if (String(data[i][0]).trim() !== teacherLogId) continue;
-      var d = tpNormalizeDate_(data[i][1]);
-      if (d !== targetDate) continue;
-      if (String(data[i][2]).trim() !== className) continue;
-      
-      var studentName = String(data[i][3]).trim();
-      evals[studentName] = {
-        homework: String(data[i][4] || ''),
-        understanding: String(data[i][5] || ''),
-        focus: String(data[i][6] || ''),
-        persistence: String(data[i][7] || ''),
-        growthPoints: String(data[i][8] || ''),
-        weaknesses: String(data[i][9] || ''),
-        mgmtAreas: String(data[i][10] || ''),
-        urgentAction: String(data[i][11] || ''),
-        comment: String(data[i][12] || ''),
-        isAbsent: String(data[i][10]).trim() === '결석' && !data[i][4],
-      };
-    }
+  // 최근 500행만 스캔 (최근 날짜 평가 조회)
+  var data = tpGetRecentLogData_(ss, 500);
+  for (var i = 0; i < data.length; i++) {
+    if (String(data[i][0]).trim() !== teacherLogId) continue;
+    var d = tpNormalizeDate_(data[i][1]);
+    if (d !== targetDate) continue;
+    if (String(data[i][2]).trim() !== className) continue;
+
+    var studentName = String(data[i][3]).trim();
+    evals[studentName] = {
+      homework: String(data[i][4] || ''),
+      understanding: String(data[i][5] || ''),
+      focus: String(data[i][6] || ''),
+      persistence: String(data[i][7] || ''),
+      growthPoints: String(data[i][8] || ''),
+      weaknesses: String(data[i][9] || ''),
+      mgmtAreas: String(data[i][10] || ''),
+      urgentAction: String(data[i][11] || ''),
+      comment: String(data[i][12] || ''),
+      isAbsent: String(data[i][10]).trim() === '결석' && !data[i][4],
+    };
   }
-  
-  scan(TP.SHEET_DAILY_LOG);  // [ALL] 전체 로그 취합 (포털 데이터 포함)
   
   return { ok: true, date: targetDate, className: className, evals: evals };
 }
@@ -712,11 +755,10 @@ function tpAdminOverview_(token) {
     }
   }
   
-  // 오늘 로그 집계
-  const logSheet = ss.getSheetByName(TP.SHEET_DAILY_LOG);
-  const logData = logSheet.getDataRange().getValues();
+  // 오늘 로그 집계 — 최근 500행만 스캔 (오늘 데이터는 최근에 추가됨)
+  const logData = tpGetRecentLogData_(ss, 500);
   const todayByTeacher = {};
-  for (let i = logData.length - 1; i >= 1; i--) {
+  for (let i = logData.length - 1; i >= 0; i--) {
     const rowDate = tpNormalizeDate_(logData[i][1]);
     if (rowDate !== todayISO) continue;
     const t = logData[i][0]; // 담당교사
@@ -735,7 +777,7 @@ function tpAdminOverview_(token) {
     ok: true,
     date: todayISO,
     activeStudents,
-    totalLogs: logData.length - 1,
+    totalLogs: (ss.getSheetByName(TP.SHEET_DAILY_LOG) || {getLastRow:function(){return 1;}}).getLastRow() - 1,
     todayByTeacher,
     teachers,
   };
@@ -750,27 +792,22 @@ function tpAdminEvalLog_(token, filterDate, filterTeacher, filterClass) {
   const targetDate = filterDate || Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy-MM-dd');
   const logs = [];
   
-  // ★ 두 탭 모두 스캔
-  function scanSheet_(sheetName, source) {
-    const sheet = ss.getSheetByName(sheetName);
-    if (!sheet || sheet.getLastRow() < 2) return;
-    const data = sheet.getDataRange().getValues();
-    for (let i = data.length - 1; i >= 1 && logs.length < 300; i--) {
-      const rowDate = tpNormalizeDate_(data[i][1]);
-      if (filterDate && rowDate !== targetDate) continue;
-      if (filterTeacher && data[i][0] !== filterTeacher) continue;
-      if (filterClass && data[i][2] !== filterClass) continue;
-      logs.push({
-        source, rowIndex: i + 1, sheetName,
-        teacher: data[i][0], date: rowDate, className: data[i][2],
-        student: data[i][3], homework: data[i][4], understanding: data[i][5],
-        focus: data[i][6], persistence: data[i][7],
-        growthPoints: data[i][8], weaknesses: data[i][9],
-        mgmtAreas: data[i][10], urgentAction: data[i][11], comment: data[i][12],
-      });
-    }
+  // 최근 2000행만 스캔 (날짜 필터가 있으므로 충분)
+  const data = tpGetRecentLogData_(ss, 2000);
+  for (let i = data.length - 1; i >= 0 && logs.length < 300; i--) {
+    const rowDate = tpNormalizeDate_(data[i][1]);
+    if (filterDate && rowDate !== targetDate) continue;
+    if (filterTeacher && data[i][0] !== filterTeacher) continue;
+    if (filterClass && data[i][2] !== filterClass) continue;
+    logs.push({
+      source: 'all', rowIndex: i + 1, sheetName: TP.SHEET_DAILY_LOG,
+      teacher: data[i][0], date: rowDate, className: data[i][2],
+      student: data[i][3], homework: data[i][4], understanding: data[i][5],
+      focus: data[i][6], persistence: data[i][7],
+      growthPoints: data[i][8], weaknesses: data[i][9],
+      mgmtAreas: data[i][10], urgentAction: data[i][11], comment: data[i][12],
+    });
   }
-  scanSheet_(TP.SHEET_DAILY_LOG, 'all');
   
   // 날짜 내림차순 정렬
   logs.sort((a, b) => b.date.localeCompare(a.date));
@@ -946,32 +983,27 @@ function tpEvalTrend_(studentName, days, token) {
   }
   
   var entries = [];
-  
-  // 두 탭 모두 스캔
-  function scan(sheetName) {
-    var sh = ss.getSheetByName(sheetName);
-    if (!sh || sh.getLastRow() < 2) return;
-    var data = sh.getDataRange().getValues();
-    for (var i = 1; i < data.length; i++) {
-      if (String(data[i][3]).trim() !== studentName) continue;
-      var d = tpNormalizeDate_(data[i][1]);
-      if (d < cutoffISO) continue;
-      var hw = extractScore(data[i][4]);
-      var ud = extractScore(data[i][5]);
-      var fc = extractScore(data[i][6]);
-      var ps = extractScore(data[i][7]);
-      if (hw === null && ud === null) continue; // 결석 등 빈 데이터 제외
-      entries.push({
-        date: d,
-        teacher: String(data[i][0]),
-        className: String(data[i][2]),
-        homework: hw, understanding: ud, focus: fc, persistence: ps,
-        growthPoints: String(data[i][8] || ''),
-        weaknesses: String(data[i][9] || ''),
-      });
-    }
+
+  // 최근 N일분 데이터만 스캔 (일 ~100행 가정, 여유 있게 daysNum * 100)
+  var data = tpGetRecentLogData_(ss, Math.max(2000, daysNum * 100));
+  for (var i = 0; i < data.length; i++) {
+    if (String(data[i][3]).trim() !== studentName) continue;
+    var d = tpNormalizeDate_(data[i][1]);
+    if (d < cutoffISO) continue;
+    var hw = extractScore(data[i][4]);
+    var ud = extractScore(data[i][5]);
+    var fc = extractScore(data[i][6]);
+    var ps = extractScore(data[i][7]);
+    if (hw === null && ud === null) continue;
+    entries.push({
+      date: d,
+      teacher: String(data[i][0]),
+      className: String(data[i][2]),
+      homework: hw, understanding: ud, focus: fc, persistence: ps,
+      growthPoints: String(data[i][8] || ''),
+      weaknesses: String(data[i][9] || ''),
+    });
   }
-  scan(TP.SHEET_DAILY_LOG);
   
   // 날짜 오름차순 정렬
   entries.sort(function(a, b) { return a.date.localeCompare(b.date); });
@@ -1044,32 +1076,28 @@ function tpEvalStats_(days, token) {
   var byTeacher = {};
   var byDate = {}; // 날짜별 전체 입력수
   
-  function scan(sheetName) {
-    var sh = ss.getSheetByName(sheetName);
-    if (!sh || sh.getLastRow() < 2) return;
-    var data = sh.getDataRange().getValues();
-    for (var i = 1; i < data.length; i++) {
-      var d = tpNormalizeDate_(data[i][1]);
-      if (d < cutoffISO) continue;
-      var teacher = String(data[i][0]).trim();
-      if (!teacher) continue;
-      
-      if (!byTeacher[teacher]) byTeacher[teacher] = { count: 0, hw: [], ud: [], fc: [], ps: [], dates: {} };
-      byTeacher[teacher].count++;
-      var hw = extractScore(data[i][4]);
-      var ud = extractScore(data[i][5]);
-      var fc = extractScore(data[i][6]);
-      var ps = extractScore(data[i][7]);
-      if (hw !== null) byTeacher[teacher].hw.push(hw);
-      if (ud !== null) byTeacher[teacher].ud.push(ud);
-      if (fc !== null) byTeacher[teacher].fc.push(fc);
-      if (ps !== null) byTeacher[teacher].ps.push(ps);
-      byTeacher[teacher].dates[d] = (byTeacher[teacher].dates[d] || 0) + 1;
-      
-      byDate[d] = (byDate[d] || 0) + 1;
-    }
+  // 최근 N일분 데이터만 스캔
+  var data = tpGetRecentLogData_(ss, Math.max(2000, daysNum * 100));
+  for (var i = 0; i < data.length; i++) {
+    var d = tpNormalizeDate_(data[i][1]);
+    if (d < cutoffISO) continue;
+    var teacher = String(data[i][0]).trim();
+    if (!teacher) continue;
+
+    if (!byTeacher[teacher]) byTeacher[teacher] = { count: 0, hw: [], ud: [], fc: [], ps: [], dates: {} };
+    byTeacher[teacher].count++;
+    var hw = extractScore(data[i][4]);
+    var ud = extractScore(data[i][5]);
+    var fc = extractScore(data[i][6]);
+    var ps = extractScore(data[i][7]);
+    if (hw !== null) byTeacher[teacher].hw.push(hw);
+    if (ud !== null) byTeacher[teacher].ud.push(ud);
+    if (fc !== null) byTeacher[teacher].fc.push(fc);
+    if (ps !== null) byTeacher[teacher].ps.push(ps);
+    byTeacher[teacher].dates[d] = (byTeacher[teacher].dates[d] || 0) + 1;
+
+    byDate[d] = (byDate[d] || 0) + 1;
   }
-  scan(TP.SHEET_DAILY_LOG);
   
   function avg(arr) { return arr.length ? Math.round(arr.reduce(function(a,b){return a+b;},0) / arr.length * 10) / 10 : null; }
   
@@ -1228,11 +1256,11 @@ function tpChangePassword_(d) {
   var data = sh.getDataRange().getValues();
   
   for (var i = 1; i < data.length; i++) {
-    if (data[i][0] === name) {
-      if (String(data[i][2]) !== String(currentPw)) {
+    if (String(data[i][0]).trim() === String(name).trim()) {
+      if (!tpCheckPw_(String(data[i][2]), String(currentPw))) {
         return { ok: false, error: '현재 비밀번호가 일치하지 않습니다.' };
       }
-      sh.getRange(i + 1, 3).setValue(newPw);
+      sh.getRange(i + 1, 3).setValue(tpHashPw_(newPw));
       return { ok: true, message: '비밀번호가 변경되었습니다.' };
     }
   }
@@ -1243,9 +1271,11 @@ function tpChangePassword_(d) {
 // 유틸리티
 function tpGenToken_(name) {
   const ts = new Date().getTime();
-  const payload = name + ':' + ts + ':' + TP.TOKEN_SECRET;
+  var secret = TP.TOKEN_SECRET;
+  try { var sp = PropertiesService.getScriptProperties().getProperty('TOKEN_SECRET'); if (sp) secret = sp; } catch(e){}
+  const payload = name + ':' + ts + ':' + secret;
   const hash = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, payload, Utilities.Charset.UTF_8);
-  const hStr = hash.map(b => ('0' + (b & 0xFF).toString(16)).slice(-2)).join('').substring(0, 16);
+  const hStr = hash.map(function(b){return ('0' + (b & 0xFF).toString(16)).slice(-2);}).join('').substring(0, 16);
   return Utilities.base64Encode(name + ':' + ts + ':' + hStr);
 }
 
@@ -1255,8 +1285,18 @@ function tpValidToken_(token) {
     const decoded = Utilities.newBlob(Utilities.base64Decode(token)).getDataAsString();
     const parts = decoded.split(':');
     if (parts.length < 3) return false;
+    const name = parts[0];
     const ts = parseInt(parts[1]);
-    return (new Date().getTime() - ts) / 3600000 < TP.TOKEN_EXPIRY_HOURS;
+    const hStr = parts.slice(2).join(':');
+    // 시간 만료 체크
+    if ((new Date().getTime() - ts) / 3600000 >= TP.TOKEN_EXPIRY_HOURS) return false;
+    // 해시 검증 — 위조 방지
+    var secret = TP.TOKEN_SECRET;
+    try { var sp = PropertiesService.getScriptProperties().getProperty('TOKEN_SECRET'); if (sp) secret = sp; } catch(e){}
+    const payload = name + ':' + ts + ':' + secret;
+    const hash = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, payload, Utilities.Charset.UTF_8);
+    const expectedHash = hash.map(function(b){return ('0' + (b & 0xFF).toString(16)).slice(-2);}).join('').substring(0, 16);
+    return hStr === expectedHash;
   } catch (e) { return false; }
 }
 
@@ -1272,8 +1312,8 @@ function tpNormalizeDate_(val) {
   if (m) {
     return m[1] + '-' + m[2].padStart(2, '0') + '-' + m[3].padStart(2, '0');
   }
-  // "2026-03-20" 그대로
-  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  // "2026-03-20" 또는 "2026-03-20T09:00:00" → 날짜 부분만
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.substring(0, 10);
   return s;
 }
 

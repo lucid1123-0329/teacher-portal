@@ -241,8 +241,8 @@ function formatSyncDate_(val) {
   if (match) {
     return match[1] + '-' + match[2].padStart(2, '0') + '-' + match[3].padStart(2, '0');
   }
-  // "2026-03-20" 그대로
-  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  // "2026-03-20" 또는 "2026-03-20T09:00:00" → 날짜 부분만
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.substring(0, 10);
   return s;
 }
 
@@ -1603,7 +1603,8 @@ function tpCounselRegisterEnrolled_(data, token) {
     newRow[SYNC.C_CONSENT] = true;
     newRow[SYNC.C_STATUS] = '재원생등록';
     newRow[SYNC.C_STEP_CONSULT] = now;
-    
+
+    var sheet = counselSheet_(SYNC.COUNSEL_TAB);
     sheet.appendRow(newRow);
     
     return {
