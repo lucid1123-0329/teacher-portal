@@ -291,6 +291,7 @@ a{color:var(--ac);text-decoration:none}::selection{background:var(--acbg)}
 <!-- EVAL GRID -->
 <div class="pg" id="p-eval">
 <div class="eval-top"><button class="btn btn-g btn-sm" onclick="nav('p-dash')">← 뒤로</button><div><div class="eval-title" id="eH"></div><div class="eval-sub" id="eSub"></div></div><div style="margin-left:auto;display:flex;align-items:center;gap:8px"><input type="date" id="eDate" class="ipt" style="height:28px;font-size:13px" onchange="loadEvalDate()"><span class="chip chip-n" id="eProg">0/0</span><span class="chip chip-n" id="eMode" style="display:none">수정모드</span><button class="btn btn-g btn-sm" onclick="openRecentEvals()">최근 기록</button></div></div>
+<div id="editGuide" style="display:none;padding:10px 16px;margin:0 0 8px;background:#fffbeb;border:1px solid #f59e0b;border-radius:8px;font-size:13px;color:#92400e;line-height:1.5">수정모드: 점수를 다시 클릭하여 변경하고, <b style="color:var(--er)">✕</b> 버튼으로 개별 학생을 초기화할 수 있습니다. 수정 후 <b>저장</b> 버튼을 눌러주세요.</div>
 <div class="grid-wrap"><table class="grid" id="eGrid"><thead></thead><tbody></tbody></table></div>
 </div>
 <div class="save-bar" id="saveBar"><div class="info"><strong id="saveC">0</strong>명 완료</div><button class="btn btn-a" id="saveBtn" onclick="doSave()" disabled>저장</button></div>
@@ -599,7 +600,7 @@ else{dc.style.display='none';tg.textContent='펼치기 ▼';}}
 // ==============================
 // EVAL GRID — 핵심 재설계
 // ==============================
-async function oC(cn){sh('');S.cc=cn;S.ev={};S.existingEvals={};
+async function oC(cn){sh('');S.cc=cn;S.ev={};S.existingEvals={};S._editMode=false;$('editGuide').style.display='none';
 const r=await gA('tp_students',{className:cn,token:S.tk});hd();
 if(!r.ok){ts(r.error,'er');return;}S.sts=r.students;S.evalSubject=r.subject;
 $('eH').textContent=cn;$('eSub').textContent=r.subject+' · '+r.students.length+'명';
@@ -616,8 +617,10 @@ try{const r=await gA('tp_getMyEvals',{teacherLogId:S.t.logId,date:date,className
 if(r.ok&&r.evals){S.existingEvals=r.evals;}}catch(e){}
 hd();
 const hasExisting=Object.keys(S.existingEvals).length>0;
+S._editMode=hasExisting;
 $('eMode').style.display=hasExisting?'inline-flex':'none';
 $('eMode').textContent=hasExisting?'수정모드':'';
+$('editGuide').style.display=hasExisting?'block':'none';
 buildGrid();}
 
 function buildGrid(){const cfg=S.cf||{};const scales=cfg.scales||['5점 (완벽)','4점 (우수)','3점 (보통)','2점 (미흡)','1점 (불량)'];
@@ -650,7 +653,7 @@ const hasDetail=ev.gp||ev.wk||ev.mg||ev.ua||ev.cm;
 return`<tr id="gr${i}" class="${isAbs?'absent':''}${isDone?' done':''}"><td>${st.name}<br><span style="font-size:11px;color:var(--t3)">${st.grade}</span></td>
 <td class="abs-cell" onclick="gAbs(${i})"><div class="abs-check${isAbs?' on':''}" id="ga${i}">✓</div></td>
 ${scCells}
-<td><button class="btn btn-g btn-sm" id="db${i}" style="font-size:11px;padding:0 8px;white-space:nowrap" onclick="gDet(${i})">상세 ▼</button></td></tr>
+<td style="white-space:nowrap"><button class="btn btn-g btn-sm" id="db${i}" style="font-size:11px;padding:0 8px;white-space:nowrap" onclick="gDet(${i})">상세 ▼</button>${S._editMode?`<button class="btn btn-sm" style="font-size:11px;padding:0 6px;margin-left:4px;color:var(--er);border:1px solid var(--er);background:transparent" onclick="resetRow(${i})">✕</button>`:''}</td></tr>
 <tr class="detail-row" id="dr${i}"><td colspan="7"><div class="detail-inner${hasDetail?' open':''}" id="di${i}">${buildDetail(st,i)}</div></td></tr>`;}).join('');
 uProg();}
 
@@ -682,6 +685,7 @@ if(isAbs){const di=$(`di${i}`);di.classList.remove('open');$(`db${i}`).textConte
 uRow(+i);uProg();}
 
 function gDet(i){const di=$(`di${i}`);const open=!di.classList.contains('open');di.classList.toggle('open');$(`db${i}`).textContent=open?'상세 ▲':'상세 ▼';}
+function resetRow(i){if(!confirm(S.sts[i].name+' 학생의 평가를 초기화하시겠습니까?'))return;S.ev[i]={};buildGrid();uCnt();ts('초기화 완료','ok');}
 function gChk(i,f){const chs=document.querySelectorAll(`input[type=checkbox][data-i="${i}"][data-f="${f}"]`);
 chs.forEach(c=>c.parentElement.classList.toggle('ck',c.checked));
 if(!S.ev[i])S.ev[i]={};S.ev[i][f]=Array.from(chs).filter(c=>c.checked).map(c=>c.value).join(', ');}
