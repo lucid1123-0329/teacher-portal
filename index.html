@@ -560,6 +560,9 @@ if(day===dy3[new Date().getDay()]){updateDashStats(S._dash, r);}
 function renderSchedule(r){
 var sb=$('schedBody');
 if(!r.schedule||!r.schedule.length){sb.innerHTML='<p style="color:var(--t4);text-align:center;padding:20px">'+r.dayOfWeek+'요일 수업이 없습니다.</p>';return;}
+// todayStatus에서 반별 완료 현황 맵 구성
+var classMap={};
+if(S._dash&&S._dash.classes){for(var k=0;k<S._dash.classes.length;k++){var cc=S._dash.classes[k];classMap[cc.name]={completed:cc.completed,total:cc.total};}}
 var h='';
 for(var i=0;i<r.schedule.length;i++){
 var slot=r.schedule[i];
@@ -569,11 +572,21 @@ h+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px
 for(var j=0;j<slot.classes.length;j++){
 var c=slot.classes[j];
 var stuText=c.students.length<=6?c.students.join(', '):c.students.slice(0,5).join(', ')+' 외 '+(c.students.length-5)+'명';
-h+='<div class="cls-card" onclick="oC(\''+esc(c.name)+'\')" style="margin:0;padding:10px;flex-direction:column;align-items:flex-start;gap:4px;cursor:pointer;border:1px solid var(--ln);border-radius:8px">';
+// 완료 현황
+var ci=classMap[c.name];
+var comp=ci?ci.completed:0;
+var tot=ci?ci.total:c.studentCount;
+var done=tot>0&&comp>=tot;
+var borderColor=done?'var(--ok)':'var(--ln)';
+var bgColor=done?'#f0fdf4':'#fff';
+var badgeColor=done?'var(--ok)':comp>0?'var(--ac)':'var(--t4)';
+h+='<div class="cls-card" onclick="oC(\''+esc(c.name)+'\')" style="margin:0;padding:10px;flex-direction:column;align-items:flex-start;gap:4px;cursor:pointer;border:1.5px solid '+borderColor+';border-radius:8px;background:'+bgColor+'">';
 h+='<div style="display:flex;align-items:center;gap:8px;width:100%">';
 h+='<div class="cls-ico" style="width:28px;height:28px;font-size:12px;flex-shrink:0">'+c.subject[0]+'</div>';
 h+='<div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600">'+c.name+'</div>';
-h+='<div style="font-size:11px;color:var(--t3)">'+c.subject+' · '+c.studentCount+'명</div></div></div>';
+h+='<div style="font-size:11px;color:var(--t3)">'+c.subject+' · '+c.studentCount+'명</div></div>';
+h+='<div style="font-size:11px;font-weight:600;color:'+badgeColor+';white-space:nowrap">'+(done?'✓ 완료':comp+'/'+tot)+'</div>';
+h+='</div>';
 h+='<div style="font-size:11px;color:var(--t4);line-height:1.4;word-break:break-all">'+stuText+'</div>';
 h+='</div>';}
 h+='</div></div>';}
