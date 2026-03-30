@@ -685,7 +685,7 @@ if(isAbs){const di=$(`di${i}`);di.classList.remove('open');$(`db${i}`).textConte
 uRow(+i);uProg();}
 
 function gDet(i){const di=$(`di${i}`);const open=!di.classList.contains('open');di.classList.toggle('open');$(`db${i}`).textContent=open?'상세 ▲':'상세 ▼';}
-function resetRow(i){if(!confirm(S.sts[i].name+' 학생의 평가를 초기화하시겠습니까?'))return;S.ev[i]={};buildGrid();uCnt();ts('초기화 완료','ok');}
+function resetRow(i){S.ev[i]={};delete S.existingEvals[S.sts[i].name];buildGrid();uCnt();ts(S.sts[i].name+' 초기화','ok');}
 function gChk(i,f){const chs=document.querySelectorAll(`input[type=checkbox][data-i="${i}"][data-f="${f}"]`);
 chs.forEach(c=>c.parentElement.classList.toggle('ck',c.checked));
 if(!S.ev[i])S.ev[i]={};S.ev[i][f]=Array.from(chs).filter(c=>c.checked).map(c=>c.value).join(', ');}
@@ -701,7 +701,9 @@ tr.classList.toggle('done',!!done);tr.classList.toggle('absent',!!isAbs);}
 function uProg(){let d=0;S.sts.forEach((st,i)=>{const e=S.ev[i]||{};if(e._absent||(e.hw&&e.ud&&e.fc&&e.ps))d++;});
 $('eProg').textContent=`${d}/${S.sts.length}`;$('saveC').textContent=d;$('saveBtn').disabled=d===0;}
 
-async function doSave(){const btn=$('saveBtn');btn.disabled=true;btn.textContent='저장 중...';
+async function doSave(){
+if(S._editMode&&!confirm('수정한 내용을 저장하시겠습니까?'))return;
+const btn=$('saveBtn');btn.disabled=true;btn.textContent='저장 중...';
 const evalDate=$('eDate').value;
 const evs=[];S.sts.forEach((st,i)=>{const e=S.ev[i]||{};const isAbs=e._absent;
 if(!isAbs&&(!e.hw||!e.ud||!e.fc||!e.ps))return;
