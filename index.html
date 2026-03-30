@@ -487,12 +487,9 @@ if(!r||!r.ok)return;S._dash=r;S._dashTs=Date.now();}
 const d=new Date(),dy=['일','월','화','수','목','금','토'];
 $('dH').textContent=S.t.role==='관리자'?'대시보드':S.t.name+' 선생님';
 $('dD').textContent=`${d.getFullYear()}. ${d.getMonth()+1}. ${d.getDate()} ${dy[d.getDay()]}요일`;
-const p=r.totalStudents>0?Math.round(r.completedStudents/r.totalStudents*100):0;
-const rem=r.totalStudents-r.completedStudents;
-$('dS').innerHTML=`<div class="stat"><div class="stat-l">전체</div><div class="stat-v">${r.totalStudents}</div></div>
-<div class="stat"><div class="stat-l">입력 완료</div><div class="stat-v">${r.completedStudents}<span style="font-size:13px;font-weight:400;color:var(--t3)"> / ${r.totalStudents}</span></div></div>
-<div class="stat"><div class="stat-l">달성률</div><div class="stat-v">${p}%</div></div>
-<div class="stat"><div class="stat-l">미입력</div><div class="stat-v" style="color:${rem>0?'var(--er)':'var(--ok)'}">${rem}</div></div>`;
+// 통계는 시간표 로딩 후 업데이트 (updateDashStats)
+// 초기에는 기존 todayStatus 데이터로 표시
+updateDashStats(r, null);
 const cl=$('dC');
 // 시간표는 반 목록 유무와 관계없이 항상 로딩
 const dy2=['일','월','화','수','목','금','토'];$('dayFilter').value=dy2[d.getDay()];loadSchedule();
@@ -500,6 +497,50 @@ if(!r.classes||!r.classes.length){cl.innerHTML='<p style="color:var(--t4);paddin
 cl.innerHTML=r.classes.map(c=>{const pct=c.total>0?Math.round(c.completed/c.total*100):0;
 return`<div class="cls-card" onclick="oC('${esc(c.name)}')"><div class="cls-ico">${c.subject[0]}</div><div><div class="cls-nm">${c.name}</div><div class="cls-meta">${c.subject} · ${c.total}명</div></div>
 <div class="cls-prog"><div class="v">${c.completed}/${c.total}</div><div class="bar"><div class="fill" style="width:${pct}%;background:${pct===100?'var(--ok)':pct>0?'var(--ac)':'var(--ln)'}"></div></div></div></div>`;}).join('');}
+
+// ==============================
+// 대시보드 통계 렌더링
+// ==============================
+function updateDashStats(todayStatus, schedData){
+var isAdmin=S.t.role==='관리자';
+var ds=$('dS');
+
+if(schedData&&schedData.schedule){
+// 시간표 기반 통계: 오늘 수업 반 수 + 학생 수
+var todayClasses=0,todayStudents=0;
+for(var i=0;i<schedData.schedule.length;i++){
+var slot=schedData.schedule[i];
+for(var j=0;j<slot.classes.length;j++){
+todayClasses++;
+todayStudents+=slot.classes[j].studentCount;
+}}
+
+var comp=todayStatus?todayStatus.completedStudents:0;
+var pct=todayStudents>0?Math.round(comp/todayStudents*100):0;
+var rem=todayStudents-comp;
+if(rem<0)rem=0;
+
+if(isAdmin){
+ds.innerHTML='<div class="stat"><div class="stat-l">오늘 수업</div><div class="stat-v">'+todayClasses+'<span style="font-size:13px;font-weight:400;color:var(--t3)">개 반</span></div></div>'+
+'<div class="stat"><div class="stat-l">전체 학생</div><div class="stat-v">'+todayStudents+'<span style="font-size:13px;font-weight:400;color:var(--t3)">명</span></div></div>'+
+'<div class="stat"><div class="stat-l">입력 완료</div><div class="stat-v">'+comp+'<span style="font-size:13px;font-weight:400;color:var(--t3)"> / '+todayStudents+'</span></div></div>'+
+'<div class="stat"><div class="stat-l">달성률</div><div class="stat-v">'+pct+'%</div></div>';
+}else{
+ds.innerHTML='<div class="stat"><div class="stat-l">오늘 수업</div><div class="stat-v">'+todayClasses+'<span style="font-size:13px;font-weight:400;color:var(--t3)">개 반</span></div></div>'+
+'<div class="stat"><div class="stat-l">오늘 학생</div><div class="stat-v">'+todayStudents+'<span style="font-size:13px;font-weight:400;color:var(--t3)">명</span></div></div>'+
+'<div class="stat"><div class="stat-l">입력 완료</div><div class="stat-v">'+comp+'<span style="font-size:13px;font-weight:400;color:var(--t3)"> / '+todayStudents+'</span></div></div>'+
+'<div class="stat"><div class="stat-l">미입력</div><div class="stat-v" style="color:'+(rem>0?'var(--er)':'var(--ok)')+'">'+rem+'</div></div>';
+}
+}else{
+// 시간표 미로딩 시: 기존 todayStatus 기반 표시
+var ts=todayStatus||{totalStudents:0,completedStudents:0};
+var p2=ts.totalStudents>0?Math.round(ts.completedStudents/ts.totalStudents*100):0;
+var rem2=ts.totalStudents-ts.completedStudents;
+ds.innerHTML='<div class="stat"><div class="stat-l">전체</div><div class="stat-v">'+ts.totalStudents+'</div></div>'+
+'<div class="stat"><div class="stat-l">입력 완료</div><div class="stat-v">'+ts.completedStudents+'<span style="font-size:13px;font-weight:400;color:var(--t3)"> / '+ts.totalStudents+'</span></div></div>'+
+'<div class="stat"><div class="stat-l">달성률</div><div class="stat-v">'+p2+'%</div></div>'+
+'<div class="stat"><div class="stat-l">미입력</div><div class="stat-v" style="color:'+(rem2>0?'var(--er)':'var(--ok)')+'">'+rem2+'</div></div>';
+}}
 
 // ==============================
 // 시간표 렌더링
@@ -511,6 +552,9 @@ try{
 var r=await gA('tp_todaySchedule',{teacher:S.t.name,role:S.t.role,dayOfWeek:day,token:S.tk});
 if(!r||!r.ok){$('schedBody').innerHTML='<p style="color:var(--t4);text-align:center;padding:12px">시간표를 불러올 수 없습니다.</p>';return;}
 renderSchedule(r);
+// 오늘 요일일 때만 통계 업데이트 (다른 요일 조회 시 통계 변경 안 함)
+var dy3=['일','월','화','수','목','금','토'];
+if(day===dy3[new Date().getDay()]){updateDashStats(S._dash, r);}
 }catch(e){$('schedBody').innerHTML='<p style="color:var(--er);text-align:center;padding:12px">오류: '+e.message+'</p>';}}
 
 function renderSchedule(r){
