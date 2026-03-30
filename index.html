@@ -563,17 +563,20 @@ if(!r.schedule||!r.schedule.length){sb.innerHTML='<p style="color:var(--t4);text
 var h='';
 for(var i=0;i<r.schedule.length;i++){
 var slot=r.schedule[i];
-h+='<div style="margin-bottom:12px"><div style="font-size:13px;font-weight:700;color:var(--ac);padding:6px 0;border-bottom:1px solid var(--ln)">🕐 '+slot.time+'</div>';
+h+='<div style="margin-bottom:16px">';
+h+='<div style="font-size:13px;font-weight:700;color:var(--ac);padding:4px 0 8px;border-bottom:1px solid var(--ln)">🕐 '+slot.time+'</div>';
+h+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-top:8px">';
 for(var j=0;j<slot.classes.length;j++){
 var c=slot.classes[j];
-var stuText=c.students.length<=5?c.students.join(', '):c.students.slice(0,5).join(', ')+' ...외 '+(c.students.length-5)+'명';
-h+='<div class="cls-card" onclick="oC(\''+esc(c.name)+'\')" style="margin:4px 0;padding:10px 12px">';
-h+='<div class="cls-ico" style="width:32px;height:32px;font-size:14px">'+c.subject[0]+'</div>';
-h+='<div style="flex:1;min-width:0"><div class="cls-nm" style="font-size:14px">'+c.name+'</div>';
-h+='<div style="font-size:12px;color:var(--t3);margin-top:2px">'+c.subject+' · '+c.studentCount+'명</div>';
-h+='<div style="font-size:11px;color:var(--t4);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+stuText+'</div>';
-h+='</div></div>';}
+var stuText=c.students.length<=6?c.students.join(', '):c.students.slice(0,5).join(', ')+' 외 '+(c.students.length-5)+'명';
+h+='<div class="cls-card" onclick="oC(\''+esc(c.name)+'\')" style="margin:0;padding:10px;flex-direction:column;align-items:flex-start;gap:4px;cursor:pointer;border:1px solid var(--ln);border-radius:8px">';
+h+='<div style="display:flex;align-items:center;gap:8px;width:100%">';
+h+='<div class="cls-ico" style="width:28px;height:28px;font-size:12px;flex-shrink:0">'+c.subject[0]+'</div>';
+h+='<div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600">'+c.name+'</div>';
+h+='<div style="font-size:11px;color:var(--t3)">'+c.subject+' · '+c.studentCount+'명</div></div></div>';
+h+='<div style="font-size:11px;color:var(--t4);line-height:1.4;word-break:break-all">'+stuText+'</div>';
 h+='</div>';}
+h+='</div></div>';}
 sb.innerHTML=h;}
 
 function toggleAllClasses(){var dc=$('dC'),tg=$('clsToggle');
