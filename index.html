@@ -654,7 +654,9 @@ return`<tr id="gr${i}" class="${isAbs?'absent':''}${isDone?' done':''}"><td>${st
 <td class="abs-cell" onclick="gAbs(${i})"><div class="abs-check${isAbs?' on':''}" id="ga${i}">✓</div></td>
 ${scCells}
 <td style="white-space:nowrap"><button class="btn btn-g btn-sm" id="db${i}" style="font-size:11px;padding:0 8px;white-space:nowrap" onclick="gDet(${i})">상세 ▼</button>${S._editMode?`<button class="btn btn-sm" style="font-size:11px;padding:0 6px;margin-left:4px;color:var(--er);border:1px solid var(--er);background:transparent" onclick="resetRow(${i})">✕</button>`:''}</td></tr>
-<tr class="detail-row" id="dr${i}"><td colspan="7"><div class="detail-inner${hasDetail?' open':''}" id="di${i}">${buildDetail(st,i)}</div></td></tr>`;}).join('');
+<tr class="detail-row" id="dr${i}"><td colspan="7"><div class="detail-inner${hasDetail||isAbs?' open':''}" id="di${i}">${buildDetail(st,i)}</div></td></tr>`;}).join('');
+// 결석 학생: 코멘트만 보이도록 정성평가 숨김
+S.sts.forEach((st,i)=>{const ev=S.ev[i]||{};if(ev._absent){const di=$(`di${i}`);if(di)di.querySelectorAll('.det-sec').forEach(s=>s.style.display='none');$(`db${i}`).textContent='상세 ▲';}});
 uProg();}
 
 function buildDetail(st,i){const cfg=S.cf||{};const gp=cfg.growthPts||[];const wk=cfg.weaknesses||[];const mg=cfg.mgmtAreas||[];const ua=cfg.urgentActions||[];
@@ -681,7 +683,15 @@ const e=S.ev[i];if(e.hw&&e.ud&&e.fc&&e.ps){const di=$(`di${i}`);if(!di.classList
 function gAbs(i){const ch=$(`ga${i}`);const isAbs=!ch.classList.contains('on');ch.classList.toggle('on');
 const tr=$(`gr${i}`);tr.classList.toggle('absent',isAbs);
 if(!S.ev[i])S.ev[i]={};S.ev[i]._absent=isAbs;
-if(isAbs){const di=$(`di${i}`);di.classList.remove('open');$(`db${i}`).textContent='상세 ▼';}
+const di=$(`di${i}`);
+if(isAbs){
+// 결석 시: 상세 열고 코멘트만 표시 (정성평가 숨김)
+di.classList.add('open');$(`db${i}`).textContent='상세 ▲';
+di.querySelectorAll('.det-sec').forEach(s=>s.style.display='none');
+}else{
+// 결석 해제 시: 정성평가 다시 표시
+di.querySelectorAll('.det-sec').forEach(s=>s.style.display='');
+}
 uRow(+i);uProg();}
 
 function gDet(i){const di=$(`di${i}`);const open=!di.classList.contains('open');di.classList.toggle('open');$(`db${i}`).textContent=open?'상세 ▲':'상세 ▼';}
