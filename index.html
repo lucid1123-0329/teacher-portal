@@ -824,7 +824,8 @@ $('enMoClasses').innerHTML=S.cls.map(c=>`<label style="display:flex;align-items:
 <input type="checkbox" value="${esc(c.name)}" style="accent-color:var(--ac)"><div><b>${c.name}</b><span style="color:var(--t3);margin-left:4px">${c.subject}</span></div></label>`).join('');
 $('enMo').classList.remove('hd');}
 async function doEnrollConfirm(){const cls=Array.from(document.querySelectorAll('#enMoClasses input:checked')).map(c=>c.value);cM('enMo');sh('');
-const r=await pA({action:'tp_admin_enrollStudent',student:enTgt,classes:cls,token:S.tk});hd();r.ok?ts(r.message,'ok')&&lEnroll():ts(r.error,'er');}
+var stInfo=enSts.find(function(s){return s.name===enTgt;})||{};
+const r=await pA({action:'tp_admin_enrollStudent',student:enTgt,classes:cls,grade:stInfo.grade||'',school:stInfo.school||'',token:S.tk});hd();r.ok?ts(r.message,'ok')&&lEnroll():ts(r.error,'er');}
 
 // ENROLLMENT EDIT
 async function oSE(n){$('seMoTi').textContent=n+' — 수강';const st=S.allSt.find(s=>s.name===n);const cur=(st&&st.classes)||[];
