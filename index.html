@@ -862,6 +862,20 @@ $('cdMoTi').textContent=title;$('cdMoBody').innerHTML=html;$('cdMo').classList.r
 // 차트는 DOM 렌더 후 생성
 requestAnimationFrame(()=>{if(type==='psy')renderPsyCharts(st);else if((type==='eng'||type==='math'))renderLtCharts(type==='eng'?st.engLtJson:st.mathLtJson);});}
 
+// 학생 프로필에서 레벨테스트 분석 모달 열기 — tp_studentProfile에서 이미 받은 JSON 재사용
+function viewLtFromProfile(name,type){
+const s=S.curProfile;if(!s||s.name!==name){ts('데이터 없음','er');return;}
+const jsonStr=type==='eng'?s.levelTestEnglish:s.levelTestMath;
+if(!jsonStr){ts('레벨테스트 데이터 없음','er');return;}
+destroyCdCharts();
+const subj=type==='eng'?'영어':'수학';
+const st={name:s.name,grade:s.grade||'',school:s.school||''};
+$('cdCapBtn').style.display='inline-flex';$('cdCapBtn').onclick=()=>captureCd(name,type);
+$('cdMoTi').textContent=name+' — '+subj+' 레벨테스트 분석';
+$('cdMoBody').innerHTML=buildLtReport(jsonStr,subj,name,st);
+$('cdMo').classList.remove('hd');
+requestAnimationFrame(()=>renderLtCharts(jsonStr));}
+
 // ── 성향검사 리포트 HTML ──
 function buildPsyReport(st){
 try{const pj=JSON.parse(st.surveyJson);const pa=pj.profileAnalysis||{};const ps=pj.profileScores||{};const rl=pj.reliability||{};const cs=pj.consultStrategy||{};const sa=pj.sectionAnalysis||{};
@@ -1413,7 +1427,7 @@ const SEC_COLORS=['#6366f1','#22c55e','#f59e0b','#ec4899','#0066ff'];
 const LBL={intrinsic_motivation:'내재적 동기',identified_regulation:'동일시 조절',self_efficacy:'자기효능감',achievement_pressure:'성취 압박감',academic_lethargy:'학업 무기력',metacognition:'메타인지',planning_ability:'계획 수립',memory_strategy:'암기 전략',comprehension_strategy:'이해/구조화',error_analysis:'오답 분석',execution_power:'실행력',persistence:'끈기/지속성',env_control:'환경 통제',attention_control:'집중 유지',digital_detox:'디지털 절제',academic_self_esteem:'학업 자존감',test_anxiety:'시험 불안',resilience:'회복 탄력성',emotion_regulation:'감정 조절',optimism:'낙관성',parent_support:'부모 지지',autonomy_respect:'자율성 존중',help_seeking:'도움 요청',teacher_rapport:'교사 유대감',peer_relation:'교우 관계'};
 
 async function oPr(n,from){S.pf=from||'p-dash';sh('');const r=await gA('tp_studentProfile',{student:n,token:S.tk});hd();if(!r.ok){ts(r.error,'er');return;}
-const s=r.student;$('prH').textContent=s.name;
+const s=r.student;S.curProfile=s;$('prH').textContent=s.name;
 let pj=null;if(s.personalityJson){try{pj=JSON.parse(s.personalityJson);}catch(e){}}
 
 // Tabs
@@ -1431,8 +1445,10 @@ bodies[0]=`<div class="card"><div class="info-grid">
 <div class="info-item"><div class="info-label">수강 반</div><div class="info-val">${(s.classes||[]).join(', ')||'—'}</div></div>
 </div></div>`;
 if(s.levelTestEnglish||s.levelTestMath){bodies[0]+=`<div class="card"><div class="card-h">레벨테스트</div><div class="info-grid">`;
-if(s.levelTestEnglish){try{const le=JSON.parse(s.levelTestEnglish);bodies[0]+=`<div class="info-item"><div class="info-label">영어</div><div class="info-val">${le.totalScore!==undefined?le.totalScore+'점':JSON.stringify(le).substring(0,50)}</div></div>`;}catch(e){bodies[0]+=`<div class="info-item"><div class="info-label">영어</div><div class="info-val">${String(s.levelTestEnglish).substring(0,60)}</div></div>`;}}
-if(s.levelTestMath){try{const lm=JSON.parse(s.levelTestMath);bodies[0]+=`<div class="info-item"><div class="info-label">수학</div><div class="info-val">${lm.totalScore!==undefined?lm.totalScore+'점':JSON.stringify(lm).substring(0,50)}</div></div>`;}catch(e){bodies[0]+=`<div class="info-item"><div class="info-label">수학</div><div class="info-val">${String(s.levelTestMath).substring(0,60)}</div></div>`;}}
+if(s.levelTestEnglish){let engVal='';try{const le=JSON.parse(s.levelTestEnglish);engVal=le.totalScore!==undefined?le.totalScore+'점':JSON.stringify(le).substring(0,50);}catch(e){engVal=String(s.levelTestEnglish).substring(0,60);}
+bodies[0]+=`<div class="info-item"><div class="info-label">영어</div><div class="info-val" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span>${engVal}</span><button class="btn btn-g btn-sm" style="font-size:11px;padding:0 8px;height:22px" onclick="viewLtFromProfile('${esc(s.name)}','eng')">분석 보기</button></div></div>`;}
+if(s.levelTestMath){let mathVal='';try{const lm=JSON.parse(s.levelTestMath);mathVal=lm.totalScore!==undefined?lm.totalScore+'점':JSON.stringify(lm).substring(0,50);}catch(e){mathVal=String(s.levelTestMath).substring(0,60);}
+bodies[0]+=`<div class="info-item"><div class="info-label">수학</div><div class="info-val" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span>${mathVal}</span><button class="btn btn-g btn-sm" style="font-size:11px;padding:0 8px;height:22px" onclick="viewLtFromProfile('${esc(s.name)}','math')">분석 보기</button></div></div>`;}
 bodies[0]+=`</div></div>`;}
 
 // Tab 1: 성향 (only if hasPsy)
