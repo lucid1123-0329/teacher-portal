@@ -862,19 +862,25 @@ $('cdMoTi').textContent=title;$('cdMoBody').innerHTML=html;$('cdMo').classList.r
 // 차트는 DOM 렌더 후 생성
 requestAnimationFrame(()=>{if(type==='psy')renderPsyCharts(st);else if((type==='eng'||type==='math'))renderLtCharts(type==='eng'?st.engLtJson:st.mathLtJson);});}
 
-// 학생 프로필에서 레벨테스트 분석 모달 열기 — tp_studentProfile에서 이미 받은 JSON 재사용
-function viewLtFromProfile(name,type){
+// 학생 프로필에서 레벨테스트 분석 모달 열기
+// counsel 시트(Sheet 3)의 최신 LT 데이터 우선 조회 — 메인 DB는 입학 시점 스냅샷이라 stale
+function viewLtFromProfile(name,type){return (async()=>{
 const s=S.curProfile;if(!s||s.name!==name){ts('데이터 없음','er');return;}
-const jsonStr=type==='eng'?s.levelTestEnglish:s.levelTestMath;
+sh('레벨테스트 분석 조회...');
+if(!cdCache[name]){const r=await gA('tp_counselStudentDetail',{student:name,token:S.tk});if(r.ok)cdCache[name]=r.student;}
+let jsonStr=null,grade=s.grade||'',school=s.school||'';
+if(cdCache[name]){jsonStr=type==='eng'?cdCache[name].engLtJson:cdCache[name].mathLtJson;grade=cdCache[name].grade||grade;school=cdCache[name].school||school;}
+if(!jsonStr)jsonStr=type==='eng'?s.levelTestEnglish:s.levelTestMath; // counsel에 없으면 프로필 캐시 fallback
+hd();
 if(!jsonStr){ts('레벨테스트 데이터 없음','er');return;}
 destroyCdCharts();
 const subj=type==='eng'?'영어':'수학';
-const st={name:s.name,grade:s.grade||'',school:s.school||''};
+const st={name:s.name,grade,school};
 $('cdCapBtn').style.display='inline-flex';$('cdCapBtn').onclick=()=>captureCd(name,type);
 $('cdMoTi').textContent=name+' — '+subj+' 레벨테스트 분석';
 $('cdMoBody').innerHTML=buildLtReport(jsonStr,subj,name,st);
 $('cdMo').classList.remove('hd');
-requestAnimationFrame(()=>renderLtCharts(jsonStr));}
+requestAnimationFrame(()=>renderLtCharts(jsonStr));})();}
 
 // ── 성향검사 리포트 HTML ──
 function buildPsyReport(st){
