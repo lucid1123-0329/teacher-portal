@@ -862,7 +862,22 @@ $('cdMoTi').textContent=title;$('cdMoBody').innerHTML=html;$('cdMo').classList.r
 // 차트는 DOM 렌더 후 생성
 requestAnimationFrame(()=>{if(type==='psy')renderPsyCharts(st);else if((type==='eng'||type==='math'))renderLtCharts(type==='eng'?st.engLtJson:st.mathLtJson);});}
 
-// 학생 프로필에서 레벨테스트 분석 모달 열기
+// 학생 프로필 — [LOG] 채점이력의 특정 시도 분석 모달 열기 (인덱스 기반)
+function viewLtFromHistory(idx){
+const h=S.ltHistory&&S.ltHistory[idx];if(!h){ts('이력 항목 없음','er');return;}
+if(!h.resultJson){ts('분석 데이터 없음','er');return;}
+destroyCdCharts();
+const subj=h.subject==='english'?'영어':h.subject==='math'?'수학':(h.subject||'');
+const s=S.curProfile||{};
+const st={name:s.name||'',grade:s.grade||'',school:s.school||''};
+const datePart=h.date?' ('+h.date+')':'';
+$('cdCapBtn').style.display='inline-flex';$('cdCapBtn').onclick=()=>captureCd(s.name||'',h.subject==='english'?'eng':'math');
+$('cdMoTi').textContent=(s.name||'')+' — '+subj+' 레벨테스트 분석'+datePart;
+$('cdMoBody').innerHTML=buildLtReport(h.resultJson,subj,s.name||'',st);
+$('cdMo').classList.remove('hd');
+requestAnimationFrame(()=>renderLtCharts(h.resultJson));}
+
+// 학생 프로필에서 레벨테스트 분석 모달 열기 (snapshot fallback 경로)
 // counsel 시트(Sheet 3)의 최신 LT 데이터 우선 조회 — 메인 DB는 입학 시점 스냅샷이라 stale
 function viewLtFromProfile(name,type){return (async()=>{
 const s=S.curProfile;if(!s||s.name!==name){ts('데이터 없음','er');return;}
@@ -1432,8 +1447,10 @@ const SEC_NAMES={section1_motivation:'학습 동기',section2_cognition:'인지 
 const SEC_COLORS=['#6366f1','#22c55e','#f59e0b','#ec4899','#0066ff'];
 const LBL={intrinsic_motivation:'내재적 동기',identified_regulation:'동일시 조절',self_efficacy:'자기효능감',achievement_pressure:'성취 압박감',academic_lethargy:'학업 무기력',metacognition:'메타인지',planning_ability:'계획 수립',memory_strategy:'암기 전략',comprehension_strategy:'이해/구조화',error_analysis:'오답 분석',execution_power:'실행력',persistence:'끈기/지속성',env_control:'환경 통제',attention_control:'집중 유지',digital_detox:'디지털 절제',academic_self_esteem:'학업 자존감',test_anxiety:'시험 불안',resilience:'회복 탄력성',emotion_regulation:'감정 조절',optimism:'낙관성',parent_support:'부모 지지',autonomy_respect:'자율성 존중',help_seeking:'도움 요청',teacher_rapport:'교사 유대감',peer_relation:'교우 관계'};
 
-async function oPr(n,from){S.pf=from||'p-dash';sh('');const r=await gA('tp_studentProfile',{student:n,token:S.tk});hd();if(!r.ok){ts(r.error,'er');return;}
-const s=r.student;S.curProfile=s;$('prH').textContent=s.name;
+async function oPr(n,from){S.pf=from||'p-dash';sh('');
+const [r,lh]=await Promise.all([gA('tp_studentProfile',{student:n,token:S.tk}),gA('tp_studentLtHistory',{student:n,token:S.tk}).catch(()=>({ok:false}))]);
+hd();if(!r.ok){ts(r.error,'er');return;}
+const s=r.student;S.curProfile=s;S.ltHistory=(lh&&lh.ok)?lh.history:[];$('prH').textContent=s.name;
 let pj=null;if(s.personalityJson){try{pj=JSON.parse(s.personalityJson);}catch(e){}}
 
 // Tabs
@@ -1450,7 +1467,18 @@ bodies[0]=`<div class="card"><div class="info-grid">
 <div class="info-item"><div class="info-label">상태</div><div class="info-val"><span class="chip ${s.status==='재원'?'chip-ok':'chip-er'}">${s.status}</span></div></div>
 <div class="info-item"><div class="info-label">수강 반</div><div class="info-val">${(s.classes||[]).join(', ')||'—'}</div></div>
 </div></div>`;
-if(s.levelTestEnglish||s.levelTestMath){bodies[0]+=`<div class="card"><div class="card-h">레벨테스트</div><div class="info-grid">`;
+// 레벨테스트 — 이력(history) 우선, 없으면 메인 DB 스냅샷 fallback
+if(S.ltHistory&&S.ltHistory.length){
+bodies[0]+=`<div class="card"><div class="card-h">레벨테스트 이력 (${S.ltHistory.length}건)</div><div class="tw"><table class="tb">
+<thead><tr><th>날짜</th><th>과목</th><th>유형</th><th>점수</th><th></th></tr></thead><tbody>`;
+S.ltHistory.forEach((h,idx)=>{const subjLbl=h.subject==='english'?'영어':h.subject==='math'?'수학':(h.subject||'—');
+const score=(h.totalScore!=null&&h.totalQuestions!=null)?`${h.totalScore}/${h.totalQuestions}`:(h.totalScore!=null?String(h.totalScore):'—');
+const pct=(h.percentage!=null&&h.percentage!=='')?` <span style="color:var(--t3);font-size:11px">(${h.percentage}%)</span>`:'';
+bodies[0]+=`<tr><td>${h.date||'—'}</td><td>${subjLbl}</td><td style="color:var(--t3)">${h.testType||''}</td><td style="font-weight:600">${score}${pct}</td><td>${h.resultJson?`<button class="btn btn-g btn-sm" style="font-size:11px;padding:0 8px;height:22px" onclick="viewLtFromHistory(${idx})">분석</button>`:'<span style="color:var(--t4);font-size:11px">—</span>'}</td></tr>`;});
+bodies[0]+=`</tbody></table></div></div>`;
+}else if(s.levelTestEnglish||s.levelTestMath){
+// 이력이 없을 때만 스냅샷으로 fallback (구버전 데이터 호환)
+bodies[0]+=`<div class="card"><div class="card-h">레벨테스트 (스냅샷)</div><div class="info-grid">`;
 if(s.levelTestEnglish){let engVal='';try{const le=JSON.parse(s.levelTestEnglish);engVal=le.totalScore!==undefined?le.totalScore+'점':JSON.stringify(le).substring(0,50);}catch(e){engVal=String(s.levelTestEnglish).substring(0,60);}
 bodies[0]+=`<div class="info-item"><div class="info-label">영어</div><div class="info-val" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span>${engVal}</span><button class="btn btn-g btn-sm" style="font-size:11px;padding:0 8px;height:22px" onclick="viewLtFromProfile('${esc(s.name)}','eng')">분석 보기</button></div></div>`;}
 if(s.levelTestMath){let mathVal='';try{const lm=JSON.parse(s.levelTestMath);mathVal=lm.totalScore!==undefined?lm.totalScore+'점':JSON.stringify(lm).substring(0,50);}catch(e){mathVal=String(s.levelTestMath).substring(0,60);}
