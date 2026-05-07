@@ -1448,7 +1448,11 @@ const SEC_COLORS=['#6366f1','#22c55e','#f59e0b','#ec4899','#0066ff'];
 const LBL={intrinsic_motivation:'내재적 동기',identified_regulation:'동일시 조절',self_efficacy:'자기효능감',achievement_pressure:'성취 압박감',academic_lethargy:'학업 무기력',metacognition:'메타인지',planning_ability:'계획 수립',memory_strategy:'암기 전략',comprehension_strategy:'이해/구조화',error_analysis:'오답 분석',execution_power:'실행력',persistence:'끈기/지속성',env_control:'환경 통제',attention_control:'집중 유지',digital_detox:'디지털 절제',academic_self_esteem:'학업 자존감',test_anxiety:'시험 불안',resilience:'회복 탄력성',emotion_regulation:'감정 조절',optimism:'낙관성',parent_support:'부모 지지',autonomy_respect:'자율성 존중',help_seeking:'도움 요청',teacher_rapport:'교사 유대감',peer_relation:'교우 관계'};
 
 async function oPr(n,from){S.pf=from||'p-dash';sh('');
-const [r,lh]=await Promise.all([gA('tp_studentProfile',{student:n,token:S.tk}),gA('tp_studentLtHistory',{student:n,token:S.tk}).catch(()=>({ok:false}))]);
+const [r,lh,rr]=await Promise.all([
+  gA('tp_studentProfile',{student:n,token:S.tk}),
+  gA('tp_studentLtHistory',{student:n,token:S.tk}).catch(()=>({ok:false})),
+  gA('tp_studentReports',{student:n,token:S.tk}).catch(e=>({ok:false,_err:e}))
+]);
 hd();if(!r.ok){ts(r.error,'er');return;}
 const s=r.student;S.curProfile=s;S.ltHistory=(lh&&lh.ok)?lh.history:[];$('prH').textContent=s.name;
 let pj=null;if(s.personalityJson){try{pj=JSON.parse(s.personalityJson);}catch(e){}}
@@ -1510,10 +1514,10 @@ if(cs.recommend_text){bodies[1]+=`<div class="card" style="margin-bottom:0"><div
 bodies[1]+='</div>'; // close psyCapture
 }
 
-// Tab 2 (or 1 if no psy): 리포트
+// Tab 2 (or 1 if no psy): 리포트 — oPr() 진입부에서 미리 fetch 완료 (rr 사용)
 const rIdx=hasPsy?2:1;
-try{const rr=await gA('tp_studentReports',{student:n,token:S.tk});
-if(rr.ok&&rr.reports.length){
+try{
+if(rr&&rr.ok&&rr.reports&&rr.reports.length){
 bodies[rIdx]=`<div class="card"><div class="card-h">2주 리포트 · ${rr.reports.length}건</div>`;
 rr.reports.slice(0,10).forEach((rp,idx)=>{
 bodies[rIdx]+=`<div style="border:1px solid var(--ln);border-radius:6px;margin-bottom:6px;overflow:hidden">
